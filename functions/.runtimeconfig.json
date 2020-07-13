@@ -1,0 +1,8 @@
+{
+  "firebase": {
+    "projectId": "grandnewinsyte",
+    "databaseURL": "https://grandnewinsyte.firebaseio.com",
+    "storageBucket": "grandnewinsyte.appspot.com",
+    "locationId": "us-central"
+  }
+}

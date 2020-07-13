@@ -1,0 +1,184 @@
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { View, StyleSheet } from 'react-native';
+import { List, Loading, ErrorView, NothingView } from '../../../../components';
+import { setCurrentHomeListPostIndex } from '../../../../redux/curentViewableItem/actions';
+import HomePostCard from '../HomePostCard';
+import HomePublicPostListLoading from './HomePublicPostListLoading';
+import SortPublicPostList from './SortPublicPostList';
+import {
+  fetchPublicNewPosts,
+  pullToFetchPublicNewPosts,
+  pullToFetchPublicHotPosts,
+  fetchPublicHotPosts,
+  clear,
+} from '../../../../redux/posts/actions';
+import { checkPostListChanged } from '../../../../utils/functions';
+import { AppState } from '../../../../redux/store';
+import Colors from '../../../../constants/Colors';
+
+interface HomePublicPostListProps {
+  posts: Array<any>;
+  onSetCurrentViewableIndex: (index: number) => void;
+  onFetchPublicNewPosts: () => void;
+  onFetchPublicHotPosts: () => void;
+  onPullToFetchPublicNewPosts: () => void;
+  onPullToFetchPublicHotPosts: () => void;
+  onClear: () => void;
+  pullLoading: boolean;
+  loading: boolean;
+  error: Error | null;
+  feedChoice: string;
+}
+
+class HomePublicPostList extends Component<HomePublicPostListProps> {
+  private viewabilityConfig: {};
+  constructor(props: HomePublicPostListProps) {
+    super(props);
+    this.viewabilityConfig = {
+      // waitForInteraction: true,
+      minimumViewTime: 0,
+      itemVisiblePercentThreshold: 80,
+    };
+  }
+
+  shouldComponentUpdate(nextProps: HomePublicPostListProps) {
+    // console.log(checkPostListChanged(this.props.posts, nextProps.posts));
+    if (
+      (this.props.posts.length === 0 || nextProps.posts.length === 0) &&
+      this.props.loading !== nextProps.loading
+    ) {
+      return true;
+    }
+    if (this.props.pullLoading !== nextProps.pullLoading) {
+      return true;
+    }
+    if (checkPostListChanged(this.props.posts, nextProps.posts)) {
+      return true;
+    }
+    if (this.props.error !== nextProps.error) {
+      return true;
+    }
+    return false;
+  }
+
+  onViewableItemsChanged = ({ viewableItems, _ }: any) => {
+    if (viewableItems && viewableItems.length > 0 && viewableItems[0]) {
+      this.props.onSetCurrentViewableIndex(viewableItems[0].index);
+    }
+  };
+
+  componentDidMount() {
+    this.props.onFetchPublicNewPosts();
+  }
+
+  emptyHandler = () => {
+    this.props.onClear();
+    this.props.onFetchPublicNewPosts();
+  };
+
+  render() {
+    const {
+      posts,
+      onFetchPublicNewPosts,
+      onFetchPublicHotPosts,
+      onPullToFetchPublicNewPosts,
+      onPullToFetchPublicHotPosts,
+      pullLoading,
+      loading,
+      feedChoice,
+    } = this.props;
+    // console.log('home list');
+    // console.log(posts.length)
+
+    if (loading && posts.length === 0) {
+      return (
+        <View style={styles.container}>
+          <SortPublicPostList />
+          <Loading />
+        </View>
+      );
+    }
+    if (posts.length === 0) {
+      return (
+        <View style={styles.container}>
+          <SortPublicPostList />
+          <NothingView handle={this.emptyHandler} />
+        </View>
+      );
+    }
+    if (this.props.error) {
+      return (
+        <View style={styles.container}>
+          <SortPublicPostList />
+          <ErrorView
+            errorText={this.props.error.message}
+            handle={this.emptyHandler}
+          />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.container}>
+        <View style={{ zIndex: 100 }}>
+          <List
+            data={posts}
+            card={HomePostCard as React.ReactNode}
+            onViewableItemsChanged={this.onViewableItemsChanged}
+            viewabilityConfig={this.viewabilityConfig}
+            onEndReached={
+              feedChoice === 'new'
+                ? onFetchPublicNewPosts
+                : onFetchPublicHotPosts
+            }
+            onRefresh={
+              feedChoice === 'new'
+                ? onPullToFetchPublicNewPosts
+                : onPullToFetchPublicHotPosts
+            }
+            refreshing={pullLoading}
+            listHeaderComponent={<SortPublicPostList />}
+          />
+        </View>
+        <View style={styles.loadingWrapper}>
+          <HomePublicPostListLoading />
+        </View>
+      </View>
+    );
+  }
+}
+
+const mapStateToProps = (state: AppState) => ({
+  pullLoading: state.allPosts.public.pullLoading,
+  loading: state.allPosts.public.loading,
+  error: state.allPosts.public.error,
+  posts: state.allPosts.public.posts,
+  feedChoice: state.allPosts.public.feedChoice,
+});
+
+const mapDispatchToProps = {
+  onSetCurrentViewableIndex: setCurrentHomeListPostIndex,
+  onFetchPublicNewPosts: fetchPublicNewPosts,
+  onFetchPublicHotPosts: fetchPublicHotPosts,
+  onPullToFetchPublicNewPosts: pullToFetchPublicNewPosts,
+  onPullToFetchPublicHotPosts: pullToFetchPublicHotPosts,
+  onClear: clear,
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.brightColor,
+    flex: 1,
+  },
+  loadingWrapper: {
+    width: '100%',
+    position: 'absolute',
+    bottom: 0,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(HomePublicPostList);
