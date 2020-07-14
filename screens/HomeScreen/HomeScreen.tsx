@@ -5,12 +5,12 @@ import { AppState } from '../../redux/store';
 import HomeAuth from './private_components/HomeAuth';
 import HomeNotAuth from './private_components/HomeNotAuth';
 
-interface FeedProps {
-  onFetchPublicNewPosts: () => void;
-  loading: boolean;
-  posts: Array<any>;
-  error: Error | null;
-}
+// interface FeedProps {
+//   onFetchPublicNewPosts: () => void;
+//   loading: boolean;
+//   posts: Array<any>;
+//   error: Error | null;
+// }
 
 class HomeScreen extends Component<any> {
   constructor(props: any) {

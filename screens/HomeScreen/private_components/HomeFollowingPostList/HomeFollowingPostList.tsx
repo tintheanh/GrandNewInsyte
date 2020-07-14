@@ -15,10 +15,11 @@ import {
 } from '../../../../redux/posts/actions';
 import { checkPostListChanged } from '../../../../utils/functions';
 import { AppState } from '../../../../redux/store';
-import Colors from '../../../../constants/Colors';
+import { Colors } from '../../../../constants';
+import { Post } from '../../../../models';
 
 interface HomeFollowingPostListProps {
-  posts: Array<any>;
+  posts: Array<Post>;
   onSetCurrentViewableIndex: (index: number) => void;
   onFetchFollowingNewPosts: () => void;
   onFetchFollowingHotPosts: () => void;

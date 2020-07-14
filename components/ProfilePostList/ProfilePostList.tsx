@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import { Animated, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { checkPostListChanged } from '../../utils/functions';
-import Layout from '../../constants/Layout';
+import { Layout } from '../../constants';
+import { Post } from '../../models';
 
 const windowHeight = Layout.window.height;
 
@@ -27,8 +28,7 @@ interface ProfilePostListProps {
   };
   onRefresh?: () => void;
   card: React.ComponentClass<any> | React.ReactNode;
-  // TODO chage posts type to post type
-  posts: any[];
+  posts: Array<Post>;
   refreshing?: boolean;
 }
 

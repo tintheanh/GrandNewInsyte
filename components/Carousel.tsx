@@ -7,21 +7,23 @@ const square = Layout.window.width;
 
 interface CarouselProps {
   items: Array<{
-    id: string;
-    uri: string;
+    url: string;
     type: string;
   }>;
   shouldPlayMedia: boolean;
 }
 
-class Carousel extends Component<CarouselProps> {
-  state = { active: 0 };
+export default class Carousel extends Component<CarouselProps> {
+  state = { currentActive: 0 };
 
-  shouldComponentUpdate(_: CarouselProps, nextState: any) {
-    if (nextState.active !== this.state.active) {
+  shouldComponentUpdate(
+    _: CarouselProps,
+    nextState: { currentActive: number },
+  ) {
+    if (nextState.currentActive !== this.state.currentActive) {
       return true;
     }
-    if (this.props.items[nextState.active].type === 'image') {
+    if (this.props.items[nextState.currentActive].type === 'image') {
       return false;
     }
     return true;
@@ -32,8 +34,8 @@ class Carousel extends Component<CarouselProps> {
       nativeEvent.contentOffset.x / nativeEvent.layoutMeasurement.width,
     );
 
-    if (slide !== this.state.active) {
-      this.setState({ active: slide });
+    if (slide !== this.state.currentActive) {
+      this.setState({ currentActive: slide });
     }
   };
 
@@ -50,40 +52,50 @@ class Carousel extends Component<CarouselProps> {
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast">
-            {items.map((item: any, index: number) => {
-              return item.type === 'image' ? (
-                <Image
-                  key={item.id}
-                  source={{ uri: item.uri }}
-                  defaultSource={require('../assets/img-empty.png')}
-                  resizeMode="cover"
-                  style={styles.image}
-                />
-              ) : (
-                <CarouselVideo
-                  key={item.id}
-                  videoUri={item.uri}
-                  shouldPlay={
-                    shouldPlayMedia ? this.state.active === index : false
-                  }
-                />
-              );
-            })}
+            {items.map(
+              (
+                item: {
+                  url: string;
+                  type: string;
+                },
+                index: number,
+              ) => {
+                return item.type === 'image' ? (
+                  <Image
+                    key={item.url}
+                    source={{ uri: item.url }}
+                    defaultSource={require('../assets/img-empty.png')}
+                    resizeMode="cover"
+                    style={styles.image}
+                  />
+                ) : (
+                  <CarouselVideo
+                    key={item.url}
+                    videoUrl={item.url}
+                    shouldPlay={
+                      shouldPlayMedia
+                        ? this.state.currentActive === index
+                        : false
+                    }
+                  />
+                );
+              },
+            )}
           </ScrollView>
         ) : (
           <View>
             {items[0].type === 'image' ? (
               <Image
-                key={items[0].id}
-                source={{ uri: items[0].uri }}
+                key={items[0].url}
+                source={{ uri: items[0].url }}
                 defaultSource={require('../assets/img-empty.png')}
                 resizeMode="cover"
                 style={styles.image}
               />
             ) : (
               <CarouselVideo
-                key={items[0].id}
-                videoUri={items[0].uri}
+                key={items[0].url}
+                videoUrl={items[0].url}
                 shouldPlay={shouldPlayMedia}
               />
             )}
@@ -97,7 +109,7 @@ class Carousel extends Component<CarouselProps> {
                 key={index}
                 style={{
                   ...styles.bullet,
-                  color: this.state.active === index ? 'white' : 'gray',
+                  color: this.state.currentActive === index ? 'white' : 'gray',
                   opacity: 0.6,
                 }}>
                 &bull;
@@ -138,5 +150,3 @@ const styles = StyleSheet.create({
     height: square,
   },
 });
-
-export default Carousel;

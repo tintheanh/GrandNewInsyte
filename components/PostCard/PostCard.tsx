@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { NavigationProp, NavigationState } from '@react-navigation/native';
-import Colors from '../../constants/Colors';
+import { Colors } from '../../constants';
 import Carousel from '../Carousel';
 import { UserSection, Caption, InteractionSection } from './private_components';
+import { Post } from '../../models';
 
 interface PostCardProps {
-  // TODO make data as Post type
-  data: any;
+  data: Post;
   currentViewableIndex: number;
   index: number;
   navigation: NavigationProp<
@@ -49,17 +49,24 @@ export default class PostCard extends Component<PostCardProps> {
       data.likes !== nextProps.data.likes ||
       data.comments !== nextProps.data.comments ||
       data.user.avatar !== nextProps.data.user.avatar
-    )
+    ) {
       return true;
+    }
 
-    if (data.media.length === 0) return false;
+    if (data.media.length === 0) {
+      return false;
+    }
 
     if (data.media.length === 1 && data.media[0].type === 'image') {
       return false;
     }
 
-    if (this.state.shouldPlayMedia !== nextState.shouldPlayMedia) return true;
-    if (isTabFocused !== nextProps.isTabFocused) return true;
+    if (this.state.shouldPlayMedia !== nextState.shouldPlayMedia) {
+      return true;
+    }
+    if (isTabFocused !== nextProps.isTabFocused) {
+      return true;
+    }
     if (currentViewableIndex === nextProps.currentViewableIndex) {
       return false;
     }
@@ -101,7 +108,7 @@ export default class PostCard extends Component<PostCardProps> {
         <UserSection
           avatar={data.user.avatar}
           username={data.user.username}
-          datePosted={data.date_posted}
+          datePosted={data.datePosted}
           iconPrivacy={iconPrivacy}
           navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}
           navigateWhenClickOnUsernameOrAvatar={

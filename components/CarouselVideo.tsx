@@ -6,12 +6,12 @@ import { Ionicons, Layout } from '../constants';
 const square = Layout.window.width;
 
 interface CarouselVideoProps {
-  videoUri: string;
+  videoUrl: string;
   shouldPlay: boolean;
 }
 
 export default function CarouselVideo({
-  videoUri,
+  videoUrl,
   shouldPlay,
 }: CarouselVideoProps) {
   const [mute, setMute] = useState(true);
@@ -22,7 +22,7 @@ export default function CarouselVideo({
     <TouchableWithoutFeedback onPress={onSetMute}>
       <View>
         <Video
-          source={{ uri: videoUri }}
+          source={{ uri: videoUrl }}
           posterSource={require('../assets/img-empty.png')}
           rate={1.0}
           volume={1.0}

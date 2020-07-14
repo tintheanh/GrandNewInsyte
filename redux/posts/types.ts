@@ -1,4 +1,4 @@
-// import { Post } from '../../models';
+import { Post } from '../../models';
 
 export const FETCH_PUBLIC_NEWPOSTS_STARTED = 'FETCH_PUBLIC_NEWPOSTS_STARTED';
 export const FETCH_PUBLIC_NEWPOSTS_SUCCESS = 'FETCH_PUBLIC_NEWPOSTS_SUCCESS';
@@ -72,6 +72,10 @@ export const SET_PUBLIC_FEED_CHOICE = 'SET_PUBLIC_FEED_CHOICE';
 export const SET_FOLLOWING_FEED_CHOICE = 'SET_FOLLOWING_FEED_CHOICE';
 export const CLEAR = 'CLEAR';
 
+export const CREATE_POST_STARTED = 'CREATE_POST_STARTED';
+export const CREATE_POST_SUCCESS = 'CREATE_POST_SUCCESS';
+export const CREATE_POST_FAILURE = 'CREATE_POST_FAILURE';
+
 export interface PostAction {
   type: string;
   payload:
@@ -82,13 +86,14 @@ export interface PostAction {
     | Array<any>
     | number
     | string
+    | Post
     | null
     | Error;
 }
 
 export interface PostState {
   public: {
-    posts: Array<any>;
+    posts: Array<Post>;
     loading: boolean;
     pullLoading: boolean;
     lastNewVisible: number;
@@ -114,4 +119,10 @@ export interface PostState {
     error: Error | null;
     lastVisible: number;
   };
+  // newlyCreatedPost: {
+  //   loading: boolean;
+  //   privacy: 'public' | 'followers';
+  //   caption: string;
+  //   media: any[];
+  // };
 }

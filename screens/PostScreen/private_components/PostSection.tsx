@@ -22,8 +22,7 @@ interface PostSectionProps {
   iconPrivacy: string;
   caption: string;
   media: Array<{
-    id: string;
-    uri: string;
+    url: string;
     type: string;
   }>;
   likes: number;

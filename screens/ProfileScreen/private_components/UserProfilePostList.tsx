@@ -16,8 +16,9 @@ import {
 } from '../../../components';
 import UserProfilePostListLoading from './UserProfilePostListLoading';
 import { checkPostListChanged } from '../../../utils/functions';
-import Colors from '../../../constants/Colors';
+import { Colors } from '../../../constants';
 import { AppState } from '../../../redux/store';
+import { Post } from '../../../models';
 
 const windowHeight = Layout.window.height;
 
@@ -34,8 +35,7 @@ interface UserProfilePostListProps {
   onFetchUserPosts: () => void;
   onPullToFetchUserPosts: () => void;
   currentTabIndex: number;
-  // TODO chage posts type to post type
-  posts: any[];
+  posts: Array<Post>;
   error: Error | null;
   loading: boolean;
   pullLoading: boolean;

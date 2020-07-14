@@ -39,9 +39,12 @@ import {
   SET_FOLLOWING_HOTTIME,
   SET_PUBLIC_FEED_CHOICE,
   SET_FOLLOWING_FEED_CHOICE,
+  CREATE_POST_FAILURE,
+  CREATE_POST_STARTED,
+  CREATE_POST_SUCCESS,
   CLEAR,
 } from './types';
-// import { Post } from '../../models';
+import { Post } from '../../models';
 import {
   fsDB,
   postsPerBatch,
@@ -49,7 +52,11 @@ import {
   FirebaseFirestoreTypes,
 } from '../../config';
 import { AppState } from '../store';
-import { getCurrentUnixTime, docFStoPostArray } from '../../utils/functions';
+import {
+  getCurrentUnixTime,
+  docFStoPostArray,
+  docFBtoPostArray,
+} from '../../utils/functions';
 
 // const oneWeek = 2.365e10;
 
@@ -90,46 +97,6 @@ import { getCurrentUnixTime, docFStoPostArray } from '../../utils/functions';
 //   return newPosts;
 // };
 
-const docFBtoPostArray = async (docCollection: Array<string>) => {
-  const newPosts = [];
-  for (const postID of docCollection) {
-    try {
-      const postRef = await fsDB.collection('posts').doc(postID).get();
-      if (!postRef.exists) {
-        continue;
-      }
-
-      const postData = postRef.data();
-      const userRef = await fsDB
-        .collection('users')
-        .doc(postData!.posted_by)
-        .get();
-      if (!userRef.exists) {
-        continue;
-      }
-
-      const userData = userRef.data();
-      const post = {
-        id: postRef.id,
-        user: {
-          username: userData!.username,
-          avatar: userData!.avatar,
-        },
-        caption: postData!.caption,
-        date_posted: postData!.date_posted,
-        likes: postData!.num_likes,
-        comments: 0,
-        media: postData!.media,
-        privacy: postData!.privacy,
-      };
-      newPosts.push(post);
-    } catch (err) {
-      continue;
-    }
-  }
-  return newPosts;
-};
-
 /* -------------------- post actions -------------------- */
 
 /* ---------------- public posts methods ---------------- */
@@ -146,8 +113,13 @@ export const fetchPublicNewPosts = () => async (
     // console.log(percent);
     // if (percent > 50) throw new Error('dummy error');
 
-    const { allPosts } = getState();
-    const { lastNewVisible } = allPosts.public;
+    const { lastNewVisible } = getState().allPosts.public;
+    const { user } = getState().auth;
+    const currentUser = {
+      id: user?.id,
+      username: user?.username,
+      avatar: user?.avatar,
+    };
 
     let query: FirebaseFirestoreTypes.Query;
     if (lastNewVisible === 0) {
@@ -171,7 +143,10 @@ export const fetchPublicNewPosts = () => async (
       return dispatch(fetchPublicNewPostsEnd());
     }
 
-    const newPosts = await docFStoPostArray(documentSnapshots.docs);
+    const newPosts = await docFStoPostArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
 
     if (newPosts.length === 0) {
       return dispatch(fetchPublicNewPostsEnd());
@@ -188,9 +163,16 @@ export const fetchPublicNewPosts = () => async (
 
 export const pullToFetchPublicNewPosts = () => async (
   dispatch: (action: PostAction) => void,
+  getState: () => AppState,
 ) => {
   dispatch(pullToFetchPublicNewPostsStarted());
   try {
+    const { user } = getState().auth;
+    const currentUser = {
+      id: user?.id,
+      username: user?.username,
+      avatar: user?.avatar,
+    };
     const documentSnapshots = await fsDB
       .collection('posts')
       .where('privacy', '==', 'public')
@@ -202,7 +184,10 @@ export const pullToFetchPublicNewPosts = () => async (
       return dispatch(fetchPublicNewPostsEnd());
     }
 
-    const newPosts = await docFStoPostArray(documentSnapshots.docs);
+    const newPosts = await docFStoPostArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
 
     if (newPosts.length === 0) {
       return dispatch(fetchPublicNewPostsEnd());
@@ -228,8 +213,13 @@ export const fetchPublicHotPosts = () => async (
     // console.log('fetch public hot');
     const currentTime = getCurrentUnixTime();
 
-    const { allPosts } = getState();
-    const { lastHotVisible, hotTime } = allPosts.public;
+    const { lastHotVisible, hotTime } = getState().allPosts.public;
+    const { user } = getState().auth;
+    const currentUser = {
+      id: user?.id,
+      username: user?.username,
+      avatar: user?.avatar,
+    };
 
     const timeAgo = currentTime - hotTime;
 
@@ -257,7 +247,10 @@ export const fetchPublicHotPosts = () => async (
       return dispatch(fetchPublicHotPostsEnd());
     }
 
-    const newPosts = await docFStoPostArray(documentSnapshots.docs);
+    const newPosts = await docFStoPostArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
 
     if (newPosts.length === 0) {
       return dispatch(fetchPublicHotPostsEnd());
@@ -285,6 +278,12 @@ export const pullToFetchPublicHotPosts = () => async (
     const currentTime = getCurrentUnixTime();
 
     const hotTime = getState().allPosts.public.hotTime;
+    const { user } = getState().auth;
+    const currentUser = {
+      id: user?.id,
+      username: user?.username,
+      avatar: user?.avatar,
+    };
 
     const timeAgo = currentTime - hotTime;
 
@@ -300,7 +299,10 @@ export const pullToFetchPublicHotPosts = () => async (
       return dispatch(fetchPublicHotPostsEnd());
     }
 
-    const newPosts = await docFStoPostArray(documentSnapshots.docs);
+    const newPosts = await docFStoPostArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
 
     if (newPosts.length === 0) {
       return dispatch(fetchPublicHotPostsEnd());
@@ -334,13 +336,19 @@ export const fetchFollowingNewPosts = () => async (
   try {
     const { allPosts, auth } = getState();
     const { lastNewVisible } = allPosts.following;
-    const uid = auth.user?.id;
+
+    const currentUser = {
+      id: auth.user?.id,
+      username: auth.user?.username,
+      avatar: auth.user?.avatar,
+    };
+
     let docCollection: Array<string> = [];
 
     if (lastNewVisible === 0) {
       // get document from realtime db
       const snapshots = await fbDB
-        .ref(`users/${uid}/following_posts`)
+        .ref(`users/${currentUser.id}/following_posts`)
         .orderByChild('date_posted')
         .limitToLast(postsPerBatch)
         .once('value');
@@ -363,7 +371,7 @@ export const fetchFollowingNewPosts = () => async (
       docCollection = dataForSorting.map((doc) => doc.id);
     } else {
       const snapshots = await fbDB
-        .ref(`users/${uid}/following_posts`)
+        .ref(`users/${currentUser.id}/following_posts`)
         .orderByChild('date_posted')
         .endAt(lastNewVisible)
         .limitToLast(postsPerBatch + 1)
@@ -387,7 +395,7 @@ export const fetchFollowingNewPosts = () => async (
       return dispatch(fetchFollowingNewPostsEnd());
     }
 
-    const newPosts = await docFBtoPostArray(docCollection);
+    const newPosts = await docFBtoPostArray(docCollection, currentUser);
 
     if (newPosts.length === 0) {
       return dispatch(fetchFollowingNewPostsEnd());
@@ -408,11 +416,16 @@ export const pullToFetchFollowingNewPosts = () => async (
 ) => {
   dispatch(pullToFetchFollowingNewPostsStarted());
   try {
-    const { auth } = getState();
-    const uid = auth.user?.id;
+    const { user } = getState().auth;
+
+    const currentUser = {
+      id: user?.id,
+      username: user?.username,
+      avatar: user?.avatar,
+    };
 
     const snapshots = await fbDB
-      .ref(`users/${uid}/following_posts`)
+      .ref(`users/${currentUser.id}/following_posts`)
       .orderByChild('date_posted')
       .limitToLast(postsPerBatch)
       .once('value');
@@ -434,7 +447,7 @@ export const pullToFetchFollowingNewPosts = () => async (
       return dispatch(fetchFollowingNewPostsEnd());
     }
 
-    const newPosts = await docFBtoPostArray(docCollection);
+    const newPosts = await docFBtoPostArray(docCollection, currentUser);
 
     if (newPosts.length === 0) {
       return dispatch(fetchFollowingNewPostsEnd());
@@ -456,9 +469,15 @@ export const fetchFollowingHotPosts = () => async (
 ) => {
   dispatch(fetchFollowingHotPostsStarted());
   try {
-    const { allPosts, auth } = getState();
-    const { lastHotVisible, hotTime } = allPosts.following;
-    const uid = auth.user?.id;
+    const { lastHotVisible, hotTime } = getState().allPosts.following;
+    const { user } = getState().auth;
+
+    const currentUser = {
+      id: user?.id,
+      username: user?.username,
+      avatar: user?.avatar,
+    };
+
     const currentTime = getCurrentUnixTime();
     const timeAgo = currentTime - hotTime;
 
@@ -469,7 +488,7 @@ export const fetchFollowingHotPosts = () => async (
     }> = [];
     if (lastHotVisible === 0) {
       const snapshots = await fbDB
-        .ref(`users/${uid}/following_posts`)
+        .ref(`users/${currentUser.id}/following_posts`)
         .orderByChild('date_posted')
         .startAt(timeAgo)
         .limitToLast(postsPerBatch)
@@ -485,7 +504,7 @@ export const fetchFollowingHotPosts = () => async (
       docCollection = dataForSorting.map((doc) => doc.id);
     } else {
       const snapshots = await fbDB
-        .ref(`users/${uid}/following_posts`)
+        .ref(`users/${currentUser.id}/following_posts`)
         .orderByChild('date_posted')
         .startAt(timeAgo)
         .endAt(lastHotVisible)
@@ -510,7 +529,7 @@ export const fetchFollowingHotPosts = () => async (
     const newLastHotVisible =
       dataForSorting[dataForSorting.length - 1].date_posted;
 
-    const newPosts = await docFBtoPostArray(docCollection);
+    const newPosts = await docFBtoPostArray(docCollection, currentUser);
 
     if (newPosts.length === 0) {
       return dispatch(fetchFollowingHotPostsEnd());
@@ -530,14 +549,20 @@ export const pullToFetchFollowingHotPosts = () => async (
 ) => {
   dispatch(pullToFetchFollowingHotPostsStarted());
   try {
-    const { auth } = getState();
-    const uid = auth.user?.id;
     const { hotTime } = getState().allPosts.following;
+    const { user } = getState().auth;
+
+    const currentUser = {
+      id: user?.id,
+      username: user?.username,
+      avatar: user?.avatar,
+    };
+
     const currentTime = getCurrentUnixTime();
     const timeAgo = currentTime - hotTime;
 
     const snapshots = await fbDB
-      .ref(`users/${uid}/following_posts`)
+      .ref(`users/${currentUser.id}/following_posts`)
       .orderByChild('date_posted')
       .startAt(timeAgo)
       .limitToLast(postsPerBatch)
@@ -560,7 +585,7 @@ export const pullToFetchFollowingHotPosts = () => async (
       return dispatch(fetchFollowingHotPostsEnd());
     }
 
-    const newPosts = await docFBtoPostArray(docCollection);
+    const newPosts = await docFBtoPostArray(docCollection, currentUser);
 
     if (newPosts.length === 0) {
       return dispatch(fetchFollowingHotPostsEnd());
@@ -590,20 +615,26 @@ export const fetchUserPosts = () => async (
   console.log('fetch user posts');
   dispatch(fetchUserPostsStarted());
   try {
-    const currentUser = getState().auth.user;
+    const { user } = getState().auth;
     const { lastVisible } = getState().allPosts.userPosts;
+
+    const currentUser = {
+      id: user?.id,
+      avatar: user?.avatar,
+      username: user?.username,
+    };
 
     let query: FirebaseFirestoreTypes.Query;
     if (lastVisible === 0) {
       query = fsDB
         .collection('posts')
-        .where('posted_by', '==', currentUser!.id)
+        .where('posted_by', '==', currentUser.id)
         .orderBy('date_posted', 'desc')
         .limit(postsPerBatch);
     } else {
       query = fsDB
         .collection('posts')
-        .where('posted_by', '==', currentUser!.id)
+        .where('posted_by', '==', currentUser.id)
         .where('date_posted', '<', lastVisible)
         .orderBy('date_posted', 'desc')
         .limit(postsPerBatch);
@@ -615,29 +646,10 @@ export const fetchUserPosts = () => async (
       return dispatch(fetchUserPostsEnd());
     }
 
-    const newPosts = [];
-
-    for (const doc of documentSnapshots.docs) {
-      const postData = doc.data();
-      try {
-        const post = {
-          id: doc.id,
-          user: {
-            username: currentUser?.username,
-            avatar: currentUser?.avatar,
-          },
-          caption: postData!.caption,
-          date_posted: postData!.date_posted,
-          likes: postData!.num_likes,
-          comments: 0,
-          media: postData!.media,
-          privacy: postData!.privacy,
-        };
-        newPosts.push(post);
-      } catch (err) {
-        continue;
-      }
-    }
+    const newPosts = await docFStoPostArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
 
     // const newPosts = await docFStoPostArray(documentSnapshots.docs);
 
@@ -973,5 +985,24 @@ const pullToFetchUserPostsFailure = (error: Error): PostAction => ({
 });
 
 /* ------------- end following posts actions ------------ */
+
+/* ----------------- create post actions ---------------- */
+
+const createPostStarted = (): PostAction => ({
+  type: CREATE_POST_STARTED,
+  payload: null,
+});
+
+const createPostSuccess = (newPost: Post): PostAction => ({
+  type: CREATE_POST_SUCCESS,
+  payload: newPost,
+});
+
+const createPostError = (error: Error): PostAction => ({
+  type: CREATE_POST_SUCCESS,
+  payload: error,
+});
+
+/* --------------- end create post actions -------------- */
 
 /* ----------------- end post dispatches ---------------- */

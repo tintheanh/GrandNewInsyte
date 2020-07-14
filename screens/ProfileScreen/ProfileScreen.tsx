@@ -380,7 +380,6 @@ const ProfileScreen = (props: any) => {
     }
     return (
       <UserProfileTaggedPostList
-        data={DATA}
         scrollY={scrollY}
         onMomentumScrollBegin={onMomentumScrollBegin}
         onScrollEndDrag={onScrollEndDrag}

@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import { Animated, FlatList } from 'react-native';
 import { connect } from 'react-redux';
-import Layout from '../../../constants/Layout';
+import { Layout } from '../../../constants';
 import { setCurrentUserTaggedListPostIndex } from '../../../redux/curentViewableItem/actions';
 import UserProfileTaggedPostCard from './UserProfileTaggedPostCard';
+import { Post } from '../../../models';
 
 const windowHeight = Layout.window.height;
 
@@ -18,9 +19,7 @@ interface UserProfileTaggedPostListProps {
   tabBarHeight: number;
   onSetCurrentViewableIndex: (index: number) => void;
   currentTabIndex: number;
-
-  // TODO chage data type to post type
-  data: any[];
+  data: Array<Post>;
 }
 
 class UserProfileTaggedPostList extends Component<
@@ -82,7 +81,7 @@ class UserProfileTaggedPostList extends Component<
           paddingTop: headerHeight + tabBarHeight,
           minHeight: windowHeight - tabBarHeight,
         }}
-        data={data}
+        data={[]}
         renderItem={({ item, index }: { item: any; index: number }) => (
           <UserProfileTaggedPostCard
             index={index}

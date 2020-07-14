@@ -3,10 +3,10 @@ import { connect } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { PostCard } from '../../../components';
 import { AppState } from '../../../redux/store';
+import { Post } from '../../../models';
 
 interface HomePostCardProps {
-  // TODO make data as Post type
-  data: any;
+  data: Post;
   currentViewableIndex: number;
   index: number;
   navigation: any;
@@ -71,8 +71,7 @@ class HomePostCard extends Component<HomePostCardProps> {
 }
 
 interface HOCHomePostCardProps {
-  // TODO make data as Post type
-  data: any;
+  data: Post;
   currentViewableIndex: number;
   index: number;
 }

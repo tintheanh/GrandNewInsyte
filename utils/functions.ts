@@ -6,6 +6,7 @@ import {
   FirebaseAuthTypes,
   FirebaseFirestoreTypes,
 } from '../config';
+import { Post } from '../models';
 
 const alertDialog = (alertText: string) => {
   Alert.alert(
@@ -158,7 +159,7 @@ const checkPostListChanged = (list1: Array<any>, list2: Array<any>) => {
 };
 
 const getCurrentUser = () => {
-  return new Promise<FirebaseAuthTypes.User | null>((resolve, _) => {
+  return new Promise<FirebaseAuthTypes.User | null>((resolve) => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       unsubscribe();
       resolve(user);
@@ -168,32 +169,53 @@ const getCurrentUser = () => {
 
 const docFStoPostArray = async (
   docs: Array<FirebaseFirestoreTypes.QueryDocumentSnapshot>,
-) => {
+  currentUser?: {
+    id: string | undefined;
+    username: string | undefined;
+    avatar: string | undefined;
+  },
+): Promise<Array<Post>> => {
   const newPosts = [];
 
   for (const doc of docs) {
     const postData = doc.data();
+    let userData = null;
     try {
-      const userRef = await fsDB
-        .collection('users')
-        .doc(postData.posted_by)
-        .get();
+      if (
+        currentUser &&
+        currentUser.id &&
+        currentUser.id === postData!.posted_by
+      ) {
+        userData = {
+          username: currentUser.username,
+          avatar: currentUser.avatar,
+        };
+      } else {
+        const userRef = await fsDB
+          .collection('users')
+          .doc(postData.posted_by)
+          .get();
 
-      if (!userRef.exists) {
-        continue;
+        if (!userRef.exists) {
+          continue;
+        }
+
+        userData = {
+          username: userRef.data()!.username,
+          avatar: userRef.data()!.avatar,
+        };
       }
 
-      const userData = userRef.data();
       const post = {
         id: doc.id,
         user: {
-          username: userData!.username,
-          avatar: userData!.avatar,
+          username: userData.username,
+          avatar: userData.avatar,
         },
         caption: postData!.caption,
         date_posted: postData!.date_posted,
-        likes: postData!.num_likes,
-        comments: 0,
+        likes: postData!.likes,
+        comments: postData!.comments,
         media: postData!.media,
         privacy: postData!.privacy,
       };
@@ -203,6 +225,91 @@ const docFStoPostArray = async (
     }
   }
   return newPosts;
+};
+
+const docFBtoPostArray = async (
+  docCollection: Array<string>,
+  currentUser?: {
+    id: string | undefined;
+    username: string | undefined;
+    avatar: string | undefined;
+  },
+): Promise<Array<Post>> => {
+  const newPosts = [];
+  for (const postID of docCollection) {
+    try {
+      const postRef = await fsDB.collection('posts').doc(postID).get();
+      if (!postRef.exists) {
+        continue;
+      }
+
+      const postData = postRef.data();
+
+      let userData = null;
+
+      if (
+        currentUser &&
+        currentUser.id &&
+        currentUser.id === postData!.posted_by
+      ) {
+        userData = {
+          username: currentUser.username,
+          avatar: currentUser.avatar,
+        };
+      } else {
+        const userRef = await fsDB
+          .collection('users')
+          .doc(postData!.posted_by)
+          .get();
+
+        if (!userRef.exists) {
+          continue;
+        }
+
+        userData = {
+          username: userRef.data()!.username,
+          avatar: userRef.data()!.avatar,
+        };
+      }
+
+      const post = {
+        id: postRef.id,
+        user: {
+          username: userData.username,
+          avatar: userData.avatar,
+        },
+        caption: postData!.caption,
+        date_posted: postData!.date_posted,
+        likes: postData!.likes,
+        comments: postData!.comments,
+        media: postData!.media,
+        privacy: postData!.privacy,
+      };
+      newPosts.push(post);
+    } catch (err) {
+      continue;
+    }
+  }
+  return newPosts;
+};
+
+const filterImageArray = (arr: any[]) => {
+  const filteredArr = arr.reduce((acc, current) => {
+    const x = acc.find(
+      (item: any) =>
+        item.mime === current.mime &&
+        item.size === current.size &&
+        item.width === current.width &&
+        item.height === current.height,
+    );
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, []);
+
+  return filteredArr;
 };
 
 export {
@@ -216,5 +323,7 @@ export {
   getCurrentUnixTime,
   checkPostListChanged,
   docFStoPostArray,
+  docFBtoPostArray,
   alertDialog,
+  filterImageArray,
 };
