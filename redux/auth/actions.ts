@@ -29,9 +29,7 @@ import {
   emailValidate,
   passwordValidate,
   fetchUser,
-  createBlob,
   // delay,
-  compressImage,
   getCurrentUser,
 } from '../../utils/functions';
 import { AppState } from '../store';

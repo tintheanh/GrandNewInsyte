@@ -26,14 +26,8 @@ interface ListProps {
 }
 
 export default class List extends Component<ListProps> {
-  private onEndReachedCalledDuringMomentum: boolean;
-  constructor(props: ListProps) {
-    super(props);
-    this.onEndReachedCalledDuringMomentum = false;
-  }
-
   shouldComponentUpdate(nextProps: ListProps) {
-    // console.log(this.props.data.length, nextProps.data.length);
+    // console.log(checkPostListChanged(this.props.data, nextProps.data));
     if (this.props.refreshing !== nextProps.refreshing) {
       return true;
     }
@@ -44,15 +38,9 @@ export default class List extends Component<ListProps> {
     return false;
   }
 
-  _onMomentumScrollBegin = () => {
-    this.onEndReachedCalledDuringMomentum = false;
-  };
-
-  _onEndReached = () => {
-    if (!this.onEndReachedCalledDuringMomentum) {
-      this.props.onEndReached();
-      this.onEndReachedCalledDuringMomentum = true;
-    }
+  _onEndReached = ({ distanceFromEnd }: { distanceFromEnd: number }) => {
+    if (distanceFromEnd < 0) return;
+    this.props.onEndReached();
   };
 
   refresh = () => {
@@ -62,7 +50,6 @@ export default class List extends Component<ListProps> {
   };
 
   render() {
-    // console.log('list');
     const {
       data,
       card,
@@ -75,6 +62,7 @@ export default class List extends Component<ListProps> {
       listFooterComponent = undefined,
       refreshing = false,
     } = this.props;
+    // console.log(data);
     const Card = card as React.ComponentClass<any>;
     return (
       <SafeAreaView style={{ height: '100%' }}>
@@ -88,7 +76,6 @@ export default class List extends Component<ListProps> {
           windowSize={windowSize}
           viewabilityConfig={viewabilityConfig}
           removeClippedSubviews={false}
-          onMomentumScrollBegin={this._onMomentumScrollBegin}
           onEndReached={this._onEndReached}
           onEndReachedThreshold={0.5}
           ListHeaderComponent={listHeaderComponent}

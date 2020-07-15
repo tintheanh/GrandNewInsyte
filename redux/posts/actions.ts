@@ -56,6 +56,9 @@ import {
   getCurrentUnixTime,
   docFStoPostArray,
   docFBtoPostArray,
+  uploadMedia,
+  delay,
+  deleteMedia,
 } from '../../utils/functions';
 
 // const oneWeek = 2.365e10;
@@ -152,7 +155,7 @@ export const fetchPublicNewPosts = () => async (
       return dispatch(fetchPublicNewPostsEnd());
     }
 
-    const newLastNewVisible = newPosts[newPosts.length - 1].date_posted;
+    const newLastNewVisible = newPosts[newPosts.length - 1].datePosted;
 
     dispatch(fetchPublicNewPostsSuccess(newPosts, newLastNewVisible));
   } catch (err) {
@@ -168,6 +171,7 @@ export const pullToFetchPublicNewPosts = () => async (
   dispatch(pullToFetchPublicNewPostsStarted());
   try {
     const { user } = getState().auth;
+    const currentPosts = getState().allPosts.public.posts;
     const currentUser = {
       id: user?.id,
       username: user?.username,
@@ -193,9 +197,22 @@ export const pullToFetchPublicNewPosts = () => async (
       return dispatch(fetchPublicNewPostsEnd());
     }
 
-    const newLastNewVisible = newPosts[newPosts.length - 1].date_posted;
+    const pendingPost = currentPosts.find(
+      (post) => post.id === 'pending-post-69',
+    );
 
-    dispatch(pullToFetchPublicNewPostsSuccess(newPosts, newLastNewVisible));
+    let allPosts = [];
+    if (pendingPost) {
+      newPosts.push(pendingPost);
+      const sortedByDate = newPosts.sort((a, b) => b.datePosted - a.datePosted);
+      allPosts = sortedByDate;
+    } else {
+      allPosts = newPosts;
+    }
+
+    const newLastNewVisible = allPosts[allPosts.length - 1].datePosted;
+
+    dispatch(pullToFetchPublicNewPostsSuccess(allPosts, newLastNewVisible));
   } catch (err) {
     console.log(err.message);
     dispatch(
@@ -256,7 +273,7 @@ export const fetchPublicHotPosts = () => async (
       return dispatch(fetchPublicHotPostsEnd());
     }
 
-    const newLastHotVisible = newPosts[newPosts.length - 1].date_posted;
+    const newLastHotVisible = newPosts[newPosts.length - 1].datePosted;
 
     const sortedByLikes = newPosts.sort((a, b) => b.likes - a.likes);
 
@@ -308,7 +325,7 @@ export const pullToFetchPublicHotPosts = () => async (
       return dispatch(fetchPublicHotPostsEnd());
     }
 
-    const newLastHotVisible = newPosts[newPosts.length - 1].date_posted;
+    const newLastHotVisible = newPosts[newPosts.length - 1].datePosted;
 
     const sortedByLikes = newPosts.sort((a, b) => b.likes - a.likes);
 
@@ -401,7 +418,7 @@ export const fetchFollowingNewPosts = () => async (
       return dispatch(fetchFollowingNewPostsEnd());
     }
 
-    const newLastNewVisible = newPosts[newPosts.length - 1].date_posted;
+    const newLastNewVisible = newPosts[newPosts.length - 1].datePosted;
 
     dispatch(fetchFollowingNewPostsSuccess(newPosts, newLastNewVisible));
   } catch (err) {
@@ -453,7 +470,7 @@ export const pullToFetchFollowingNewPosts = () => async (
       return dispatch(fetchFollowingNewPostsEnd());
     }
 
-    const newLastNewVisible = newPosts[newPosts.length - 1].date_posted;
+    const newLastNewVisible = newPosts[newPosts.length - 1].datePosted;
     dispatch(pullToFetchFollowingNewPostsSuccess(newPosts, newLastNewVisible));
   } catch (err) {
     console.log(err.message);
@@ -591,7 +608,7 @@ export const pullToFetchFollowingHotPosts = () => async (
       return dispatch(fetchFollowingHotPostsEnd());
     }
 
-    const newLastNewVisible = newPosts[newPosts.length - 1].date_posted;
+    const newLastNewVisible = newPosts[newPosts.length - 1].datePosted;
     const newPostsSorted = newPosts.sort((a, b) => b.likes - a.likes);
     dispatch(
       pullToFetchFollowingHotPostsSuccess(newPostsSorted, newLastNewVisible),
@@ -657,7 +674,7 @@ export const fetchUserPosts = () => async (
       return dispatch(fetchUserPostsEnd());
     }
 
-    const newLastVisible = newPosts[newPosts.length - 1].date_posted;
+    const newLastVisible = newPosts[newPosts.length - 1].datePosted;
     dispatch(fetchUserPostsSuccess(newPosts, newLastVisible));
   } catch (err) {
     console.log(err.message);
@@ -760,6 +777,93 @@ export const setFollowingFeedChoice = (choice: string) => async (
     type: SET_FOLLOWING_FEED_CHOICE,
     payload: choice,
   });
+};
+
+export const createPost = (
+  {
+    privacy,
+    caption,
+    media,
+  }: {
+    privacy: 'public' | 'followers';
+    caption: string;
+    media: Array<{
+      uri: string;
+      mime: string;
+      size: number;
+      width: number;
+      height: number;
+    }>;
+  },
+  callback: () => void,
+) => async (
+  dispatch: (action: PostAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  const currentDatePosted = getCurrentUnixTime();
+  const tempPost = {
+    id: 'pending-post-69',
+    caption,
+    privacy,
+    media: media.map((md) => ({
+      id: md.uri,
+      url: md.uri,
+      type: (md.mime.includes('image') ? 'image' : 'video') as
+        | 'image'
+        | 'video',
+      width: md.width,
+      height: md.height,
+    })),
+    datePosted: currentDatePosted,
+    likes: 0,
+    comments: 0,
+    user: {
+      avatar: user?.avatar as string,
+      username: user?.username as string,
+    },
+  };
+  dispatch(createPostStarted(tempPost));
+  try {
+    callback();
+    await delay(3000);
+    // throw new Error('Failed');
+    const uid = user?.id;
+    const uploadedMedia = await uploadMedia(uid as string, media);
+    // console.log(uploadedMedia);
+    try {
+      // throw new Error('Failed');
+      const postRef = await fsDB.collection('posts').add({
+        caption,
+        privacy,
+        media: uploadedMedia,
+        comments: 0,
+        likes: 0,
+        posted_by: uid as string,
+        date_posted: currentDatePosted,
+      });
+      const newPost = {
+        id: postRef.id,
+        caption,
+        privacy,
+        media: uploadedMedia,
+        datePosted: currentDatePosted,
+        likes: 0,
+        comments: 0,
+        user: {
+          avatar: user?.avatar as string,
+          username: user?.username as string,
+        },
+      };
+      dispatch(createPostSuccess(newPost));
+    } catch (err) {
+      await deleteMedia(uid as string, uploadedMedia);
+      throw err;
+    }
+  } catch (err) {
+    console.log(err.message);
+    dispatch(createPostError(err));
+  }
 };
 
 export const clear = () => async (dispatch: (action: PostAction) => void) => {
@@ -988,9 +1092,9 @@ const pullToFetchUserPostsFailure = (error: Error): PostAction => ({
 
 /* ----------------- create post actions ---------------- */
 
-const createPostStarted = (): PostAction => ({
+const createPostStarted = (tempPost: Post): PostAction => ({
   type: CREATE_POST_STARTED,
-  payload: null,
+  payload: tempPost,
 });
 
 const createPostSuccess = (newPost: Post): PostAction => ({
@@ -999,7 +1103,7 @@ const createPostSuccess = (newPost: Post): PostAction => ({
 });
 
 const createPostError = (error: Error): PostAction => ({
-  type: CREATE_POST_SUCCESS,
+  type: CREATE_POST_FAILURE,
   payload: error,
 });
 

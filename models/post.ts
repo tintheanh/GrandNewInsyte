@@ -4,7 +4,13 @@ export default interface Post {
   datePosted: number;
   likes: number;
   comments: number;
-  media: Array<{ type: 'image' | 'video'; url: string }>;
+  media: Array<{
+    id: string;
+    type: 'image' | 'video';
+    url: string;
+    width: number;
+    height: number;
+  }>;
   user: {
     avatar: string;
     username: string;

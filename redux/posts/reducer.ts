@@ -36,6 +36,9 @@ import {
   PULL_TO_FETCH_USER_POSTS_SUCCESS,
   SET_PUBLIC_HOTTIME,
   SET_FOLLOWING_HOTTIME,
+  CREATE_POST_FAILURE,
+  CREATE_POST_STARTED,
+  CREATE_POST_SUCCESS,
   CLEAR,
   PostState,
   PostAction,
@@ -43,7 +46,7 @@ import {
   SET_FOLLOWING_FEED_CHOICE,
 } from './types';
 import { oneWeek } from '../../constants';
-// import { Post } from '../../models';
+import { Post } from '../../models';
 
 const initialState: PostState = {
   public: {
@@ -70,6 +73,10 @@ const initialState: PostState = {
     posts: [],
     lastVisible: 0,
     pullLoading: false,
+    loading: false,
+    error: null,
+  },
+  createPost: {
     loading: false,
     error: null,
   },
@@ -341,6 +348,51 @@ export default function postsReducer(
 
     /* ---------------- end user posts cases ---------------- */
 
+    /* ------------------ create post cases ----------------- */
+
+    case CREATE_POST_STARTED: {
+      const newState = { ...state };
+      newState.createPost.error = null;
+      newState.createPost.loading = true;
+      const newPosts = [...state.public.posts];
+
+      // ensure only one pending post
+      const filteredPending = newPosts.filter(
+        (post) => post.id !== 'pending-post-69',
+      );
+
+      filteredPending.unshift(action.payload as Post);
+      newState.public.posts = filteredPending;
+      return newState;
+    }
+    case CREATE_POST_SUCCESS: {
+      const newState = { ...state };
+      const posts = [...state.public.posts];
+      const index = posts.findIndex((post) => post.id === 'pending-post-69');
+      if (index !== -1) {
+        posts[index] = action.payload as Post;
+      } else {
+        posts.unshift(action.payload as Post);
+      }
+      newState.public.posts = posts;
+      newState.createPost.loading = false;
+      newState.createPost.error = null;
+      return newState;
+    }
+    case CREATE_POST_FAILURE: {
+      const newState = { ...state };
+      const posts = [...newState.public.posts];
+      const filteredPending = posts.filter(
+        (post) => post.id !== 'pending-post-69',
+      );
+      newState.public.posts = filteredPending;
+      newState.createPost.error = action.payload as Error;
+      newState.createPost.loading = false;
+      return newState;
+    }
+
+    /* ---------------- end create post cases --------------- */
+
     case SET_PUBLIC_HOTTIME: {
       const newState = { ...state };
       newState.public.hotTime = action.payload as number;
@@ -398,6 +450,10 @@ export default function postsReducer(
           posts: [],
           lastVisible: 0,
           pullLoading: false,
+          loading: false,
+          error: null,
+        },
+        createPost: {
           loading: false,
           error: null,
         },

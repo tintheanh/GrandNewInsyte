@@ -10,6 +10,7 @@ import {
   Feather,
   Ionicons,
 } from '../constants';
+import { alertDialog } from '../utils/functions';
 import { AppState } from '../redux/store';
 import { checkAuth } from '../redux/auth/actions';
 import TabBarIcon from '../components/TabBarIcon';
@@ -29,11 +30,17 @@ class BottomTabNavigator extends Component<any> {
     if (this.props.user !== nextProps.user) {
       return true;
     }
+    if (this.props.createPostLoading !== nextProps.createPostLoading)
+      return true;
+    if (this.props.createPostError !== nextProps.createPostError) return true;
     return false;
   }
 
   render() {
-    // console.log('bottom');
+    // console.log('bottom', this.props.createPostLoading);
+    if (this.props.createPostError) {
+      alertDialog(this.props.createPostError.message);
+    }
     return (
       <BottomTab.Navigator
         initialRouteName="Home"
@@ -71,16 +78,22 @@ class BottomTabNavigator extends Component<any> {
             component={ModalPlaceHolder}
             options={{
               tabBarIcon: ({ focused }) => (
-                <TabBarIcon
-                  icon={Feather}
-                  focused={focused}
-                  name="plus-square"
-                />
+                <View
+                  style={{ opacity: this.props.createPostLoading ? 0.5 : 1 }}>
+                  <TabBarIcon
+                    icon={Feather}
+                    focused={focused}
+                    name="plus-square"
+                  />
+                </View>
               ),
             }}
             listeners={({ navigation }) => ({
               tabPress: (e) => {
                 e.preventDefault();
+                if (this.props.createPostLoading) {
+                  return;
+                }
                 navigation.navigate('Add', { screen: 'AddPost' });
               },
             })}
@@ -118,6 +131,8 @@ class BottomTabNavigator extends Component<any> {
 
 const mapStateToProps = (state: AppState) => ({
   user: state.auth.user,
+  createPostLoading: state.allPosts.createPost.loading,
+  createPostError: state.allPosts.createPost.error,
 });
 
 const mapDispatchToProps = {

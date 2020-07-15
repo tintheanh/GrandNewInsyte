@@ -44,8 +44,8 @@ export default class PostCard extends Component<PostCardProps> {
 
   shouldComponentUpdate(nextProps: PostCardProps, nextState: any) {
     const { data, currentViewableIndex, index, isTabFocused } = this.props;
-
     if (
+      data.id !== nextProps.data.id ||
       data.likes !== nextProps.data.likes ||
       data.comments !== nextProps.data.comments ||
       data.user.avatar !== nextProps.data.user.avatar
@@ -80,6 +80,8 @@ export default class PostCard extends Component<PostCardProps> {
     return false;
   }
 
+  // processMedia = () => this.props.data.media.map((md) => ({ url: md.url }));
+
   render() {
     const {
       data,
@@ -104,7 +106,12 @@ export default class PostCard extends Component<PostCardProps> {
         break;
     }
     return (
-      <View style={styles.container}>
+      <View
+        pointerEvents={data.id === 'pending-post-69' ? 'none' : 'auto'}
+        style={{
+          ...styles.container,
+          opacity: data.id === 'pending-post-69' ? 0.4 : 1,
+        }}>
         <UserSection
           avatar={data.user.avatar}
           username={data.user.username}

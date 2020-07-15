@@ -1,8 +1,10 @@
 import moment from 'moment';
 import { Alert } from 'react-native';
+import { v4 as uuidv4 } from 'uuid';
 import {
   fsDB,
   auth,
+  fireStorage,
   FirebaseAuthTypes,
   FirebaseFirestoreTypes,
 } from '../config';
@@ -33,9 +35,9 @@ const passwordValidate = (password: string) => {
 };
 
 const convertTime = (unix: number) => {
-  const relative = moment
-    .unix(parseInt((unix / 1000).toFixed(0), 10))
-    .fromNow();
+  const relative = moment.unix(Math.floor(unix / 1000)).fromNow();
+
+  // console.log(relative);
 
   if (relative === 'a few seconds ago') {
     return 'Just now';
@@ -147,7 +149,11 @@ const checkPostListChanged = (list1: Array<any>, list2: Array<any>) => {
     const p1 = list1[i];
     const p2 = list2[i];
 
-    if (p1.likes !== p2.likes || p1.comments !== p2.comments) {
+    if (
+      p1.id !== p2.id ||
+      p1.likes !== p2.likes ||
+      p1.comments !== p2.comments
+    ) {
       return true;
     }
     if (p1.user.avatar !== p2.user.avatar) {
@@ -213,7 +219,7 @@ const docFStoPostArray = async (
           avatar: userData.avatar,
         },
         caption: postData!.caption,
-        date_posted: postData!.date_posted,
+        datePosted: postData!.date_posted,
         likes: postData!.likes,
         comments: postData!.comments,
         media: postData!.media,
@@ -279,7 +285,7 @@ const docFBtoPostArray = async (
           avatar: userData.avatar,
         },
         caption: postData!.caption,
-        date_posted: postData!.date_posted,
+        datePosted: postData!.date_posted,
         likes: postData!.likes,
         comments: postData!.comments,
         media: postData!.media,
@@ -312,6 +318,60 @@ const filterImageArray = (arr: any[]) => {
   return filteredArr;
 };
 
+const uploadMedia = async (
+  uid: string,
+  media: Array<{
+    uri: string;
+    mime: string;
+    size: number;
+    width: number;
+    height: number;
+  }>,
+) => {
+  const uploadedMedia = [];
+  for (const md of media) {
+    try {
+      const mediaID = uuidv4();
+      const mediaRef = fireStorage.ref(`users/${uid}/post_media/${mediaID}`);
+      await mediaRef.putFile(md.uri);
+      const url = await mediaRef.getDownloadURL();
+      const uploaded = {
+        id: mediaID,
+        url,
+        type: (md.mime.includes('image') ? 'image' : 'video') as
+          | 'image'
+          | 'video',
+        width: md.width,
+        height: md.height,
+      };
+      uploadedMedia.push(uploaded);
+    } catch (err) {
+      continue;
+    }
+  }
+  return uploadedMedia;
+};
+
+const deleteMedia = async (
+  uid: string,
+  media: Array<{
+    url: string;
+    id: string;
+    type: string;
+    width: number;
+    height: number;
+  }>,
+) => {
+  for (const md of media) {
+    try {
+      const mediaRef = fireStorage.ref(`users/${uid}/post_media/${md.id}`);
+      await mediaRef.delete();
+    } catch (err) {
+      continue;
+    }
+  }
+};
+
 export {
   emailValidate,
   passwordValidate,
@@ -326,4 +386,6 @@ export {
   docFBtoPostArray,
   alertDialog,
   filterImageArray,
+  uploadMedia,
+  deleteMedia,
 };

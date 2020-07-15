@@ -17,6 +17,7 @@ class HomePostCard extends Component<HomePostCardProps> {
     const { currentViewableIndex, index, data } = this.props;
 
     if (
+      data.id !== nextProps.data.id ||
       data.likes !== nextProps.data.likes ||
       data.comments !== nextProps.data.comments ||
       data.user.avatar !== nextProps.data.user.avatar
@@ -90,6 +91,7 @@ export default connect(mapStateToProps)(
     },
     (prevProps, nextProps) => {
       if (
+        prevProps.data.id !== nextProps.data.id ||
         prevProps.data.likes !== nextProps.data.likes ||
         prevProps.data.comments !== nextProps.data.comments ||
         prevProps.data.user.avatar !== nextProps.data.user.avatar

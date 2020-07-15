@@ -1,29 +1,69 @@
 import React, { Component } from 'react';
-import { View, ScrollView, Text, StyleSheet, Image } from 'react-native';
-import Layout from '../constants/Layout';
+import {
+  View,
+  ScrollView,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableWithoutFeedback,
+  Modal,
+} from 'react-native';
+import ImageViewer from 'react-native-image-zoom-viewer';
+import { Layout } from '../constants';
 import CarouselVideo from './CarouselVideo';
 
 const square = Layout.window.width;
 
 interface CarouselProps {
   items: Array<{
+    id: string;
     url: string;
     type: string;
+    width: number;
+    height: number;
   }>;
   shouldPlayMedia: boolean;
 }
 
-export default class Carousel extends Component<CarouselProps> {
-  state = { currentActive: 0 };
+interface CarouselState {
+  active: number;
+  imgTraversalIndices: Array<number>;
+  showModal: boolean;
+}
 
-  shouldComponentUpdate(
-    _: CarouselProps,
-    nextState: { currentActive: number },
-  ) {
-    if (nextState.currentActive !== this.state.currentActive) {
+class Carousel extends Component<CarouselProps, CarouselState> {
+  constructor(props: CarouselProps) {
+    super(props);
+    this.state = {
+      active: 0,
+      imgTraversalIndices: this.createImgTraversalIndices(),
+      showModal: false,
+    };
+  }
+
+  createImgTraversalIndices = () => {
+    const { items } = this.props;
+    const imgTraversalIndices = [];
+    let i = 0;
+    for (const md of items) {
+      if (md.type === 'image') {
+        imgTraversalIndices.push(i);
+        i += 1;
+      } else {
+        imgTraversalIndices.push(-1);
+      }
+    }
+    return imgTraversalIndices;
+  };
+
+  shouldComponentUpdate(_: CarouselProps, nextState: CarouselState) {
+    if (this.state.showModal !== nextState.showModal) {
       return true;
     }
-    if (this.props.items[nextState.currentActive].type === 'image') {
+    if (nextState.active !== this.state.active) {
+      return true;
+    }
+    if (this.props.items[nextState.active].type === 'image') {
       return false;
     }
     return true;
@@ -34,9 +74,29 @@ export default class Carousel extends Component<CarouselProps> {
       nativeEvent.contentOffset.x / nativeEvent.layoutMeasurement.width,
     );
 
-    if (slide !== this.state.currentActive) {
-      this.setState({ currentActive: slide });
+    if (slide !== this.state.active) {
+      this.setState({ active: slide });
     }
+  };
+
+  showModal = () => {
+    if (!this.state.showModal) {
+      this.setState({ showModal: true });
+    }
+  };
+
+  closeModal = () => {
+    if (this.state.showModal) {
+      this.setState({ showModal: false });
+    }
+  };
+
+  processMediaForImagesModal = () => {
+    return this.props.items.filter((md) => {
+      if (md.type !== 'video') {
+        return { url: md.url, width: md.width, height: md.height };
+      }
+    });
   };
 
   render() {
@@ -52,49 +112,45 @@ export default class Carousel extends Component<CarouselProps> {
             pagingEnabled
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast">
-            {items.map(
-              (
-                item: {
-                  url: string;
-                  type: string;
-                },
-                index: number,
-              ) => {
-                return item.type === 'image' ? (
+            {items.map((item, index: number) => {
+              return item.type === 'image' ? (
+                <TouchableWithoutFeedback
+                  key={item.id}
+                  onPress={() => this.setState({ showModal: true })}>
                   <Image
-                    key={item.url}
                     source={{ uri: item.url }}
                     defaultSource={require('../assets/img-empty.png')}
                     resizeMode="cover"
                     style={styles.image}
                   />
-                ) : (
-                  <CarouselVideo
-                    key={item.url}
-                    videoUrl={item.url}
-                    shouldPlay={
-                      shouldPlayMedia
-                        ? this.state.currentActive === index
-                        : false
-                    }
-                  />
-                );
-              },
-            )}
+                </TouchableWithoutFeedback>
+              ) : (
+                <CarouselVideo
+                  key={item.id}
+                  videoUrl={item.url}
+                  shouldPlay={
+                    shouldPlayMedia ? this.state.active === index : false
+                  }
+                />
+              );
+            })}
           </ScrollView>
         ) : (
           <View>
             {items[0].type === 'image' ? (
-              <Image
-                key={items[0].url}
-                source={{ uri: items[0].url }}
-                defaultSource={require('../assets/img-empty.png')}
-                resizeMode="cover"
-                style={styles.image}
-              />
+              <TouchableWithoutFeedback
+                key={items[0].id}
+                onPress={this.showModal}>
+                <Image
+                  source={{ uri: items[0].url }}
+                  defaultSource={require('../assets/img-empty.png')}
+                  resizeMode="cover"
+                  style={styles.image}
+                />
+              </TouchableWithoutFeedback>
             ) : (
               <CarouselVideo
-                key={items[0].url}
+                key={items[0].id}
                 videoUrl={items[0].url}
                 shouldPlay={shouldPlayMedia}
               />
@@ -109,7 +165,7 @@ export default class Carousel extends Component<CarouselProps> {
                 key={index}
                 style={{
                   ...styles.bullet,
-                  color: this.state.currentActive === index ? 'white' : 'gray',
+                  color: this.state.active === index ? 'white' : 'gray',
                   opacity: 0.6,
                 }}>
                 &bull;
@@ -117,6 +173,16 @@ export default class Carousel extends Component<CarouselProps> {
             ))}
           </View>
         ) : null}
+        <Modal visible={this.state.showModal}>
+          <ImageViewer
+            imageUrls={this.processMediaForImagesModal()}
+            index={this.state.imgTraversalIndices[this.state.active]}
+            enableImageZoom
+            useNativeDriver
+            enableSwipeDown
+            onCancel={this.closeModal}
+          />
+        </Modal>
       </View>
     );
   }
@@ -150,3 +216,5 @@ const styles = StyleSheet.create({
     height: square,
   },
 });
+
+export default Carousel;

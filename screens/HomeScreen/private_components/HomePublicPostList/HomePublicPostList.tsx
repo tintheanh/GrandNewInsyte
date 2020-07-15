@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { List, Loading, ErrorView, NothingView } from '../../../../components';
 import { setCurrentHomeListPostIndex } from '../../../../redux/curentViewableItem/actions';
 import HomePostCard from '../HomePostCard';
@@ -15,8 +15,10 @@ import {
 } from '../../../../redux/posts/actions';
 import { checkPostListChanged } from '../../../../utils/functions';
 import { AppState } from '../../../../redux/store';
-import { Colors } from '../../../../constants';
+import { Colors, Layout } from '../../../../constants';
 import { Post } from '../../../../models';
+
+const height = Layout.window.height;
 
 interface HomePublicPostListProps {
   posts: Array<Post>;
@@ -89,8 +91,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
       loading,
       feedChoice,
     } = this.props;
-    // console.log('home list');
-    // console.log(posts.length)
+    // console.log('home list', posts);
 
     if (loading && posts.length === 0) {
       return (
@@ -140,6 +141,9 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
             }
             refreshing={pullLoading}
             listHeaderComponent={<SortPublicPostList />}
+            listFooterComponent={
+              <View style={{ paddingBottom: height / 10 }} />
+            }
           />
         </View>
         <View style={styles.loadingWrapper}>
@@ -150,13 +154,15 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
   }
 }
 
-const mapStateToProps = (state: AppState) => ({
-  pullLoading: state.allPosts.public.pullLoading,
-  loading: state.allPosts.public.loading,
-  error: state.allPosts.public.error,
-  posts: state.allPosts.public.posts,
-  feedChoice: state.allPosts.public.feedChoice,
-});
+const mapStateToProps = (state: AppState) => {
+  return {
+    pullLoading: state.allPosts.public.pullLoading,
+    loading: state.allPosts.public.loading,
+    error: state.allPosts.public.error,
+    posts: state.allPosts.public.posts,
+    feedChoice: state.allPosts.public.feedChoice,
+  };
+};
 
 const mapDispatchToProps = {
   onSetCurrentViewableIndex: setCurrentHomeListPostIndex,

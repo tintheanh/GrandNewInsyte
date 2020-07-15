@@ -119,10 +119,8 @@ export interface PostState {
     error: Error | null;
     lastVisible: number;
   };
-  // newlyCreatedPost: {
-  //   loading: boolean;
-  //   privacy: 'public' | 'followers';
-  //   caption: string;
-  //   media: any[];
-  // };
+  createPost: {
+    loading: boolean;
+    error: Error | null;
+  };
 }

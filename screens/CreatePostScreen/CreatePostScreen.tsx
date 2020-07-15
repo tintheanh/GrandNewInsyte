@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { connect } from 'react-redux';
 import { filterImageArray, alertDialog } from '../../utils/functions';
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
 import {
@@ -9,6 +10,7 @@ import {
   MediaInput,
   MediaView,
 } from './private_components';
+import { createPost } from '../../redux/posts/actions';
 import { Colors } from '../../constants';
 
 // const DismissKeyboard = ({ children }: any): JSX.Element => (
@@ -85,8 +87,9 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
         multiple: true,
         mediaType: 'any',
         maxFiles: 10,
-        includeExif: true,
       })) as Image[];
+
+      // console.log(media);
 
       const mediaItems = media.map((md) => ({
         uri: md.path,
@@ -95,6 +98,8 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
         width: md.width,
         height: md.height,
       }));
+
+      // console.log(mediaItems);
 
       const newMedia = (this.state.media as any[]).concat(mediaItems);
       const filtered = filterImageArray(newMedia);
@@ -163,6 +168,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       return alertDialog('Your post cannot be empty.');
     }
     console.log('ok');
+    this.props.onCreatePost(this.state, this.props.navigation.goBack);
   };
 
   render() {
@@ -215,6 +221,10 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   }
 }
 
+const mapDisPatchToProps = {
+  onCreatePost: createPost,
+};
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -237,4 +247,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreatePostScreen;
+export default connect(null, mapDisPatchToProps)(CreatePostScreen);
