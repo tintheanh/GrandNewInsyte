@@ -1,23 +1,28 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { PostCard } from '../../../components';
 import { AppState } from '../../../redux/store';
+import { deletePost } from '../../../redux/posts/actions';
 import { Post } from '../../../models';
 
 interface HomePostCardProps {
   data: Post;
   currentViewableIndex: number;
   index: number;
+  currentUID: string | undefined;
   navigation: any;
+  onDeletePost: (postID: string) => void;
 }
 
 class HomePostCard extends Component<HomePostCardProps> {
   shouldComponentUpdate(nextProps: HomePostCardProps) {
     const { currentViewableIndex, index, data } = this.props;
-
+    // console.log(nextProps.data);
     if (
       data.id !== nextProps.data.id ||
+      data.caption !== nextProps.data.caption ||
       data.likes !== nextProps.data.likes ||
       data.comments !== nextProps.data.comments ||
       data.user.avatar !== nextProps.data.user.avatar
@@ -55,8 +60,37 @@ class HomePostCard extends Component<HomePostCardProps> {
     });
   };
 
+  performDeletePost = () => this.props.onDeletePost(this.props.data.id);
+
+  postControl = () => {
+    Alert.alert(
+      '',
+      'Do you want to delete your post?',
+      [
+        {
+          text: 'Delete',
+          onPress: this.performDeletePost,
+        },
+
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
   render() {
-    const { data, currentViewableIndex, index, navigation } = this.props;
+    const {
+      data,
+      currentViewableIndex,
+      index,
+      navigation,
+      currentUID,
+    } = this.props;
+
+    // console.log('home card', data);
     // console.log('home card', index);
     return (
       <PostCard
@@ -66,6 +100,9 @@ class HomePostCard extends Component<HomePostCardProps> {
         navigation={navigation}
         navigateWhenClickOnPostOrComment={this.navigateToPost}
         navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
+        userPostControl={
+          data.user.id === currentUID ? this.postControl : undefined
+        }
       />
     );
   }
@@ -75,13 +112,23 @@ interface HOCHomePostCardProps {
   data: Post;
   currentViewableIndex: number;
   index: number;
+  currentUID: string | undefined;
+  onDeletePost: (postID: string) => void;
 }
 
 const mapStateToProps = (state: AppState) => ({
+  currentUID: state.auth.user?.id,
   currentViewableIndex: state.postListIndices.currentHomeListPostIndex,
 });
 
-export default connect(mapStateToProps)(
+const mapDispathToProps = {
+  onDeletePost: deletePost,
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispathToProps,
+)(
   React.memo(
     function (props: HOCHomePostCardProps) {
       const navigation = useNavigation();
@@ -92,6 +139,7 @@ export default connect(mapStateToProps)(
     (prevProps, nextProps) => {
       if (
         prevProps.data.id !== nextProps.data.id ||
+        prevProps.data.caption !== nextProps.data.caption ||
         prevProps.data.likes !== nextProps.data.likes ||
         prevProps.data.comments !== nextProps.data.comments ||
         prevProps.data.user.avatar !== nextProps.data.user.avatar

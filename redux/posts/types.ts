@@ -76,6 +76,10 @@ export const CREATE_POST_STARTED = 'CREATE_POST_STARTED';
 export const CREATE_POST_SUCCESS = 'CREATE_POST_SUCCESS';
 export const CREATE_POST_FAILURE = 'CREATE_POST_FAILURE';
 
+export const DELETE_POST_STARTED = 'DELETE_POST_STARTED';
+export const DELETE_POST_SUCCESS = 'DELETE_POST_SUCCESS';
+export const DELETE_POST_FAILURE = 'DELETE_POST_FAILURE';
+
 export interface PostAction {
   type: string;
   payload:
@@ -103,7 +107,7 @@ export interface PostState {
     error: Error | null;
   };
   following: {
-    posts: Array<any>;
+    posts: Array<Post>;
     loading: boolean;
     pullLoading: boolean;
     lastNewVisible: number;
@@ -113,13 +117,17 @@ export interface PostState {
     error: Error | null;
   };
   userPosts: {
-    posts: Array<any>;
+    posts: Array<Post>;
     loading: boolean;
     pullLoading: boolean;
     error: Error | null;
     lastVisible: number;
   };
   createPost: {
+    loading: boolean;
+    error: Error | null;
+  };
+  deletePost: {
     loading: boolean;
     error: Error | null;
   };

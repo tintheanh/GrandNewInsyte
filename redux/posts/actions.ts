@@ -42,6 +42,9 @@ import {
   CREATE_POST_FAILURE,
   CREATE_POST_STARTED,
   CREATE_POST_SUCCESS,
+  DELETE_POST_FAILURE,
+  DELETE_POST_STARTED,
+  DELETE_POST_SUCCESS,
   CLEAR,
 } from './types';
 import { Post } from '../../models';
@@ -170,8 +173,11 @@ export const pullToFetchPublicNewPosts = () => async (
 ) => {
   dispatch(pullToFetchPublicNewPostsStarted());
   try {
+    // await delay(3000);
     const { user } = getState().auth;
     const currentPosts = getState().allPosts.public.posts;
+    const createPostLoading = getState().allPosts.createPost.loading;
+    const deletePostLoading = getState().allPosts.deletePost.loading;
     const currentUser = {
       id: user?.id,
       username: user?.username,
@@ -197,17 +203,45 @@ export const pullToFetchPublicNewPosts = () => async (
       return dispatch(fetchPublicNewPostsEnd());
     }
 
-    const pendingPost = currentPosts.find(
-      (post) => post.id === 'pending-post-69',
+    // keep pending and deleting posts
+
+    const pendingPosts = currentPosts.filter(
+      (post) =>
+        post.id === 'pending-post-69' ||
+        post.id.includes('--pending-delete-post'),
     );
 
+    // console.log(pendingPosts);
+
     let allPosts = [];
-    if (pendingPost) {
-      newPosts.push(pendingPost);
-      const sortedByDate = newPosts.sort((a, b) => b.datePosted - a.datePosted);
+    if (pendingPosts.length > 0) {
+      const pendingDeletePostIDs = pendingPosts
+        .filter((post) => post.id.includes('--pending-delete-post'))
+        .map((post) => {
+          const splited = post.id.split('--pending-delete-post');
+          return splited[0];
+        });
+      const merged = newPosts.concat(pendingPosts);
+      // console.log(merged);
+      const noPendingDeletePosts = merged.filter(
+        (post) => !pendingDeletePostIDs.includes(post.id),
+      );
+      // console.log(noPendingDeletePosts);
+      const sortedByDate = noPendingDeletePosts.sort(
+        (a, b) => b.datePosted - a.datePosted,
+      );
       allPosts = sortedByDate;
     } else {
       allPosts = newPosts;
+    }
+
+    if (createPostLoading === false && deletePostLoading === false) {
+      const noPending = allPosts.filter(
+        (post) =>
+          post.id !== 'pending-post-69' &&
+          !post.id.includes('--pending-delete-post'),
+      );
+      allPosts = noPending;
     }
 
     const newLastNewVisible = allPosts[allPosts.length - 1].datePosted;
@@ -629,7 +663,7 @@ export const fetchUserPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
-  console.log('fetch user posts');
+  // console.log('fetch user posts');
   dispatch(fetchUserPostsStarted());
   try {
     const { user } = getState().auth;
@@ -711,6 +745,7 @@ export const pullToFetchUserPosts = () => async (
         const post = {
           id: doc.id,
           user: {
+            id: currentUser?.id,
             username: currentUser?.username,
             avatar: currentUser?.avatar,
           },
@@ -801,6 +836,9 @@ export const createPost = (
   getState: () => AppState,
 ) => {
   const { user } = getState().auth;
+  if (!user) {
+    return dispatch(createPostError(new Error('Please sign in first.')));
+  }
   const currentDatePosted = getCurrentUnixTime();
   const tempPost = {
     id: 'pending-post-69',
@@ -819,6 +857,7 @@ export const createPost = (
     likes: 0,
     comments: 0,
     user: {
+      id: user?.id as string,
       avatar: user?.avatar as string,
       username: user?.username as string,
     },
@@ -826,7 +865,7 @@ export const createPost = (
   dispatch(createPostStarted(tempPost));
   try {
     callback();
-    await delay(3000);
+    await delay(5000);
     // throw new Error('Failed');
     const uid = user?.id;
     const uploadedMedia = await uploadMedia(uid as string, media);
@@ -851,6 +890,7 @@ export const createPost = (
         likes: 0,
         comments: 0,
         user: {
+          id: user.id,
           avatar: user?.avatar as string,
           username: user?.username as string,
         },
@@ -863,6 +903,54 @@ export const createPost = (
   } catch (err) {
     console.log(err.message);
     dispatch(createPostError(err));
+  }
+};
+
+export const deletePost = (postID: string) => async (
+  dispatch: (action: PostAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  if (!user) {
+    return dispatch(
+      deletePostError(new Error('Unauthorized. Please sign in.')),
+    );
+  }
+  // console.log(postID);
+  dispatch(deletePostStarted(postID));
+  try {
+    await delay(5000);
+    const postIDPlusPending = postID + '--pending-delete-post';
+    const userPosts = getState().allPosts.userPosts.posts;
+    const publicPosts = getState().allPosts.public.posts;
+    const followingPosts = getState().allPosts.following.posts;
+
+    // desire post can be in any post list
+    const desirePostInUser = userPosts.find(
+      (post) => post.id === postIDPlusPending,
+    );
+    const desirePostInPublic = publicPosts.find(
+      (post) => post.id === postIDPlusPending,
+    );
+    const desirePostInFollowing = followingPosts.find(
+      (post) => post.id === postIDPlusPending,
+    );
+    if (!desirePostInUser && !desirePostInPublic && !desirePostInFollowing) {
+      throw new Error('Error occured. Post not found');
+    }
+
+    const desirePost = [
+      desirePostInUser,
+      desirePostInFollowing,
+      desirePostInPublic,
+    ].find((post) => post !== undefined) as Post;
+
+    await fsDB.collection('posts').doc(postID).delete();
+    await deleteMedia(user.id, desirePost.media);
+    dispatch(deletePostSuccess(postIDPlusPending));
+  } catch (err) {
+    console.log(err.message);
+    dispatch(deletePostError(err));
   }
 };
 
@@ -1108,5 +1196,24 @@ const createPostError = (error: Error): PostAction => ({
 });
 
 /* --------------- end create post actions -------------- */
+
+/* ----------------- delete post actions ---------------- */
+
+const deletePostStarted = (postID: string): PostAction => ({
+  type: DELETE_POST_STARTED,
+  payload: postID,
+});
+
+const deletePostSuccess = (postID: string): PostAction => ({
+  type: DELETE_POST_SUCCESS,
+  payload: postID,
+});
+
+const deletePostError = (error: Error): PostAction => ({
+  type: DELETE_POST_FAILURE,
+  payload: error,
+});
+
+/* --------------- end delete post actions -------------- */
 
 /* ----------------- end post dispatches ---------------- */

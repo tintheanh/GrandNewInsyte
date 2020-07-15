@@ -12,6 +12,7 @@ export default interface Post {
     height: number;
   }>;
   user: {
+    id: string;
     avatar: string;
     username: string;
   };

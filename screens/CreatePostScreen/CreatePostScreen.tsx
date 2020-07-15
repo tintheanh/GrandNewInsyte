@@ -113,7 +113,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   };
 
   removeMedia = (index: number) => {
-    console.log(index);
+    // console.log(index);
     const currentMedia = [...this.state.media];
     currentMedia.splice(index, 1);
     this.setState({ media: currentMedia });

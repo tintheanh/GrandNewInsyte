@@ -139,8 +139,7 @@ const fetchUser = async (uid: string) => {
   }
 };
 
-// TODO should be array of posts
-const checkPostListChanged = (list1: Array<any>, list2: Array<any>) => {
+const checkPostListChanged = (list1: Array<Post>, list2: Array<Post>) => {
   if (list1.length !== list2.length) {
     return true;
   }
@@ -151,6 +150,7 @@ const checkPostListChanged = (list1: Array<any>, list2: Array<any>) => {
 
     if (
       p1.id !== p2.id ||
+      p1.caption !== p2.caption ||
       p1.likes !== p2.likes ||
       p1.comments !== p2.comments
     ) {
@@ -165,11 +165,11 @@ const checkPostListChanged = (list1: Array<any>, list2: Array<any>) => {
 };
 
 const getCurrentUser = () => {
-  return new Promise<FirebaseAuthTypes.User | null>((resolve) => {
+  return new Promise<FirebaseAuthTypes.User | null>((resolve, reject) => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       unsubscribe();
       resolve(user);
-    });
+    }, reject);
   });
 };
 
@@ -215,6 +215,7 @@ const docFStoPostArray = async (
       const post = {
         id: doc.id,
         user: {
+          id: postData.posted_by,
           username: userData.username,
           avatar: userData.avatar,
         },
@@ -281,6 +282,7 @@ const docFBtoPostArray = async (
       const post = {
         id: postRef.id,
         user: {
+          id: postData!.posted_by,
           username: userData.username,
           avatar: userData.avatar,
         },
@@ -308,6 +310,19 @@ const filterImageArray = (arr: any[]) => {
         item.width === current.width &&
         item.height === current.height,
     );
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, []);
+
+  return filteredArr;
+};
+
+const removeDuplicatedPostsArray = (arr: Array<Post>) => {
+  const filteredArr = arr.reduce((acc: Array<Post>, current) => {
+    const x = acc.find((post) => post.id === current.id);
     if (!x) {
       return acc.concat([current]);
     } else {
@@ -388,4 +403,5 @@ export {
   filterImageArray,
   uploadMedia,
   deleteMedia,
+  removeDuplicatedPostsArray,
 };

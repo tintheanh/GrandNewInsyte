@@ -39,6 +39,9 @@ import {
   CREATE_POST_FAILURE,
   CREATE_POST_STARTED,
   CREATE_POST_SUCCESS,
+  DELETE_POST_FAILURE,
+  DELETE_POST_STARTED,
+  DELETE_POST_SUCCESS,
   CLEAR,
   PostState,
   PostAction,
@@ -46,6 +49,7 @@ import {
   SET_FOLLOWING_FEED_CHOICE,
 } from './types';
 import { oneWeek } from '../../constants';
+import { removeDuplicatedPostsArray } from '../../utils/functions';
 import { Post } from '../../models';
 
 const initialState: PostState = {
@@ -80,6 +84,10 @@ const initialState: PostState = {
     loading: false,
     error: null,
   },
+  deletePost: {
+    loading: false,
+    error: null,
+  },
 };
 
 export default function postsReducer(
@@ -105,8 +113,13 @@ export default function postsReducer(
         lastVisible: number;
       };
       const newState = { ...state };
-      const publicPosts = newState.public.posts.concat(payload.posts);
-      newState.public.posts = publicPosts;
+      const allPosts = [...state.public.posts];
+      const publicPosts = allPosts.concat(payload.posts);
+
+      // ensure no duplicates
+      const removedDuplicates = removeDuplicatedPostsArray(publicPosts);
+
+      newState.public.posts = removedDuplicates;
       newState.public.lastNewVisible = payload.lastVisible;
       newState.public.loading = false;
       return newState;
@@ -356,7 +369,7 @@ export default function postsReducer(
       newState.createPost.loading = true;
       const newPosts = [...state.public.posts];
 
-      // ensure only one pending post
+      // ensure only no pending post
       const filteredPending = newPosts.filter(
         (post) => post.id !== 'pending-post-69',
       );
@@ -367,14 +380,22 @@ export default function postsReducer(
     }
     case CREATE_POST_SUCCESS: {
       const newState = { ...state };
-      const posts = [...state.public.posts];
-      const index = posts.findIndex((post) => post.id === 'pending-post-69');
+      const newPosts = [...state.public.posts];
+      const index = newPosts.findIndex((post) => post.id === 'pending-post-69');
       if (index !== -1) {
-        posts[index] = action.payload as Post;
+        newPosts[index] = action.payload as Post;
       } else {
-        posts.unshift(action.payload as Post);
+        newPosts.unshift(action.payload as Post);
       }
-      newState.public.posts = posts;
+      // ensure only no pending post
+      const filteredPending = newPosts.filter(
+        (post) => post.id !== 'pending-post-69',
+      );
+
+      // ensure no duplicates
+      const removedDuplicates = removeDuplicatedPostsArray(filteredPending);
+
+      newState.public.posts = removedDuplicates;
       newState.createPost.loading = false;
       newState.createPost.error = null;
       return newState;
@@ -392,6 +413,81 @@ export default function postsReducer(
     }
 
     /* ---------------- end create post cases --------------- */
+
+    /* ------------------ delete post cases ----------------- */
+
+    case DELETE_POST_STARTED: {
+      const newState = { ...state };
+      const postID = action.payload as string;
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const userPosts = [...state.userPosts.posts];
+
+      const publicIndex = publicPosts.findIndex((post) => post.id === postID);
+      const followingIndex = followingPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+
+      if (publicIndex !== -1) {
+        const post = { ...publicPosts[publicIndex] };
+        post.id += '--pending-delete-post';
+        publicPosts[publicIndex] = post;
+      }
+      if (followingIndex !== -1) {
+        const post = { ...followingPosts[followingIndex] };
+        post.id += '--pending-delete-post';
+        followingPosts[followingIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...userPosts[userPostIndex] };
+        post.id += '--pending-delete-post';
+        userPosts[userPostIndex] = post;
+      }
+      newState.deletePost.loading = true;
+      newState.deletePost.error = null;
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.userPosts.posts = userPosts;
+      return newState;
+    }
+    case DELETE_POST_SUCCESS: {
+      const newState = { ...state };
+      const postID = action.payload as string;
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const userPosts = [...state.userPosts.posts];
+
+      const publicIndex = publicPosts.findIndex((post) => post.id === postID);
+      const followingIndex = followingPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+      if (publicIndex !== -1) {
+        publicPosts.splice(publicIndex, 1);
+      }
+      if (followingIndex !== -1) {
+        followingPosts.splice(followingIndex, 1);
+      }
+      if (userPostIndex !== -1) {
+        userPosts.splice(userPostIndex, 1);
+      }
+
+      newState.deletePost.loading = false;
+      newState.deletePost.error = null;
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.userPosts.posts = userPosts;
+      return newState;
+    }
+    case DELETE_POST_FAILURE: {
+      const newState = { ...state };
+      newState.deletePost.loading = false;
+      newState.deletePost.error = null;
+      return newState;
+    }
+
+    /* ---------------- end delete post cases --------------- */
 
     case SET_PUBLIC_HOTTIME: {
       const newState = { ...state };
@@ -454,6 +550,10 @@ export default function postsReducer(
           error: null,
         },
         createPost: {
+          loading: false,
+          error: null,
+        },
+        deletePost: {
           loading: false,
           error: null,
         },

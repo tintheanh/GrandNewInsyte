@@ -173,7 +173,7 @@ class Carousel extends Component<CarouselProps, CarouselState> {
             ))}
           </View>
         ) : null}
-        <Modal visible={this.state.showModal}>
+        <Modal visible={this.state.showModal} transparent>
           <ImageViewer
             imageUrls={this.processMediaForImagesModal()}
             index={this.state.imgTraversalIndices[this.state.active]}

@@ -20,6 +20,7 @@ interface PostCardProps {
   isTabFocused?: boolean;
   navigateWhenClickOnPostOrComment: () => void;
   navigateWhenClickOnUsernameOrAvatar?: () => void;
+  userPostControl?: () => void;
 }
 
 export default class PostCard extends Component<PostCardProps> {
@@ -46,6 +47,7 @@ export default class PostCard extends Component<PostCardProps> {
     const { data, currentViewableIndex, index, isTabFocused } = this.props;
     if (
       data.id !== nextProps.data.id ||
+      data.caption !== nextProps.data.caption ||
       data.likes !== nextProps.data.likes ||
       data.comments !== nextProps.data.comments ||
       data.user.avatar !== nextProps.data.user.avatar
@@ -90,6 +92,7 @@ export default class PostCard extends Component<PostCardProps> {
       isTabFocused = true,
       navigateWhenClickOnPostOrComment,
       navigateWhenClickOnUsernameOrAvatar = undefined,
+      userPostControl = undefined,
     } = this.props;
 
     // console.log('card ', index);
@@ -107,12 +110,22 @@ export default class PostCard extends Component<PostCardProps> {
     }
     return (
       <View
-        pointerEvents={data.id === 'pending-post-69' ? 'none' : 'auto'}
+        pointerEvents={
+          data.id === 'pending-post-69' ||
+          data.id.includes('--pending-delete-post')
+            ? 'none'
+            : 'auto'
+        }
         style={{
           ...styles.container,
-          opacity: data.id === 'pending-post-69' ? 0.4 : 1,
+          opacity:
+            data.id === 'pending-post-69' ||
+            data.id.includes('--pending-delete-post')
+              ? 0.4
+              : 1,
         }}>
         <UserSection
+          postID={data.id}
           avatar={data.user.avatar}
           username={data.user.username}
           datePosted={data.datePosted}
@@ -121,6 +134,7 @@ export default class PostCard extends Component<PostCardProps> {
           navigateWhenClickOnUsernameOrAvatar={
             navigateWhenClickOnUsernameOrAvatar
           }
+          userPostControl={userPostControl}
         />
         <Caption
           caption={data.caption}

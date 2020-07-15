@@ -39,7 +39,9 @@ export default class List extends Component<ListProps> {
   }
 
   _onEndReached = ({ distanceFromEnd }: { distanceFromEnd: number }) => {
-    if (distanceFromEnd < 0) return;
+    if (distanceFromEnd < 0) {
+      return;
+    }
     this.props.onEndReached();
   };
 

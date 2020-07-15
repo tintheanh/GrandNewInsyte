@@ -182,7 +182,7 @@ export default function authReducer(
           loading: false,
           error: null,
         },
-        user: undefined,
+        user: null,
         error: null,
       };
     }
