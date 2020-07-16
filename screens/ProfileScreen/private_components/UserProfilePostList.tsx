@@ -43,7 +43,7 @@ interface UserProfilePostListProps {
 
 class UserProfilePostList extends Component<UserProfilePostListProps> {
   private viewabilityConfig: {};
-  private onEndReachedCalledDuringMomentum: boolean;
+  // private onEndReachedCalledDuringMomentum: boolean;
   constructor(props: UserProfilePostListProps) {
     super(props);
     this.viewabilityConfig = {
@@ -51,7 +51,7 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
       minimumViewTime: 0,
       itemVisiblePercentThreshold: 80,
     };
-    this.onEndReachedCalledDuringMomentum = false;
+    // this.onEndReachedCalledDuringMomentum = false;
   }
 
   shouldComponentUpdate(nextProps: UserProfilePostListProps, _: any) {
@@ -110,7 +110,7 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
       pullLoading,
     } = this.props;
 
-    // console.log('profile list post');
+    // console.log('profile list post', posts);
 
     if (loading && posts.length === 0) {
       return (

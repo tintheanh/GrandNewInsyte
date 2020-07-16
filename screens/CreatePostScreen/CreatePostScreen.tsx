@@ -20,7 +20,7 @@ import { Colors } from '../../constants';
 // );
 
 interface CreatePostScreenState {
-  privacy: 'public' | 'followers';
+  privacy: 'public' | 'followers' | 'private';
   caption: string;
   media: Array<{
     uri: string;
@@ -50,6 +50,10 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
         {
           text: 'Followers',
           onPress: () => this.setState({ privacy: 'followers' }),
+        },
+        {
+          text: 'Private',
+          onPress: () => this.setState({ privacy: 'private' }),
         },
         {
           text: 'Cancel',

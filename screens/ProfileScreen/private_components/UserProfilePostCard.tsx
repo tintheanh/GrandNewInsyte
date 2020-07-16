@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { PostCard } from '../../../components';
 import { AppState } from '../../../redux/store';
+import { deletePost } from '../../../redux/posts/actions';
 import { Post } from '../../../models';
 
 interface UserProfilePostCardProps {
@@ -11,6 +13,7 @@ interface UserProfilePostCardProps {
   index: number;
   navigation: any;
   isTabFocused: boolean;
+  onDeletePost: (postID: string) => void;
 }
 
 class UserProfilePostCard extends Component<UserProfilePostCardProps> {
@@ -59,6 +62,27 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
     });
   };
 
+  performDeletePost = () => this.props.onDeletePost(this.props.data.id);
+
+  postControl = () => {
+    Alert.alert(
+      '',
+      'Do you want to delete your post?',
+      [
+        {
+          text: 'Delete',
+          onPress: this.performDeletePost,
+        },
+
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
   render() {
     const {
       data,
@@ -77,6 +101,7 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
         isTabFocused={isTabFocused}
         navigateWhenClickOnPostOrComment={this.navigateToPost}
         navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
+        userPostControl={this.postControl}
       />
     );
   }
@@ -88,13 +113,21 @@ interface HOCHomePostCardProps {
   currentViewableIndex: number;
   index: number;
   isTabFocused: boolean;
+  onDeletePost: (postID: string) => void;
 }
 
 const mapStateToProps = (state: AppState) => ({
   currentViewableIndex: state.postListIndices.currentUserListPostIndex,
 });
 
-export default connect(mapStateToProps)(
+const mapDispathToProps = {
+  onDeletePost: deletePost,
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispathToProps,
+)(
   React.memo(
     function (props: HOCHomePostCardProps) {
       const navigation = useNavigation();

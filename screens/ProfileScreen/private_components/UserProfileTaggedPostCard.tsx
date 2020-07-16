@@ -19,6 +19,16 @@ class UserProfileTaggedPostCard extends Component<
   shouldComponentUpdate(nextProps: UserProfileTaggedPostCardProps) {
     const { currentViewableIndex, index, data, isTabFocused } = this.props;
 
+    if (
+      data.id !== nextProps.data.id ||
+      data.caption !== nextProps.data.caption ||
+      data.likes !== nextProps.data.likes ||
+      data.comments !== nextProps.data.comments ||
+      data.user.avatar !== nextProps.data.user.avatar
+    ) {
+      return true;
+    }
+
     if (data.media.length === 0) {
       return false;
     }
@@ -93,6 +103,15 @@ export default connect(mapStateToProps)(
       return <UserProfileTaggedPostCard {...props} navigation={navigation} />;
     },
     (prevProps, nextProps) => {
+      if (
+        prevProps.data.id !== nextProps.data.id ||
+        prevProps.data.caption !== nextProps.data.caption ||
+        prevProps.data.likes !== nextProps.data.likes ||
+        prevProps.data.comments !== nextProps.data.comments ||
+        prevProps.data.user.avatar !== nextProps.data.user.avatar
+      ) {
+        return false;
+      }
       if (prevProps.data.media.length === 0) {
         return true;
       }

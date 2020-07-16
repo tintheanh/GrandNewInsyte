@@ -1,7 +1,17 @@
 import React, { Component } from 'react';
-import { View, StyleSheet } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  ActivityIndicator,
+} from 'react-native';
 import { NavigationProp, NavigationState } from '@react-navigation/native';
-import { Colors } from '../../constants';
+import {
+  Colors,
+  Entypo,
+  pendingDeletePostFlag,
+  pendingPostID,
+} from '../../constants';
 import Carousel from '../Carousel';
 import { UserSection, Caption, InteractionSection } from './private_components';
 import { Post } from '../../models';
@@ -111,31 +121,54 @@ export default class PostCard extends Component<PostCardProps> {
     return (
       <View
         pointerEvents={
-          data.id === 'pending-post-69' ||
-          data.id.includes('--pending-delete-post')
+          data.id === pendingPostID || data.id.includes(pendingDeletePostFlag)
             ? 'none'
             : 'auto'
         }
         style={{
           ...styles.container,
           opacity:
-            data.id === 'pending-post-69' ||
-            data.id.includes('--pending-delete-post')
+            data.id === pendingPostID || data.id.includes(pendingDeletePostFlag)
               ? 0.4
               : 1,
         }}>
-        <UserSection
-          postID={data.id}
-          avatar={data.user.avatar}
-          username={data.user.username}
-          datePosted={data.datePosted}
-          iconPrivacy={iconPrivacy}
-          navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}
-          navigateWhenClickOnUsernameOrAvatar={
-            navigateWhenClickOnUsernameOrAvatar
-          }
-          userPostControl={userPostControl}
-        />
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            paddingLeft: 12,
+            paddingRight: 12,
+          }}>
+          <View style={{ flexGrow: 1 }}>
+            <UserSection
+              avatar={data.user.avatar}
+              username={data.user.username}
+              datePosted={data.datePosted}
+              iconPrivacy={iconPrivacy}
+              navigateWhenClickOnPostOrComment={
+                navigateWhenClickOnPostOrComment
+              }
+              navigateWhenClickOnUsernameOrAvatar={
+                navigateWhenClickOnUsernameOrAvatar
+              }
+            />
+          </View>
+          {data.id === pendingPostID ||
+          data.id.includes(pendingDeletePostFlag) ? (
+            <View>
+              <ActivityIndicator size="small" color="white" />
+            </View>
+          ) : userPostControl ? (
+            <TouchableWithoutFeedback onPress={userPostControl}>
+              <Entypo
+                name="chevron-down"
+                size={20}
+                color="rgba(255,255,255, 0.6)"
+                style={{ marginTop: -5 }}
+              />
+            </TouchableWithoutFeedback>
+          ) : null}
+        </View>
         <Caption
           caption={data.caption}
           navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}

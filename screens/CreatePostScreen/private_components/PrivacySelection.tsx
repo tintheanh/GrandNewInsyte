@@ -9,14 +9,27 @@ export default function PrivacySelection({
   label: string;
   onSetPrivacy: () => void;
 }) {
+  let iconPrivacy = '';
+  switch (label) {
+    case 'public':
+      iconPrivacy = 'globe';
+      break;
+    case 'followers':
+      iconPrivacy = 'users';
+      break;
+    default:
+      iconPrivacy = 'lock';
+      break;
+  }
   return (
     <TouchableWithoutFeedback onPress={onSetPrivacy}>
       <View style={styles.privacyWrapper}>
-        {label === 'public' ? (
+        {/* {label === 'public' ? (
           <FontAwesome5 name="globe" size={11} color="white" />
         ) : (
           <FontAwesome5 name="users" size={11} color="white" />
-        )}
+        )} */}
+        <FontAwesome5 name={iconPrivacy} size={11} color="white" />
         <Text style={styles.privacyText}>{label}</Text>
         <AntDesign name="caretdown" size={11} color="white" />
       </View>

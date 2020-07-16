@@ -48,8 +48,8 @@ import {
   SET_PUBLIC_FEED_CHOICE,
   SET_FOLLOWING_FEED_CHOICE,
 } from './types';
-import { oneWeek } from '../../constants';
-import { removeDuplicatedPostsArray } from '../../utils/functions';
+import { oneWeek, pendingDeletePostFlag, pendingPostID } from '../../constants';
+import { removeDuplicatesFromPostsArray } from '../../utils/functions';
 import { Post } from '../../models';
 
 const initialState: PostState = {
@@ -117,7 +117,7 @@ export default function postsReducer(
       const publicPosts = allPosts.concat(payload.posts);
 
       // ensure no duplicates
-      const removedDuplicates = removeDuplicatedPostsArray(publicPosts);
+      const removedDuplicates = removeDuplicatesFromPostsArray(publicPosts);
 
       newState.public.posts = removedDuplicates;
       newState.public.lastNewVisible = payload.lastVisible;
@@ -136,8 +136,10 @@ export default function postsReducer(
     }
     case FETCH_PUBLIC_NEWPOSTS_END:
     case FETCH_PUBLIC_HOTPOSTS_END: {
+      console.log('reducer fetch public end');
       const newState = { ...state };
       newState.public.loading = false;
+      newState.public.pullLoading = false;
       return newState;
     }
     case PULL_TO_FETCH_PUBLIC_NEWPOSTS_STARTED:
@@ -318,7 +320,13 @@ export default function postsReducer(
       };
 
       const newState = { ...state };
-      newState.userPosts.posts = newState.userPosts.posts.concat(payload.posts);
+      const newUserPosts = newState.userPosts.posts.concat(payload.posts);
+      const filteredNewUserPosts = newUserPosts.filter(
+        (post) =>
+          post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
+      );
+
+      newState.userPosts.posts = filteredNewUserPosts;
       newState.userPosts.lastVisible = payload.lastVisible;
       newState.userPosts.loading = false;
       return newState;
@@ -365,48 +373,113 @@ export default function postsReducer(
 
     case CREATE_POST_STARTED: {
       const newState = { ...state };
-      newState.createPost.error = null;
-      newState.createPost.loading = true;
-      const newPosts = [...state.public.posts];
+      const pendingPost = action.payload as Post;
+      const publicPosts = [...state.public.posts];
+      const userPosts = [...state.userPosts.posts];
+      const followingPosts = [...state.following.posts];
 
       // ensure only no pending post
-      const filteredPending = newPosts.filter(
-        (post) => post.id !== 'pending-post-69',
+      const filteredPendingPublicPosts = publicPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingFollowingPosts = followingPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingUserPosts = userPosts.filter(
+        (post) => post.id !== pendingPostID,
       );
 
-      filteredPending.unshift(action.payload as Post);
-      newState.public.posts = filteredPending;
+      filteredPendingPublicPosts.unshift(pendingPost);
+      filteredPendingFollowingPosts.unshift(pendingPost);
+      filteredPendingUserPosts.unshift(pendingPost);
+
+      newState.createPost.error = null;
+      newState.createPost.loading = true;
+      newState.public.posts = filteredPendingPublicPosts;
+      newState.following.posts = filteredPendingFollowingPosts;
+      newState.userPosts.posts = filteredPendingUserPosts;
       return newState;
     }
     case CREATE_POST_SUCCESS: {
       const newState = { ...state };
-      const newPosts = [...state.public.posts];
-      const index = newPosts.findIndex((post) => post.id === 'pending-post-69');
-      if (index !== -1) {
-        newPosts[index] = action.payload as Post;
+      const pendingPost = action.payload as Post;
+      const publicPosts = [...state.public.posts];
+      const userPosts = [...state.userPosts.posts];
+      const followingPosts = [...state.following.posts];
+
+      const publicPendingPostIndex = publicPosts.findIndex(
+        (post) => post.id === pendingPostID,
+      );
+      const followingPendingPostIndex = followingPosts.findIndex(
+        (post) => post.id === pendingPostID,
+      );
+      const userPendingPostIndex = userPosts.findIndex(
+        (post) => post.id === pendingPostID,
+      );
+
+      if (publicPendingPostIndex !== -1) {
+        publicPosts[publicPendingPostIndex] = pendingPost;
       } else {
-        newPosts.unshift(action.payload as Post);
+        publicPosts.unshift(pendingPost);
       }
-      // ensure only no pending post
-      const filteredPending = newPosts.filter(
-        (post) => post.id !== 'pending-post-69',
+      if (followingPendingPostIndex !== -1) {
+        followingPosts[followingPendingPostIndex] = pendingPost;
+      } else {
+        followingPosts.unshift(pendingPost);
+      }
+      if (userPendingPostIndex !== -1) {
+        userPosts[userPendingPostIndex] = pendingPost;
+      } else {
+        userPosts.unshift(pendingPost);
+      }
+
+      // ensure no pending post
+      const filteredPendingPulicPosts = publicPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingFollowingPosts = followingPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingUserPosts = userPosts.filter(
+        (post) => post.id !== pendingPostID,
       );
 
       // ensure no duplicates
-      const removedDuplicates = removeDuplicatedPostsArray(filteredPending);
+      const removedDuplicatesFromPublicPosts = removeDuplicatesFromPostsArray(
+        filteredPendingPulicPosts,
+      );
+      const removedDuplicatesFromFollowingPosts = removeDuplicatesFromPostsArray(
+        filteredPendingFollowingPosts,
+      );
+      const removedDuplicatesFromUserPosts = removeDuplicatesFromPostsArray(
+        filteredPendingUserPosts,
+      );
 
-      newState.public.posts = removedDuplicates;
+      newState.public.posts = removedDuplicatesFromPublicPosts;
+      newState.following.posts = removedDuplicatesFromFollowingPosts;
+      newState.userPosts.posts = removedDuplicatesFromUserPosts;
       newState.createPost.loading = false;
       newState.createPost.error = null;
       return newState;
     }
     case CREATE_POST_FAILURE: {
       const newState = { ...state };
-      const posts = [...newState.public.posts];
-      const filteredPending = posts.filter(
-        (post) => post.id !== 'pending-post-69',
+      const publicPosts = [...state.public.posts];
+      const userPosts = [...state.userPosts.posts];
+      const followingPosts = [...state.following.posts];
+
+      const filteredPendingPublicPosts = publicPosts.filter(
+        (post) => post.id !== pendingPostID,
       );
-      newState.public.posts = filteredPending;
+      const filteredPendingFollowingPosts = followingPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingUserPosts = userPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      newState.public.posts = filteredPendingPublicPosts;
+      newState.following.posts = filteredPendingFollowingPosts;
+      newState.userPosts.posts = filteredPendingUserPosts;
       newState.createPost.error = action.payload as Error;
       newState.createPost.loading = false;
       return newState;
@@ -431,17 +504,17 @@ export default function postsReducer(
 
       if (publicIndex !== -1) {
         const post = { ...publicPosts[publicIndex] };
-        post.id += '--pending-delete-post';
+        post.id += pendingDeletePostFlag;
         publicPosts[publicIndex] = post;
       }
       if (followingIndex !== -1) {
         const post = { ...followingPosts[followingIndex] };
-        post.id += '--pending-delete-post';
+        post.id += pendingDeletePostFlag;
         followingPosts[followingIndex] = post;
       }
       if (userPostIndex !== -1) {
         const post = { ...userPosts[userPostIndex] };
-        post.id += '--pending-delete-post';
+        post.id += pendingDeletePostFlag;
         userPosts[userPostIndex] = post;
       }
       newState.deletePost.loading = true;
@@ -454,15 +527,20 @@ export default function postsReducer(
     case DELETE_POST_SUCCESS: {
       const newState = { ...state };
       const postID = action.payload as string;
+      const postIDPlusPending = postID + pendingDeletePostFlag;
       const publicPosts = [...state.public.posts];
       const followingPosts = [...state.following.posts];
       const userPosts = [...state.userPosts.posts];
 
-      const publicIndex = publicPosts.findIndex((post) => post.id === postID);
-      const followingIndex = followingPosts.findIndex(
-        (post) => post.id === postID,
+      const publicIndex = publicPosts.findIndex(
+        (post) => post.id === postID || post.id === postIDPlusPending,
       );
-      const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+      const followingIndex = followingPosts.findIndex(
+        (post) => post.id === postID || post.id === postIDPlusPending,
+      );
+      const userPostIndex = userPosts.findIndex(
+        (post) => post.id === postID || post.id === postIDPlusPending,
+      );
       if (publicIndex !== -1) {
         publicPosts.splice(publicIndex, 1);
       }
@@ -482,8 +560,17 @@ export default function postsReducer(
     }
     case DELETE_POST_FAILURE: {
       const newState = { ...state };
+      const publicPosts = state.public.posts.map((post) => ({ ...post }));
+
+      for (const post of publicPosts) {
+        if (!post.id.includes(pendingDeletePostFlag)) continue;
+        const splited = post.id.split(pendingDeletePostFlag);
+        post.id = splited[0];
+      }
+
       newState.deletePost.loading = false;
-      newState.deletePost.error = null;
+      newState.deletePost.error = action.payload as Error;
+      newState.public.posts = publicPosts;
       return newState;
     }
 

@@ -494,6 +494,8 @@ const styles = StyleSheet.create({
     elevation: 0,
     shadowOpacity: 0,
     backgroundColor: Colors.darkColor,
+    borderTopColor: Colors.brightColor,
+    borderTopWidth: 1,
   },
   indicator: { backgroundColor: 'white', height: 1 },
 });

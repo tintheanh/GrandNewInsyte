@@ -5,13 +5,11 @@ import {
   StyleSheet,
   Image,
   Text,
-  ActivityIndicator,
 } from 'react-native';
-import { FontAwesome5, Entypo } from '../../../constants';
+import { FontAwesome5 } from '../../../constants';
 import { convertTime } from '../../../utils/functions';
 
 interface UserSectionProps {
-  postID: string;
   avatar: string;
   username: string;
   datePosted: number;
@@ -22,14 +20,12 @@ interface UserSectionProps {
 }
 
 export default function UserSection({
-  postID,
   avatar,
   username,
   datePosted,
   iconPrivacy,
   navigateWhenClickOnUsernameOrAvatar = undefined,
   navigateWhenClickOnPostOrComment,
-  userPostControl = undefined,
 }: UserSectionProps) {
   // console.log(postID);
   return (
@@ -61,21 +57,6 @@ export default function UserSection({
       <TouchableWithoutFeedback onPress={navigateWhenClickOnPostOrComment}>
         <View style={{ flex: 1 }} />
       </TouchableWithoutFeedback>
-      {postID === 'pending-post-69' ||
-      postID.includes('--pending-delete-post') ? (
-        <View>
-          <ActivityIndicator size="small" color="white" />
-        </View>
-      ) : userPostControl ? (
-        <TouchableWithoutFeedback onPress={userPostControl}>
-          <Entypo
-            name="chevron-down"
-            size={20}
-            color="rgba(255,255,255, 0.6)"
-            style={styles.iconDown}
-          />
-        </TouchableWithoutFeedback>
-      ) : null}
     </View>
   );
 }
@@ -84,8 +65,6 @@ const styles = StyleSheet.create({
   userWrapper: {
     flexDirection: 'row',
     width: '100%',
-    paddingLeft: 12,
-    paddingRight: 12,
   },
   avatar: {
     width: 40,

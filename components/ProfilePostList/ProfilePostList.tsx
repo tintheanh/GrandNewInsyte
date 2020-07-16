@@ -33,11 +33,11 @@ interface ProfilePostListProps {
 }
 
 export default class ProfilePostList extends Component<ProfilePostListProps> {
-  private onEndReachedCalledDuringMomentum: boolean;
-  constructor(props: ProfilePostListProps) {
-    super(props);
-    this.onEndReachedCalledDuringMomentum = false;
-  }
+  // private onEndReachedCalledDuringMomentum: boolean;
+  // constructor(props: ProfilePostListProps) {
+  //   super(props);
+  //   this.onEndReachedCalledDuringMomentum = false;
+  // }
 
   shouldComponentUpdate(nextProps: ProfilePostListProps) {
     // console.log(this.props.data.length, nextProps.data.length);
@@ -51,17 +51,23 @@ export default class ProfilePostList extends Component<ProfilePostListProps> {
     return false;
   }
 
-  _onMomentumScrollBegin = () => {
-    this.props.onMomentumScrollBegin();
-    this.onEndReachedCalledDuringMomentum = false;
-  };
+  // _onMomentumScrollBegin = () => {
+  //   this.props.onMomentumScrollBegin();
+  // };
 
-  _onEndReached = () => {
-    if (!this.onEndReachedCalledDuringMomentum) {
-      // console.log('end');
-      this.props.onEndReached();
-      this.onEndReachedCalledDuringMomentum = true;
+  // _onEndReached = () => {
+  //   if (!this.onEndReachedCalledDuringMomentum) {
+  //     // console.log('end');
+  //     this.props.onEndReached();
+  //     this.onEndReachedCalledDuringMomentum = true;
+  //   }
+  // };
+
+  _onEndReached = ({ distanceFromEnd }: { distanceFromEnd: number }) => {
+    if (distanceFromEnd < 0) {
+      return;
     }
+    this.props.onEndReached();
   };
 
   refresh = () => {
@@ -77,6 +83,7 @@ export default class ProfilePostList extends Component<ProfilePostListProps> {
       scrollY,
       onScrollEndDrag,
       onMomentumScrollEnd,
+      onMomentumScrollBegin,
       onScrollToTop,
       headerHeight,
       tabBarHeight,
@@ -98,7 +105,7 @@ export default class ProfilePostList extends Component<ProfilePostListProps> {
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: true },
         )}
-        onMomentumScrollBegin={this._onMomentumScrollBegin}
+        onMomentumScrollBegin={onMomentumScrollBegin}
         onScrollEndDrag={onScrollEndDrag}
         onMomentumScrollEnd={onMomentumScrollEnd}
         contentContainerStyle={{

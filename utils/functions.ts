@@ -320,7 +320,7 @@ const filterImageArray = (arr: any[]) => {
   return filteredArr;
 };
 
-const removeDuplicatedPostsArray = (arr: Array<Post>) => {
+const removeDuplicatesFromPostsArray = (arr: Array<Post>) => {
   const filteredArr = arr.reduce((acc: Array<Post>, current) => {
     const x = acc.find((post) => post.id === current.id);
     if (!x) {
@@ -403,5 +403,5 @@ export {
   filterImageArray,
   uploadMedia,
   deleteMedia,
-  removeDuplicatedPostsArray,
+  removeDuplicatesFromPostsArray,
 };

@@ -16,5 +16,5 @@ export default interface Post {
     avatar: string;
     username: string;
   };
-  privacy: 'public' | 'followers';
+  privacy: 'public' | 'followers' | 'private';
 }
