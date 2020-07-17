@@ -136,7 +136,6 @@ export default function postsReducer(
     }
     case FETCH_PUBLIC_NEWPOSTS_END:
     case FETCH_PUBLIC_HOTPOSTS_END: {
-      console.log('reducer fetch public end');
       const newState = { ...state };
       newState.public.loading = false;
       newState.public.pullLoading = false;
@@ -179,19 +178,23 @@ export default function postsReducer(
     }
     case FETCH_PUBLIC_HOTPOSTS_SUCCESS: {
       const payload = action.payload as {
-        posts: Array<any>;
+        posts: Array<Post>;
         lastVisible: number;
       };
       const newState = { ...state };
       const publicPosts = newState.public.posts.concat(payload.posts);
-      newState.public.posts = publicPosts;
+
+      // ensure no duplicates
+      const removedDuplicates = removeDuplicatesFromPostsArray(publicPosts);
+
+      newState.public.posts = removedDuplicates;
       newState.public.lastHotVisible = payload.lastVisible;
       newState.public.loading = false;
       return newState;
     }
     case PULL_TO_FETCH_PUBLIC_HOTPOSTS_SUCCESS: {
       const payload = action.payload as {
-        posts: Array<any>;
+        posts: Array<Post>;
         lastVisible: number;
       };
       const newState = { ...state };
@@ -222,7 +225,10 @@ export default function postsReducer(
       };
       const newState = { ...state };
       const followingPosts = newState.following.posts.concat(payload.posts);
-      newState.following.posts = followingPosts;
+
+      // ensure no duplicates
+      const removedDuplicates = removeDuplicatesFromPostsArray(followingPosts);
+      newState.following.posts = removedDuplicates;
       newState.following.lastNewVisible = payload.lastVisible;
       newState.following.loading = false;
       return newState;
@@ -251,7 +257,7 @@ export default function postsReducer(
     }
     case PULL_TO_FETCH_FOLLOWING_NEWPOSTS_SUCCESS: {
       const payload = action.payload as {
-        posts: Array<any>;
+        posts: Array<Post>;
         lastVisible: number;
       };
       const newState = { ...state };
@@ -280,12 +286,14 @@ export default function postsReducer(
     }
     case FETCH_FOLLOWING_HOTPOSTS_SUCCESS: {
       const payload = action.payload as {
-        posts: Array<any>;
+        posts: Array<Post>;
         lastVisible: number;
       };
       const newState = { ...state };
-      const publicPosts = newState.following.posts.concat(payload.posts);
-      newState.following.posts = publicPosts;
+      const followingPosts = newState.following.posts.concat(payload.posts);
+      const removedDuplicates = removeDuplicatesFromPostsArray(followingPosts);
+
+      newState.following.posts = removedDuplicates;
       newState.following.lastHotVisible = payload.lastVisible;
       newState.following.loading = false;
       return newState;
@@ -293,7 +301,7 @@ export default function postsReducer(
 
     case PULL_TO_FETCH_FOLLOWING_HOTPOSTS_SUCCESS: {
       const payload = action.payload as {
-        posts: Array<any>;
+        posts: Array<Post>;
         lastVisible: number;
       };
       const newState = { ...state };
@@ -326,7 +334,12 @@ export default function postsReducer(
           post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
       );
 
-      newState.userPosts.posts = filteredNewUserPosts;
+      // ensure no duplicates
+      const removedDuplicates = removeDuplicatesFromPostsArray(
+        filteredNewUserPosts,
+      );
+
+      newState.userPosts.posts = removedDuplicates;
       newState.userPosts.lastVisible = payload.lastVisible;
       newState.userPosts.loading = false;
       return newState;
@@ -378,7 +391,7 @@ export default function postsReducer(
       const userPosts = [...state.userPosts.posts];
       const followingPosts = [...state.following.posts];
 
-      // ensure only no pending post
+      // ensure no pending post
       const filteredPendingPublicPosts = publicPosts.filter(
         (post) => post.id !== pendingPostID,
       );
@@ -393,11 +406,27 @@ export default function postsReducer(
       filteredPendingFollowingPosts.unshift(pendingPost);
       filteredPendingUserPosts.unshift(pendingPost);
 
+      switch (pendingPost.privacy) {
+        case 'public': {
+          newState.public.posts = filteredPendingPublicPosts;
+          newState.following.posts = filteredPendingFollowingPosts;
+          newState.userPosts.posts = filteredPendingUserPosts;
+          break;
+        }
+        case 'followers': {
+          newState.following.posts = filteredPendingFollowingPosts;
+          newState.userPosts.posts = filteredPendingUserPosts;
+          break;
+        }
+        default: {
+          newState.userPosts.posts = filteredPendingUserPosts;
+          break;
+        }
+      }
+
       newState.createPost.error = null;
       newState.createPost.loading = true;
-      newState.public.posts = filteredPendingPublicPosts;
-      newState.following.posts = filteredPendingFollowingPosts;
-      newState.userPosts.posts = filteredPendingUserPosts;
+
       return newState;
     }
     case CREATE_POST_SUCCESS: {
@@ -455,9 +484,24 @@ export default function postsReducer(
         filteredPendingUserPosts,
       );
 
-      newState.public.posts = removedDuplicatesFromPublicPosts;
-      newState.following.posts = removedDuplicatesFromFollowingPosts;
-      newState.userPosts.posts = removedDuplicatesFromUserPosts;
+      switch (pendingPost.privacy) {
+        case 'public': {
+          newState.public.posts = removedDuplicatesFromPublicPosts;
+          newState.following.posts = removedDuplicatesFromFollowingPosts;
+          newState.userPosts.posts = removedDuplicatesFromUserPosts;
+          break;
+        }
+        case 'followers': {
+          newState.following.posts = removedDuplicatesFromFollowingPosts;
+          newState.userPosts.posts = removedDuplicatesFromUserPosts;
+          break;
+        }
+        default: {
+          newState.userPosts.posts = removedDuplicatesFromUserPosts;
+          break;
+        }
+      }
+
       newState.createPost.loading = false;
       newState.createPost.error = null;
       return newState;
@@ -527,19 +571,19 @@ export default function postsReducer(
     case DELETE_POST_SUCCESS: {
       const newState = { ...state };
       const postID = action.payload as string;
-      const postIDPlusPending = postID + pendingDeletePostFlag;
+      const postIDPlusPendingDeleteFlag = postID + pendingDeletePostFlag;
       const publicPosts = [...state.public.posts];
       const followingPosts = [...state.following.posts];
       const userPosts = [...state.userPosts.posts];
 
       const publicIndex = publicPosts.findIndex(
-        (post) => post.id === postID || post.id === postIDPlusPending,
+        (post) => post.id === postID || post.id === postIDPlusPendingDeleteFlag,
       );
       const followingIndex = followingPosts.findIndex(
-        (post) => post.id === postID || post.id === postIDPlusPending,
+        (post) => post.id === postID || post.id === postIDPlusPendingDeleteFlag,
       );
       const userPostIndex = userPosts.findIndex(
-        (post) => post.id === postID || post.id === postIDPlusPending,
+        (post) => post.id === postID || post.id === postIDPlusPendingDeleteFlag,
       );
       if (publicIndex !== -1) {
         publicPosts.splice(publicIndex, 1);
@@ -560,16 +604,26 @@ export default function postsReducer(
     }
     case DELETE_POST_FAILURE: {
       const newState = { ...state };
-      const publicPosts = state.public.posts.map((post) => ({ ...post }));
-
-      for (const post of publicPosts) {
-        if (!post.id.includes(pendingDeletePostFlag)) continue;
-        const splited = post.id.split(pendingDeletePostFlag);
-        post.id = splited[0];
+      const payload = action.payload as { error: Error | null; postID: string };
+      newState.deletePost.loading = false;
+      newState.deletePost.error = payload.error;
+      if (payload.postID === '') {
+        return newState;
       }
 
-      newState.deletePost.loading = false;
-      newState.deletePost.error = action.payload as Error;
+      const postIDPlusPendingDeleteFlag =
+        payload.postID + pendingDeletePostFlag;
+      const publicPosts = [...state.public.posts];
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === postIDPlusPendingDeleteFlag,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.id = payload.postID;
+        publicPosts[publicPostIndex] = post;
+      }
+
       newState.public.posts = publicPosts;
       return newState;
     }

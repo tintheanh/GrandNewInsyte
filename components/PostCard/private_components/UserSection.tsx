@@ -7,12 +7,11 @@ import {
   Text,
 } from 'react-native';
 import { FontAwesome5 } from '../../../constants';
-import { convertTime } from '../../../utils/functions';
 
 interface UserSectionProps {
   avatar: string;
   username: string;
-  datePosted: number;
+  timeLabel: string;
   iconPrivacy: string;
   navigateWhenClickOnPostOrComment: () => void;
   navigateWhenClickOnUsernameOrAvatar?: () => void;
@@ -22,12 +21,11 @@ interface UserSectionProps {
 export default function UserSection({
   avatar,
   username,
-  datePosted,
+  timeLabel,
   iconPrivacy,
   navigateWhenClickOnUsernameOrAvatar = undefined,
   navigateWhenClickOnPostOrComment,
 }: UserSectionProps) {
-  // console.log(postID);
   return (
     <View style={styles.userWrapper}>
       <TouchableWithoutFeedback onPress={navigateWhenClickOnUsernameOrAvatar}>
@@ -44,7 +42,7 @@ export default function UserSection({
           <Text style={styles.username}>{username}</Text>
         </TouchableWithoutFeedback>
         <View style={styles.timeAndPrivacyWrapper}>
-          <Text style={styles.time}>{convertTime(datePosted)}</Text>
+          <Text style={styles.time}>{timeLabel}</Text>
           <FontAwesome5
             name={iconPrivacy}
             size={9}

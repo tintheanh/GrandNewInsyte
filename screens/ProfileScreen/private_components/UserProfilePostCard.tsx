@@ -21,6 +21,7 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
     const { currentViewableIndex, index, data, isTabFocused } = this.props;
 
     if (
+      data.timeLabel !== nextProps.data.timeLabel ||
       data.likes !== nextProps.data.likes ||
       data.comments !== nextProps.data.comments ||
       data.user.avatar !== nextProps.data.user.avatar
@@ -137,6 +138,7 @@ export default connect(
     },
     (prevProps, nextProps) => {
       if (
+        prevProps.data.timeLabel !== nextProps.data.timeLabel ||
         prevProps.data.likes !== nextProps.data.likes ||
         prevProps.data.comments !== nextProps.data.comments ||
         prevProps.data.user.avatar !== nextProps.data.user.avatar

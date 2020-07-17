@@ -19,8 +19,9 @@ interface HomePostCardProps {
 class HomePostCard extends Component<HomePostCardProps> {
   shouldComponentUpdate(nextProps: HomePostCardProps) {
     const { currentViewableIndex, index, data } = this.props;
-    // console.log(nextProps.data);
+
     if (
+      data.timeLabel !== nextProps.data.timeLabel ||
       data.id !== nextProps.data.id ||
       data.caption !== nextProps.data.caption ||
       data.likes !== nextProps.data.likes ||
@@ -138,6 +139,7 @@ export default connect(
     },
     (prevProps, nextProps) => {
       if (
+        prevProps.data.timeLabel !== nextProps.data.timeLabel ||
         prevProps.data.id !== nextProps.data.id ||
         prevProps.data.caption !== nextProps.data.caption ||
         prevProps.data.likes !== nextProps.data.likes ||

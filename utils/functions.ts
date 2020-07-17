@@ -149,6 +149,7 @@ const checkPostListChanged = (list1: Array<Post>, list2: Array<Post>) => {
     const p2 = list2[i];
 
     if (
+      p1.timeLabel !== p2.timeLabel ||
       p1.id !== p2.id ||
       p1.caption !== p2.caption ||
       p1.likes !== p2.likes ||
@@ -221,6 +222,7 @@ const docFStoPostArray = async (
         },
         caption: postData!.caption,
         datePosted: postData!.date_posted,
+        timeLabel: convertTime(postData!.date_posted),
         likes: postData!.likes,
         comments: postData!.comments,
         media: postData!.media,
@@ -288,6 +290,7 @@ const docFBtoPostArray = async (
         },
         caption: postData!.caption,
         datePosted: postData!.date_posted,
+        timeLabel: convertTime(postData!.date_posted),
         likes: postData!.likes,
         comments: postData!.comments,
         media: postData!.media,

@@ -2,6 +2,7 @@ export default interface Post {
   id: string;
   caption: string;
   datePosted: number;
+  timeLabel: string;
   likes: number;
   comments: number;
   media: Array<{

@@ -84,8 +84,12 @@ export interface PostAction {
   type: string;
   payload:
     | {
-        posts: Array<any>;
+        posts: Array<Post>;
         lastVisible: number;
+      }
+    | {
+        error: Error | null;
+        postID: string;
       }
     | Array<any>
     | number

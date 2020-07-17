@@ -53,6 +53,7 @@ import {
   postsPerBatch,
   fbDB,
   FirebaseFirestoreTypes,
+  fireFuncs,
 } from '../../config';
 import { AppState } from '../store';
 import {
@@ -62,48 +63,9 @@ import {
   uploadMedia,
   delay,
   deleteMedia,
-  removeDuplicatesFromPostsArray,
+  convertTime,
 } from '../../utils/functions';
 import { pendingDeletePostFlag, pendingPostID } from '../../constants';
-
-// const oneWeek = 2.365e10;
-
-// const postIDstoPostArray = async (postIDs: Array<string>) => {
-//   const newPosts = [];
-//   for (const postID of postIDs) {
-//     try {
-//       const postRef = await fsDB.collection('posts').doc(postID).get();
-//       if (!postRef.exists) continue;
-//       const postData = postRef.data();
-
-//       const userRef = await fsDB
-//         .collection('users')
-//         .doc(postData!.posted_by)
-//         .get();
-
-//       if (!userRef.exists) continue;
-
-//       const userData = userRef.data();
-//       const post = {
-//         id: postRef.id,
-//         user: {
-//           username: userData!.username,
-//           avatar: userData!.avatar,
-//         },
-//         caption: postData!.caption,
-//         date_posted: postData!.date_posted,
-//         likes: postData!.num_likes,
-//         comments: 0,
-//         media: postData!.media,
-//         privacy: postData!.privacy,
-//       };
-//       newPosts.push(post);
-//     } catch (err) {
-//       continue;
-//     }
-//   }
-//   return newPosts;
-// };
 
 /* -------------------- post actions -------------------- */
 
@@ -160,11 +122,9 @@ export const fetchPublicNewPosts = () => async (
       return dispatch(fetchPublicNewPostsEnd());
     }
 
-    const removedDuplicates = removeDuplicatesFromPostsArray(newPosts);
+    const newLastNewVisible = newPosts[newPosts.length - 1].datePosted;
 
-    const newLastNewVisible = removedDuplicates[removedDuplicates.length - 1].datePosted;
-
-    dispatch(fetchPublicNewPostsSuccess(removedDuplicates, newLastNewVisible));
+    dispatch(fetchPublicNewPostsSuccess(newPosts, newLastNewVisible));
   } catch (err) {
     console.log(err.message);
     dispatch(fetchPublicNewPostsFailure(new Error('Internal server error')));
@@ -177,7 +137,7 @@ export const pullToFetchPublicNewPosts = () => async (
 ) => {
   dispatch(pullToFetchPublicNewPostsStarted());
   try {
-    await delay(3000);
+    // await delay(3000);
     const { user } = getState().auth;
     const currentPosts = getState().allPosts.public.posts;
     const createPostLoading = getState().allPosts.createPost.loading;
@@ -215,19 +175,19 @@ export const pullToFetchPublicNewPosts = () => async (
 
     let allPosts = [];
     if (pendingPosts.length > 0) {
-      // Because pending-delete posts are still in the post list, newly fetched
+      // Because pending-delete posts might be still in the post list, newly fetched
       // posts might be duplicates with pending-delete posts and appear twice
       // in the post list
       // Solution: get all pending-delete post ids then filter the newly fetched
-      // posts from the ids to get posts with no duplicates
+      // posts from them to get new posts with no duplicates
       const pendingDeletePostIDs = pendingPosts
         .filter((post) => post.id.includes(pendingDeletePostFlag))
         .map((post) => {
           const splited = post.id.split(pendingDeletePostFlag);
           return splited[0];
         });
-      const merged = newPosts.concat(pendingPosts);
-      const postsWithNoDuplicateWithPendingDeletePosts = merged.filter(
+      const mergedPosts = newPosts.concat(pendingPosts);
+      const postsWithNoDuplicateWithPendingDeletePosts = mergedPosts.filter(
         (post) => !pendingDeletePostIDs.includes(post.id),
       );
       const sortedByDate = postsWithNoDuplicateWithPendingDeletePosts.sort(
@@ -238,7 +198,8 @@ export const pullToFetchPublicNewPosts = () => async (
       allPosts = newPosts;
     }
 
-    // While absolutely no post is posting or deleting, wipe out all pending posts
+    // While absolutely no post is being created or deleted,
+    // wipe out all remaining pending posts
     if (createPostLoading === false && deletePostLoading === false) {
       const noPending = allPosts.filter(
         (post) =>
@@ -310,14 +271,15 @@ export const fetchPublicHotPosts = () => async (
       return dispatch(fetchPublicHotPostsEnd());
     }
 
+    // Ensure no duplicates
+    // const removedDuplicates = removeDuplicatesFromPostsArray(newPosts);
+
     const newLastHotVisible = newPosts[newPosts.length - 1].datePosted;
 
     const sortedByLikes = newPosts.sort((a, b) => b.likes - a.likes);
 
     dispatch(fetchPublicHotPostsSuccess(sortedByLikes, newLastHotVisible));
   } catch (err) {
-    // console.log(err.code)
-    // failed-precondition
     console.log(err.message);
     dispatch(fetchPublicHotPostsFailure(new Error('Internal server error')));
   }
@@ -333,6 +295,9 @@ export const pullToFetchPublicHotPosts = () => async (
 
     const hotTime = getState().allPosts.public.hotTime;
     const { user } = getState().auth;
+    const currentPosts = getState().allPosts.public.posts;
+    const createPostLoading = getState().allPosts.createPost.loading;
+    const deletePostLoading = getState().allPosts.deletePost.loading;
     const currentUser = {
       id: user?.id,
       username: user?.username,
@@ -362,9 +327,52 @@ export const pullToFetchPublicHotPosts = () => async (
       return dispatch(fetchPublicHotPostsEnd());
     }
 
-    const newLastHotVisible = newPosts[newPosts.length - 1].datePosted;
+    // Keep pending-delete and pending posts
+    const pendingPosts = currentPosts.filter(
+      (post) =>
+        post.id === pendingPostID || post.id.includes(pendingDeletePostFlag),
+    );
 
-    const sortedByLikes = newPosts.sort((a, b) => b.likes - a.likes);
+    let allPosts = [];
+    if (pendingPosts.length > 0) {
+      // Because pending-delete posts might be still in the post list, newly fetched
+      // posts might be duplicates with pending-delete posts and appear twice
+      // in the post list
+      // Solution: get all pending-delete post ids then filter the newly fetched
+      // posts from them to get new posts with no duplicates
+      const pendingDeletePostIDs = pendingPosts
+        .filter((post) => post.id.includes(pendingDeletePostFlag))
+        .map((post) => {
+          const splited = post.id.split(pendingDeletePostFlag);
+          return splited[0];
+        });
+      const mergedPosts = newPosts.concat(pendingPosts);
+      const postsWithNoDuplicateWithPendingDeletePosts = mergedPosts.filter(
+        (post) => !pendingDeletePostIDs.includes(post.id),
+      );
+      const sortedByDate = postsWithNoDuplicateWithPendingDeletePosts.sort(
+        (a, b) => b.datePosted - a.datePosted,
+      );
+      allPosts = sortedByDate;
+    } else {
+      allPosts = newPosts;
+    }
+
+    // While absolutely no post is being created or deleted,
+    // wipe out all remaining pending posts
+    if (createPostLoading === false && deletePostLoading === false) {
+      const noPending = allPosts.filter(
+        (post) =>
+          post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
+      );
+      allPosts = noPending;
+    }
+
+    const newLastHotVisible = allPosts[allPosts.length - 1].datePosted;
+
+    // const newLastHotVisible = newPosts[newPosts.length - 1].datePosted;
+
+    const sortedByLikes = allPosts.sort((a, b) => b.likes - a.likes);
 
     dispatch(
       pullToFetchPublicHotPostsSuccess(sortedByLikes, newLastHotVisible),
@@ -471,6 +479,9 @@ export const pullToFetchFollowingNewPosts = () => async (
   dispatch(pullToFetchFollowingNewPostsStarted());
   try {
     const { user } = getState().auth;
+    const currentPosts = getState().allPosts.following.posts;
+    const createPostLoading = getState().allPosts.createPost.loading;
+    const deletePostLoading = getState().allPosts.deletePost.loading;
 
     const currentUser = {
       id: user?.id,
@@ -507,8 +518,49 @@ export const pullToFetchFollowingNewPosts = () => async (
       return dispatch(fetchFollowingNewPostsEnd());
     }
 
-    const newLastNewVisible = newPosts[newPosts.length - 1].datePosted;
-    dispatch(pullToFetchFollowingNewPostsSuccess(newPosts, newLastNewVisible));
+    // Keep pending-delete and pending posts
+    const pendingPosts = currentPosts.filter(
+      (post) =>
+        post.id === pendingPostID || post.id.includes(pendingDeletePostFlag),
+    );
+
+    let allPosts = [];
+    if (pendingPosts.length > 0) {
+      // Because pending-delete posts might be still in the post list, newly fetched
+      // posts might be duplicates with pending-delete posts and appear twice
+      // in the post list
+      // Solution: get all pending-delete post ids then filter the newly fetched
+      // posts from them to get new posts with no duplicates
+      const pendingDeletePostIDs = pendingPosts
+        .filter((post) => post.id.includes(pendingDeletePostFlag))
+        .map((post) => {
+          const splited = post.id.split(pendingDeletePostFlag);
+          return splited[0];
+        });
+      const mergedPosts = newPosts.concat(pendingPosts);
+      const postsWithNoDuplicateWithPendingDeletePosts = mergedPosts.filter(
+        (post) => !pendingDeletePostIDs.includes(post.id),
+      );
+      const sortedByDate = postsWithNoDuplicateWithPendingDeletePosts.sort(
+        (a, b) => b.datePosted - a.datePosted,
+      );
+      allPosts = sortedByDate;
+    } else {
+      allPosts = newPosts;
+    }
+
+    // While absolutely no post is being created or deleted,
+    // wipe out all remaining pending posts
+    if (createPostLoading === false && deletePostLoading === false) {
+      const noPending = allPosts.filter(
+        (post) =>
+          post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
+      );
+      allPosts = noPending;
+    }
+
+    const newLastNewVisible = allPosts[allPosts.length - 1].datePosted;
+    dispatch(pullToFetchFollowingNewPostsSuccess(allPosts, newLastNewVisible));
   } catch (err) {
     console.log(err.message);
     dispatch(
@@ -605,6 +657,9 @@ export const pullToFetchFollowingHotPosts = () => async (
   try {
     const { hotTime } = getState().allPosts.following;
     const { user } = getState().auth;
+    const currentPosts = getState().allPosts.following.posts;
+    const createPostLoading = getState().allPosts.createPost.loading;
+    const deletePostLoading = getState().allPosts.deletePost.loading;
 
     const currentUser = {
       id: user?.id,
@@ -645,8 +700,49 @@ export const pullToFetchFollowingHotPosts = () => async (
       return dispatch(fetchFollowingHotPostsEnd());
     }
 
-    const newLastNewVisible = newPosts[newPosts.length - 1].datePosted;
-    const newPostsSorted = newPosts.sort((a, b) => b.likes - a.likes);
+    // Keep pending-delete and pending posts
+    const pendingPosts = currentPosts.filter(
+      (post) =>
+        post.id === pendingPostID || post.id.includes(pendingDeletePostFlag),
+    );
+
+    let allPosts = [];
+    if (pendingPosts.length > 0) {
+      // Because pending-delete posts might be still in the post list, newly fetched
+      // posts might be duplicates with pending-delete posts and appear twice
+      // in the post list
+      // Solution: get all pending-delete post ids then filter the newly fetched
+      // posts from them to get new posts with no duplicates
+      const pendingDeletePostIDs = pendingPosts
+        .filter((post) => post.id.includes(pendingDeletePostFlag))
+        .map((post) => {
+          const splited = post.id.split(pendingDeletePostFlag);
+          return splited[0];
+        });
+      const mergedPosts = newPosts.concat(pendingPosts);
+      const postsWithNoDuplicateWithPendingDeletePosts = mergedPosts.filter(
+        (post) => !pendingDeletePostIDs.includes(post.id),
+      );
+      const sortedByDate = postsWithNoDuplicateWithPendingDeletePosts.sort(
+        (a, b) => b.datePosted - a.datePosted,
+      );
+      allPosts = sortedByDate;
+    } else {
+      allPosts = newPosts;
+    }
+
+    // While absolutely no post is being created or deleted,
+    // wipe out all remaining pending posts
+    if (createPostLoading === false && deletePostLoading === false) {
+      const noPending = allPosts.filter(
+        (post) =>
+          post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
+      );
+      allPosts = noPending;
+    }
+
+    const newLastNewVisible = allPosts[allPosts.length - 1].datePosted;
+    const newPostsSorted = allPosts.sort((a, b) => b.likes - a.likes);
     dispatch(
       pullToFetchFollowingHotPostsSuccess(newPostsSorted, newLastNewVisible),
     );
@@ -666,7 +762,7 @@ export const fetchUserPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
-  // console.log('fetch user posts');
+  console.log('fetch user posts');
   dispatch(fetchUserPostsStarted());
   try {
     const { user } = getState().auth;
@@ -705,11 +801,12 @@ export const fetchUserPosts = () => async (
       currentUser,
     );
 
-    // const newPosts = await docFStoPostArray(documentSnapshots.docs);
-
     if (newPosts.length === 0) {
       return dispatch(fetchUserPostsEnd());
     }
+
+    // // Ensure no duplicates
+    // const removedDuplicates = removeDuplicatesFromPostsArray(newPosts);
 
     const newLastVisible = newPosts[newPosts.length - 1].datePosted;
     dispatch(fetchUserPostsSuccess(newPosts, newLastVisible));
@@ -759,19 +856,19 @@ export const pullToFetchUserPosts = () => async (
 
     let allPosts = [];
     if (pendingPosts.length > 0) {
-      // Because pending-delete posts are still in the post list, newly fetched
+      // Because pending-delete posts might be still in the post list, newly fetched
       // posts might be duplicates with pending-delete posts and appear twice
       // in the post list
       // Solution: get all pending-delete post ids then filter the newly fetched
-      // posts from the ids to get posts with no duplicates
+      // posts from them to get new posts with no duplicates
       const pendingDeletePostIDs = pendingPosts
         .filter((post) => post.id.includes(pendingDeletePostFlag))
         .map((post) => {
           const splited = post.id.split(pendingDeletePostFlag);
           return splited[0];
         });
-      const merged = newPosts.concat(pendingPosts);
-      const postsWithNoDuplicateWithPendingDeletePosts = merged.filter(
+      const mergedPosts = newPosts.concat(pendingPosts);
+      const postsWithNoDuplicateWithPendingDeletePosts = mergedPosts.filter(
         (post) => !pendingDeletePostIDs.includes(post.id),
       );
       const sortedByDate = postsWithNoDuplicateWithPendingDeletePosts.sort(
@@ -782,7 +879,8 @@ export const pullToFetchUserPosts = () => async (
       allPosts = newPosts;
     }
 
-    // While absolutely no post is posting or deleting, wipe out all pending posts
+    // While absolutely no post is being created or deleted,
+    // wipe out all remaining pending posts
     if (createPostLoading === false && deletePostLoading === false) {
       const noPending = allPosts.filter(
         (post) =>
@@ -877,6 +975,7 @@ export const createPost = (
       height: md.height,
     })),
     datePosted: currentDatePosted,
+    timeLabel: convertTime(currentDatePosted),
     likes: 0,
     comments: 0,
     user: {
@@ -910,6 +1009,7 @@ export const createPost = (
         privacy,
         media: uploadedMedia,
         datePosted: currentDatePosted,
+        timeLabel: convertTime(currentDatePosted),
         likes: 0,
         comments: 0,
         user: {
@@ -918,6 +1018,24 @@ export const createPost = (
           username: user?.username as string,
         },
       };
+      if (user.followers > 0 && newPost.privacy !== 'private') {
+        const handleCreatePostForFollowers = fireFuncs.httpsCallable(
+          'handleCreatePostForFollowers',
+        );
+        await handleCreatePostForFollowers({
+          uid: user!.id,
+          postID: newPost.id,
+          date_posted: newPost.datePosted,
+        });
+      }
+
+      if (newPost.privacy !== 'private') {
+        await fbDB
+          .ref(`users/${user!.id}/following_posts`)
+          .child(newPost.id)
+          .set({ date_posted: newPost.datePosted });
+      }
+
       dispatch(createPostSuccess(newPost));
     } catch (err) {
       await deleteMedia(uid as string, uploadedMedia);
@@ -936,28 +1054,32 @@ export const deletePost = (postID: string) => async (
   const { user } = getState().auth;
   if (!user) {
     return dispatch(
-      deletePostError(new Error('Unauthorized. Please sign in.')),
+      deletePostError(new Error('Unauthorized. Please sign in.'), ''),
     );
   }
   // console.log(postID);
   dispatch(deletePostStarted(postID));
   try {
     await delay(3000);
-    throw new Error('error occured');
-    const postIDPlusPending = postID + pendingDeletePostFlag;
+
+    // const percent = Math.floor(Math.random() * 100);
+    // console.log(percent);
+    // if (percent > 50) throw new Error('dummy error');
+
+    const postIDPlusPendingDeleteFlag = postID + pendingDeletePostFlag;
     const userPosts = getState().allPosts.userPosts.posts;
     const publicPosts = getState().allPosts.public.posts;
     const followingPosts = getState().allPosts.following.posts;
 
     // desire post can be in any post list
     const desirePostInUser = userPosts.find(
-      (post) => post.id === postIDPlusPending,
+      (post) => post.id === postIDPlusPendingDeleteFlag,
     );
     const desirePostInPublic = publicPosts.find(
-      (post) => post.id === postIDPlusPending,
+      (post) => post.id === postIDPlusPendingDeleteFlag,
     );
     const desirePostInFollowing = followingPosts.find(
-      (post) => post.id === postIDPlusPending,
+      (post) => post.id === postIDPlusPendingDeleteFlag,
     );
     if (!desirePostInUser && !desirePostInPublic && !desirePostInFollowing) {
       throw new Error('Error occured. Post not found');
@@ -971,10 +1093,18 @@ export const deletePost = (postID: string) => async (
 
     await fsDB.collection('posts').doc(postID).delete();
     await deleteMedia(user!.id, desirePost.media);
+
+    if (user.followers > 0 && desirePost.privacy !== 'private') {
+      const handleDeletePostForFollowers = fireFuncs.httpsCallable(
+        'handleDeletePostForFollowers',
+      );
+      await handleDeletePostForFollowers({ postID });
+    }
+
     dispatch(deletePostSuccess(postID));
   } catch (err) {
     console.log(err.message);
-    dispatch(deletePostError(err));
+    dispatch(deletePostError(err, postID));
   }
 };
 
@@ -1233,9 +1363,12 @@ const deletePostSuccess = (postID: string): PostAction => ({
   payload: postID,
 });
 
-const deletePostError = (error: Error): PostAction => ({
+const deletePostError = (error: Error, postID: string): PostAction => ({
   type: DELETE_POST_FAILURE,
-  payload: error,
+  payload: {
+    error,
+    postID,
+  },
 });
 
 /* --------------- end delete post actions -------------- */

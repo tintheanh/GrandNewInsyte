@@ -55,7 +55,9 @@ export default class PostCard extends Component<PostCardProps> {
 
   shouldComponentUpdate(nextProps: PostCardProps, nextState: any) {
     const { data, currentViewableIndex, index, isTabFocused } = this.props;
+
     if (
+      data.timeLabel !== nextProps.data.timeLabel ||
       data.id !== nextProps.data.id ||
       data.caption !== nextProps.data.caption ||
       data.likes !== nextProps.data.likes ||
@@ -143,7 +145,7 @@ export default class PostCard extends Component<PostCardProps> {
             <UserSection
               avatar={data.user.avatar}
               username={data.user.username}
-              datePosted={data.datePosted}
+              timeLabel={data.timeLabel}
               iconPrivacy={iconPrivacy}
               navigateWhenClickOnPostOrComment={
                 navigateWhenClickOnPostOrComment
@@ -198,6 +200,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.darkColor,
     paddingTop: 12,
     paddingBottom: 8,
-    marginBottom: 2,
+    // marginBottom: 2,
+    borderBottomColor: Colors.brightColor,
+    borderBottomWidth: 2,
   },
 });

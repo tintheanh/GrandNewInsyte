@@ -88,8 +88,9 @@ class ModalEditUserProfile extends Component<
       });
       this.setState({ avatar: result.path as string });
     } catch (err) {
-      console.log(err);
-      alertDialog('Error occured, please try again.');
+      if (err.code !== 'E_PICKER_CANCELLED') {
+        alertDialog('Error occured. Please try again!');
+      }
     }
   };
 
