@@ -45,6 +45,12 @@ import {
   DELETE_POST_FAILURE,
   DELETE_POST_STARTED,
   DELETE_POST_SUCCESS,
+  LIKE_POST_STARTED,
+  LIKE_POST_FAILURE,
+  LIKE_POST_SUCCESS,
+  UNLIKE_POST_FAILURE,
+  UNLIKE_POST_STARTED,
+  UNLIKE_POST_SUCCESS,
   CLEAR,
 } from './types';
 import { Post } from '../../models';
@@ -977,6 +983,7 @@ export const createPost = (
     datePosted: currentDatePosted,
     timeLabel: convertTime(currentDatePosted),
     likes: 0,
+    isLiked: false,
     comments: 0,
     user: {
       id: user?.id as string,
@@ -1011,6 +1018,7 @@ export const createPost = (
         datePosted: currentDatePosted,
         timeLabel: convertTime(currentDatePosted),
         likes: 0,
+        isLiked: false,
         comments: 0,
         user: {
           id: user.id,
@@ -1018,6 +1026,8 @@ export const createPost = (
           username: user?.username as string,
         },
       };
+
+      // TODO need to do some cleanup if these fail
       if (user.followers > 0 && newPost.privacy !== 'private') {
         const handleCreatePostForFollowers = fireFuncs.httpsCallable(
           'handleCreatePostForFollowers',
@@ -1054,7 +1064,7 @@ export const deletePost = (postID: string) => async (
   const { user } = getState().auth;
   if (!user) {
     return dispatch(
-      deletePostError(new Error('Unauthorized. Please sign in.'), ''),
+      deletePostFailure(new Error('Unauthorized. Please sign in.'), ''),
     );
   }
   // console.log(postID);
@@ -1104,7 +1114,70 @@ export const deletePost = (postID: string) => async (
     dispatch(deletePostSuccess(postID));
   } catch (err) {
     console.log(err.message);
-    dispatch(deletePostError(err, postID));
+    dispatch(deletePostFailure(err, postID));
+  }
+};
+
+export const likePost = (postID: string) => async (
+  dispatch: (action: PostAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  if (!user) {
+    return dispatch(
+      likePostFailure(new Error('Unauthorized. Please sign in.'), ''),
+    );
+  }
+  dispatch(likePostStarted(postID));
+  try {
+    const postRef = fsDB.collection('posts').doc(postID);
+    await fsDB.runTransaction(async (trans) => {
+      const doc = await trans.get(postRef);
+      const newLikes = doc.data()!.likes + 1;
+      trans.update(postRef, { likes: newLikes });
+      // throw new Error('error when like');
+      const likeRef = fsDB
+        .collection('posts')
+        .doc(postID)
+        .collection('like_list')
+        .doc(user.id);
+      trans.set(likeRef, { c: 1 });
+    });
+    dispatch(likePostSuccess());
+  } catch (err) {
+    console.log(err.message);
+    dispatch(likePostFailure(err, postID));
+  }
+};
+
+export const unlikePost = (postID: string) => async (
+  dispatch: (action: PostAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  if (!user) {
+    return dispatch(
+      unlikePostFailure(new Error('Unauthorized. Please sign in.'), ''),
+    );
+  }
+  dispatch(unlikePostStarted(postID));
+  try {
+    const postRef = fsDB.collection('posts').doc(postID);
+    await fsDB.runTransaction(async (trans) => {
+      const doc = await trans.get(postRef);
+      const newLikes = doc.data()!.likes - 1;
+      trans.update(postRef, { likes: newLikes });
+      const likeRef = fsDB
+        .collection('posts')
+        .doc(postID)
+        .collection('like_list')
+        .doc(user.id);
+      trans.delete(likeRef);
+    });
+    dispatch(unlikePostSuccess());
+  } catch (err) {
+    console.log(err.message);
+    dispatch(unlikePostFailure(err, postID));
   }
 };
 
@@ -1363,7 +1436,7 @@ const deletePostSuccess = (postID: string): PostAction => ({
   payload: postID,
 });
 
-const deletePostError = (error: Error, postID: string): PostAction => ({
+const deletePostFailure = (error: Error, postID: string): PostAction => ({
   type: DELETE_POST_FAILURE,
   payload: {
     error,
@@ -1372,5 +1445,45 @@ const deletePostError = (error: Error, postID: string): PostAction => ({
 });
 
 /* --------------- end delete post actions -------------- */
+
+/* ------------------ like post actions ----------------- */
+
+const likePostStarted = (postID: string): PostAction => ({
+  type: LIKE_POST_STARTED,
+  payload: postID,
+});
+
+const likePostSuccess = (): PostAction => ({
+  type: LIKE_POST_SUCCESS,
+  payload: null,
+});
+
+const likePostFailure = (error: Error, postID: string): PostAction => ({
+  type: LIKE_POST_FAILURE,
+  payload: {
+    error,
+    postID,
+  },
+});
+
+const unlikePostStarted = (postID: string): PostAction => ({
+  type: UNLIKE_POST_STARTED,
+  payload: postID,
+});
+
+const unlikePostSuccess = (): PostAction => ({
+  type: UNLIKE_POST_SUCCESS,
+  payload: null,
+});
+
+const unlikePostFailure = (error: Error, postID: string): PostAction => ({
+  type: UNLIKE_POST_FAILURE,
+  payload: {
+    error,
+    postID,
+  },
+});
+
+/* ---------------- end like post actions --------------- */
 
 /* ----------------- end post dispatches ---------------- */

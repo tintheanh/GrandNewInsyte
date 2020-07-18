@@ -7,13 +7,19 @@ import {
   StyleSheet,
 } from 'react-native';
 import {
+  Colors,
   AntDesign,
   FontAwesome,
   Feather,
   FontAwesome5,
 } from '../../../constants';
 import { Carousel } from '../../../components';
-import { convertNumber, convertTime } from '../../../utils/functions';
+import {
+  convertNumber,
+  convertTime,
+  generateCaptionTextArray,
+  openURL,
+} from '../../../utils/functions';
 
 interface PostSectionProps {
   avatar: string;
@@ -22,8 +28,11 @@ interface PostSectionProps {
   iconPrivacy: string;
   caption: string;
   media: Array<{
+    id: string;
     url: string;
     type: string;
+    width: number;
+    height: number;
   }>;
   likes: number;
   comments: number;
@@ -49,7 +58,11 @@ export default function PostSection({
         <TouchableWithoutFeedback onPress={navigateWhenClickOnUsernameOrAvatar}>
           <Image
             style={styles.avatar}
-            source={{ uri: avatar }}
+            source={
+              avatar.length
+                ? { uri: avatar }
+                : require('../../../assets/user.png')
+            }
             defaultSource={require('../../../assets/user.png')}
           />
         </TouchableWithoutFeedback>
@@ -69,7 +82,22 @@ export default function PostSection({
           </View>
         </View>
       </View>
-      <Text style={styles.caption}>{caption}</Text>
+      {/* <Text style={styles.caption}>{caption}</Text> */}
+      <Text style={styles.caption}>
+        {generateCaptionTextArray(caption).map((text, i) => {
+          if (text.type === 'url') {
+            return (
+              <Text
+                key={i}
+                style={{ color: Colors.tintColor }}
+                onPress={openURL(text.value)}>
+                {text.value}
+              </Text>
+            );
+          }
+          return <Text key={i}>{text.value}</Text>;
+        })}
+      </Text>
       {media.length ? <Carousel items={media} shouldPlayMedia /> : null}
       <View style={styles.interactionSection}>
         <View style={styles.likeAndComment}>
@@ -91,7 +119,6 @@ export default function PostSection({
           </View>
         </View>
       </View>
-      {/* TODO fix it expands width 100% */}
       <TouchableWithoutFeedback onPress={selectCommentFilter}>
         <View style={styles.filterComment}>
           <Text style={styles.filterCommentText}>Top comments </Text>

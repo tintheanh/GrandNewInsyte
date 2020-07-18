@@ -80,6 +80,14 @@ export const DELETE_POST_STARTED = 'DELETE_POST_STARTED';
 export const DELETE_POST_SUCCESS = 'DELETE_POST_SUCCESS';
 export const DELETE_POST_FAILURE = 'DELETE_POST_FAILURE';
 
+export const LIKE_POST_STARTED = 'LIKE_POST_STARTED';
+export const LIKE_POST_SUCCESS = 'LIKE_POST_SUCCESS';
+export const LIKE_POST_FAILURE = 'LIKE_POST_FAILURE';
+
+export const UNLIKE_POST_STARTED = 'UNLIKE_POST_STARTED';
+export const UNLIKE_POST_SUCCESS = 'UNLIKE_POST_SUCCESS';
+export const UNLIKE_POST_FAILURE = 'UNLIKE_POST_FAILURE';
+
 export interface PostAction {
   type: string;
   payload:
@@ -135,4 +143,28 @@ export interface PostState {
     loading: boolean;
     error: Error | null;
   };
+  likePost: {
+    error: Error | null;
+  };
+  unlikePost: {
+    error: Error | null;
+  };
+  // postDetails is a stack because it associates with push navigation
+  // every navigation layer is a object of post detail pushed onto
+  // the current view postDetails stack
+  // postDetails: Array<{
+  //   id: string;
+  //   commentList: Array<{
+  //     id: string;
+  //     content: string;
+  //     datePosted: number;
+  //     likes: number;
+  //     replies: number;
+  //     user: {
+  //       id: string;
+  //       avatar: string;
+  //       username: string;
+  //     };
+  //   }>;
+  // }>;
 }

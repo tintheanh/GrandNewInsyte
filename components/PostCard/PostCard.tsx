@@ -31,6 +31,8 @@ interface PostCardProps {
   navigateWhenClickOnPostOrComment: () => void;
   navigateWhenClickOnUsernameOrAvatar?: () => void;
   userPostControl?: () => void;
+  performLikePost: () => void;
+  performUnlikePost: () => void;
 }
 
 export default class PostCard extends Component<PostCardProps> {
@@ -57,6 +59,7 @@ export default class PostCard extends Component<PostCardProps> {
     const { data, currentViewableIndex, index, isTabFocused } = this.props;
 
     if (
+      data.isLiked !== nextProps.data.isLiked ||
       data.timeLabel !== nextProps.data.timeLabel ||
       data.id !== nextProps.data.id ||
       data.caption !== nextProps.data.caption ||
@@ -105,6 +108,8 @@ export default class PostCard extends Component<PostCardProps> {
       navigateWhenClickOnPostOrComment,
       navigateWhenClickOnUsernameOrAvatar = undefined,
       userPostControl = undefined,
+      performLikePost,
+      performUnlikePost,
     } = this.props;
 
     // console.log('card ', index);
@@ -186,8 +191,11 @@ export default class PostCard extends Component<PostCardProps> {
           />
         ) : null}
         <InteractionSection
+          isLiked={data.isLiked}
           likes={data.likes}
           comments={data.comments}
+          performLikePost={performLikePost}
+          performUnlikePost={performUnlikePost}
           navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}
         />
       </View>
@@ -200,7 +208,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.darkColor,
     paddingTop: 12,
     paddingBottom: 8,
-    // marginBottom: 2,
     borderBottomColor: Colors.brightColor,
     borderBottomWidth: 2,
   },

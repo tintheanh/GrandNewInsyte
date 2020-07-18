@@ -171,7 +171,6 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     if (caption === '' && media.length === 0) {
       return alertDialog('Your post cannot be empty.');
     }
-    console.log('ok');
     this.props.onCreatePost(this.state, this.props.navigation.goBack);
   };
 

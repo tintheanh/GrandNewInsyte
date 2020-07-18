@@ -42,6 +42,12 @@ import {
   DELETE_POST_FAILURE,
   DELETE_POST_STARTED,
   DELETE_POST_SUCCESS,
+  LIKE_POST_FAILURE,
+  LIKE_POST_STARTED,
+  LIKE_POST_SUCCESS,
+  UNLIKE_POST_FAILURE,
+  UNLIKE_POST_STARTED,
+  UNLIKE_POST_SUCCESS,
   CLEAR,
   PostState,
   PostAction,
@@ -86,6 +92,12 @@ const initialState: PostState = {
   },
   deletePost: {
     loading: false,
+    error: null,
+  },
+  likePost: {
+    error: null,
+  },
+  unlikePost: {
     error: null,
   },
 };
@@ -613,8 +625,18 @@ export default function postsReducer(
 
       const postIDPlusPendingDeleteFlag =
         payload.postID + pendingDeletePostFlag;
+
       const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const userPosts = [...state.userPosts.posts];
+
       const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === postIDPlusPendingDeleteFlag,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === postIDPlusPendingDeleteFlag,
+      );
+      const userPostIndex = userPosts.findIndex(
         (post) => post.id === postIDPlusPendingDeleteFlag,
       );
 
@@ -623,12 +645,205 @@ export default function postsReducer(
         post.id = payload.postID;
         publicPosts[publicPostIndex] = post;
       }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.id = payload.postID;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...userPosts[userPostIndex] };
+        post.id = payload.postID;
+        userPosts[userPostIndex] = post;
+      }
 
       newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.userPosts.posts = userPosts;
       return newState;
     }
 
     /* ---------------- end delete post cases --------------- */
+
+    /* ------------------- like post cases ------------------ */
+
+    case LIKE_POST_STARTED: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const userPosts = [...state.userPosts.posts];
+      const postID = action.payload as string;
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...userPosts[userPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        userPosts[userPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.userPosts.posts = userPosts;
+      return newState;
+    }
+    case LIKE_POST_SUCCESS: {
+      return state;
+    }
+    case LIKE_POST_FAILURE: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const userPosts = [...state.userPosts.posts];
+      const payload = action.payload as { error: Error | null; postID: string };
+
+      newState.likePost.error = payload.error;
+      if (payload.postID === '') {
+        return newState;
+      }
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const userPostIndex = userPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...userPosts[userPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        userPosts[userPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.userPosts.posts = userPosts;
+      return newState;
+    }
+    case UNLIKE_POST_STARTED: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const userPosts = [...state.userPosts.posts];
+      const postID = action.payload as string;
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...userPosts[userPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        userPosts[userPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.userPosts.posts = userPosts;
+      return newState;
+    }
+    case UNLIKE_POST_SUCCESS: {
+      return state;
+    }
+    case UNLIKE_POST_FAILURE: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const userPosts = [...state.userPosts.posts];
+      const payload = action.payload as { error: Error | null; postID: string };
+
+      newState.unlikePost.error = payload.error;
+      if (payload.postID === '') {
+        return newState;
+      }
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const userPostIndex = userPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...userPosts[userPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        userPosts[userPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.userPosts.posts = userPosts;
+      return newState;
+    }
+
+    /* ----------------- end like post cases ---------------- */
 
     case SET_PUBLIC_HOTTIME: {
       const newState = { ...state };
@@ -696,6 +911,12 @@ export default function postsReducer(
         },
         deletePost: {
           loading: false,
+          error: null,
+        },
+        likePost: {
+          error: null,
+        },
+        unlikePost: {
           error: null,
         },
       };

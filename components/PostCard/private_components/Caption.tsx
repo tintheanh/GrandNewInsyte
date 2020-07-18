@@ -1,5 +1,11 @@
 import React from 'react';
 import { TouchableWithoutFeedback, Text, StyleSheet } from 'react-native';
+import { Colors } from '../../../constants';
+import {
+  wrapPostCaption,
+  generateCaptionTextArray,
+  openURL,
+} from '../../../utils/functions';
 
 interface CaptionProps {
   caption: string;
@@ -12,7 +18,37 @@ export default function Caption({
 }: CaptionProps) {
   return (
     <TouchableWithoutFeedback onPress={navigateWhenClickOnPostOrComment}>
-      <Text style={styles.caption}>{caption}</Text>
+      {caption.length <= 200 ? (
+        <Text style={styles.caption}>
+          {generateCaptionTextArray(caption).map((text, i) => {
+            if (text.type === 'url') {
+              return (
+                <Text
+                  key={i}
+                  style={{ color: Colors.tintColor }}
+                  onPress={openURL(text.value)}>
+                  {text.value}
+                </Text>
+              );
+            }
+            return <Text key={i}>{text.value}</Text>;
+          })}
+        </Text>
+      ) : (
+        <Text style={styles.caption}>
+          {generateCaptionTextArray(wrapPostCaption(caption)).map((text, i) => {
+            if (text.type === 'url') {
+              return (
+                <Text key={i} style={{ color: Colors.tintColor }}>
+                  {text.value}
+                </Text>
+              );
+            }
+            return <Text key={i}>{text.value}</Text>;
+          })}{' '}
+          <Text style={{ fontWeight: '500' }}>... See more</Text>
+        </Text>
+      )}
     </TouchableWithoutFeedback>
   );
 }

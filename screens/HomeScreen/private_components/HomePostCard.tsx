@@ -4,7 +4,7 @@ import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { PostCard } from '../../../components';
 import { AppState } from '../../../redux/store';
-import { deletePost } from '../../../redux/posts/actions';
+import { deletePost, likePost, unlikePost } from '../../../redux/posts/actions';
 import { Post } from '../../../models';
 
 interface HomePostCardProps {
@@ -14,6 +14,8 @@ interface HomePostCardProps {
   currentUID: string | undefined;
   navigation: any;
   onDeletePost: (postID: string) => void;
+  onLikePost: (postID: string) => void;
+  onUnlikePost: (postID: string) => void;
 }
 
 class HomePostCard extends Component<HomePostCardProps> {
@@ -21,6 +23,7 @@ class HomePostCard extends Component<HomePostCardProps> {
     const { currentViewableIndex, index, data } = this.props;
 
     if (
+      data.isLiked !== nextProps.data.isLiked ||
       data.timeLabel !== nextProps.data.timeLabel ||
       data.id !== nextProps.data.id ||
       data.caption !== nextProps.data.caption ||
@@ -82,6 +85,14 @@ class HomePostCard extends Component<HomePostCardProps> {
     );
   };
 
+  performLikePost = () => {
+    this.props.onLikePost(this.props.data.id);
+  };
+
+  performUnlikePost = () => {
+    this.props.onUnlikePost(this.props.data.id);
+  };
+
   render() {
     const {
       data,
@@ -104,6 +115,8 @@ class HomePostCard extends Component<HomePostCardProps> {
         userPostControl={
           data.user.id === currentUID ? this.postControl : undefined
         }
+        performLikePost={this.performLikePost}
+        performUnlikePost={this.performUnlikePost}
       />
     );
   }
@@ -115,6 +128,8 @@ interface HOCHomePostCardProps {
   index: number;
   currentUID: string | undefined;
   onDeletePost: (postID: string) => void;
+  onLikePost: (postID: string) => void;
+  onUnlikePost: (postID: string) => void;
 }
 
 const mapStateToProps = (state: AppState) => ({
@@ -124,6 +139,8 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispathToProps = {
   onDeletePost: deletePost,
+  onLikePost: likePost,
+  onUnlikePost: unlikePost,
 };
 
 export default connect(
@@ -139,6 +156,7 @@ export default connect(
     },
     (prevProps, nextProps) => {
       if (
+        prevProps.data.isLiked !== nextProps.data.isLiked ||
         prevProps.data.timeLabel !== nextProps.data.timeLabel ||
         prevProps.data.id !== nextProps.data.id ||
         prevProps.data.caption !== nextProps.data.caption ||

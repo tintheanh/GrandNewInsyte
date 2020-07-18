@@ -1,6 +1,9 @@
 import moment from 'moment';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
+import { URL } from 'react-native-url-polyfill';
+import InAppBrowser from 'react-native-inappbrowser-reborn';
+import URI from 'urijs';
 import {
   fsDB,
   auth,
@@ -9,6 +12,7 @@ import {
   FirebaseFirestoreTypes,
 } from '../config';
 import { Post } from '../models';
+import { Colors } from '../constants';
 
 const alertDialog = (alertText: string) => {
   Alert.alert(
@@ -97,6 +101,83 @@ const convertNumber = (num: number) => {
   return `${(num / 1000).toFixed(1)}k`;
 };
 
+const checkURL = (url: string) => {
+  try {
+    new URL(url);
+  } catch (_) {
+    return false;
+  }
+  return true;
+};
+
+const wrapPostCaption = (caption: string) => {
+  const maxLen = 150;
+  if (!caption.includes(' ')) {
+    return caption.substr(0, maxLen);
+  }
+  return caption.substr(0, caption.lastIndexOf(' ', maxLen));
+};
+
+const generateCaptionTextArray = (source: string) => {
+  const uniqueSeperator =
+    'Lk,dm9kb_"vor{sH{gT-F&sq-$)g&j1`$zj{*vEPBNeDhV3=>mhM7Lj:-:":O#z';
+
+  const res = URI.withinString(source, function (url) {
+    return uniqueSeperator + url + uniqueSeperator;
+  });
+  const splited = res.split(uniqueSeperator).filter((str) => str !== '');
+  const fin = splited.map((text) => {
+    if (checkURL(text)) {
+      return { type: 'url', value: text };
+    }
+    return { type: 'text', value: text };
+  });
+
+  return fin;
+};
+
+const openURL = (url: string) => async () => {
+  try {
+    if (await InAppBrowser.isAvailable()) {
+      InAppBrowser.close();
+      await InAppBrowser.open(url, {
+        // iOS Properties
+        dismissButtonStyle: 'cancel',
+        preferredBarTintColor: Colors.darkColor,
+        preferredControlTintColor: 'white',
+        readerMode: false,
+        animated: true,
+        modalPresentationStyle: 'fullScreen',
+        modalTransitionStyle: 'coverVertical',
+        modalEnabled: true,
+        enableBarCollapsing: false,
+        // Android Properties
+        showTitle: true,
+        toolbarColor: '#6200EE',
+        secondaryToolbarColor: 'black',
+        enableUrlBarHiding: true,
+        enableDefaultShare: true,
+        forceCloseOnRedirection: false,
+        // Specify full animation resource identifier(package:anim/name)
+        // or only resource name(in case of animation bundled with app).
+        animations: {
+          startEnter: 'slide_in_right',
+          startExit: 'slide_out_left',
+          endEnter: 'slide_in_left',
+          endExit: 'slide_out_right',
+        },
+        headers: {
+          'my-custom-header': 'my custom header value',
+        },
+      });
+    } else {
+      Linking.openURL(url);
+    }
+  } catch (error) {
+    alertDialog(error.message);
+  }
+};
+
 const fetchUser = async (uid: string) => {
   try {
     const userRef = await fsDB.collection('users').doc(uid).get();
@@ -149,6 +230,7 @@ const checkPostListChanged = (list1: Array<Post>, list2: Array<Post>) => {
     const p2 = list2[i];
 
     if (
+      p1.isLiked !== p2.isLiked ||
       p1.timeLabel !== p2.timeLabel ||
       p1.id !== p2.id ||
       p1.caption !== p2.caption ||
@@ -213,6 +295,19 @@ const docFStoPostArray = async (
         };
       }
 
+      let isLiked = false;
+      if (currentUser) {
+        const likeRef = await fsDB
+          .collection('posts')
+          .doc(doc.id)
+          .collection('like_list')
+          .doc(currentUser.id)
+          .get();
+        if (likeRef.exists) {
+          isLiked = true;
+        }
+      }
+
       const post = {
         id: doc.id,
         user: {
@@ -226,6 +321,7 @@ const docFStoPostArray = async (
         likes: postData!.likes,
         comments: postData!.comments,
         media: postData!.media,
+        isLiked,
         privacy: postData!.privacy,
       };
       newPosts.push(post);
@@ -281,6 +377,19 @@ const docFBtoPostArray = async (
         };
       }
 
+      let isLiked = false;
+      if (currentUser) {
+        const likeRef = await fsDB
+          .collection('posts')
+          .doc(postID)
+          .collection('like_list')
+          .doc(currentUser.id)
+          .get();
+        if (likeRef.exists) {
+          isLiked = true;
+        }
+      }
+
       const post = {
         id: postRef.id,
         user: {
@@ -294,6 +403,7 @@ const docFBtoPostArray = async (
         likes: postData!.likes,
         comments: postData!.comments,
         media: postData!.media,
+        isLiked,
         privacy: postData!.privacy,
       };
       newPosts.push(post);
@@ -407,4 +517,8 @@ export {
   uploadMedia,
   deleteMedia,
   removeDuplicatesFromPostsArray,
+  wrapPostCaption,
+  generateCaptionTextArray,
+  checkURL,
+  openURL,
 };

@@ -39,6 +39,12 @@ class BottomTabNavigator extends Component<any> {
     if (this.props.deletePostError !== nextProps.deletePostError) {
       return true;
     }
+    if (this.props.likePostError !== nextProps.likePostError) {
+      return true;
+    }
+    if (this.props.unlikePostError !== nextProps.unlikePostError) {
+      return true;
+    }
     return false;
   }
 
@@ -49,6 +55,12 @@ class BottomTabNavigator extends Component<any> {
     }
     if (this.props.deletePostError) {
       alertDialog(this.props.deletePostError.message);
+    }
+    if (this.props.likePostError) {
+      alertDialog(this.props.likePostError.message);
+    }
+    if (this.props.unlikePostError) {
+      alertDialog(this.props.unlikePostError.message);
     }
     return (
       <BottomTab.Navigator
@@ -143,6 +155,8 @@ const mapStateToProps = (state: AppState) => ({
   createPostLoading: state.allPosts.createPost.loading,
   createPostError: state.allPosts.createPost.error,
   deletePostError: state.allPosts.deletePost.error,
+  likePostError: state.allPosts.likePost.error,
+  unlikePostError: state.allPosts.unlikePost.error,
 });
 
 const mapDispatchToProps = {
