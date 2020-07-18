@@ -110,6 +110,17 @@ const checkURL = (url: string) => {
   return true;
 };
 
+const generateSubstrForUsername = (username: string) => {
+  const result = new Set<string>();
+  const len = username.length;
+  for (let i = 0; i < len; i++) {
+    for (let j = i + 1; j < len + 1; j++) {
+      result.add(username.slice(i, j));
+    }
+  }
+  return [...result];
+};
+
 const wrapPostCaption = (caption: string) => {
   const maxLen = 150;
   if (!caption.includes(' ')) {
@@ -225,7 +236,8 @@ const checkPostListChanged = (list1: Array<Post>, list2: Array<Post>) => {
     return true;
   }
 
-  for (let i = 0; i < list1.length; i++) {
+  const len = list1.length;
+  for (let i = 0; i < len; i++) {
     const p1 = list1[i];
     const p2 = list2[i];
 
@@ -244,6 +256,21 @@ const checkPostListChanged = (list1: Array<Post>, list2: Array<Post>) => {
     }
   }
 
+  return false;
+};
+
+const checkPostChanged = (post1: Post, post2: Post) => {
+  if (
+    post1.isLiked !== post2.isLiked ||
+    post1.timeLabel !== post2.timeLabel ||
+    post1.id !== post2.id ||
+    post1.caption !== post2.caption ||
+    post1.likes !== post2.likes ||
+    post1.comments !== post2.comments ||
+    post1.user.avatar !== post2.user.avatar
+  ) {
+    return true;
+  }
   return false;
 };
 
@@ -510,6 +537,7 @@ export {
   getCurrentUser,
   getCurrentUnixTime,
   checkPostListChanged,
+  checkPostChanged,
   docFStoPostArray,
   docFBtoPostArray,
   alertDialog,
@@ -521,4 +549,5 @@ export {
   generateCaptionTextArray,
   checkURL,
   openURL,
+  generateSubstrForUsername,
 };

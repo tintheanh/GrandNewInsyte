@@ -14,6 +14,7 @@ import {
 } from '../../constants';
 import Carousel from '../Carousel';
 import { UserSection, Caption, InteractionSection } from './private_components';
+import { checkPostChanged } from '../../utils/functions';
 import { Post } from '../../models';
 
 interface PostCardProps {
@@ -58,15 +59,7 @@ export default class PostCard extends Component<PostCardProps> {
   shouldComponentUpdate(nextProps: PostCardProps, nextState: any) {
     const { data, currentViewableIndex, index, isTabFocused } = this.props;
 
-    if (
-      data.isLiked !== nextProps.data.isLiked ||
-      data.timeLabel !== nextProps.data.timeLabel ||
-      data.id !== nextProps.data.id ||
-      data.caption !== nextProps.data.caption ||
-      data.likes !== nextProps.data.likes ||
-      data.comments !== nextProps.data.comments ||
-      data.user.avatar !== nextProps.data.user.avatar
-    ) {
+    if (checkPostChanged(data, nextProps.data)) {
       return true;
     }
 

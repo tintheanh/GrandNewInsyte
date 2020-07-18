@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { PostCard } from '../../../components';
 import { AppState } from '../../../redux/store';
 import { deletePost, likePost, unlikePost } from '../../../redux/posts/actions';
+import { checkPostChanged } from '../../../utils/functions';
 import { Post } from '../../../models';
 
 interface HomePostCardProps {
@@ -22,15 +23,7 @@ class HomePostCard extends Component<HomePostCardProps> {
   shouldComponentUpdate(nextProps: HomePostCardProps) {
     const { currentViewableIndex, index, data } = this.props;
 
-    if (
-      data.isLiked !== nextProps.data.isLiked ||
-      data.timeLabel !== nextProps.data.timeLabel ||
-      data.id !== nextProps.data.id ||
-      data.caption !== nextProps.data.caption ||
-      data.likes !== nextProps.data.likes ||
-      data.comments !== nextProps.data.comments ||
-      data.user.avatar !== nextProps.data.user.avatar
-    ) {
+    if (checkPostChanged(data, nextProps.data)) {
       return true;
     }
     if (data.media.length === 0) {
@@ -155,15 +148,7 @@ export default connect(
       return <HomePostCard {...props} navigation={navigation} />;
     },
     (prevProps, nextProps) => {
-      if (
-        prevProps.data.isLiked !== nextProps.data.isLiked ||
-        prevProps.data.timeLabel !== nextProps.data.timeLabel ||
-        prevProps.data.id !== nextProps.data.id ||
-        prevProps.data.caption !== nextProps.data.caption ||
-        prevProps.data.likes !== nextProps.data.likes ||
-        prevProps.data.comments !== nextProps.data.comments ||
-        prevProps.data.user.avatar !== nextProps.data.user.avatar
-      ) {
+      if (checkPostChanged(prevProps.data, nextProps.data)) {
         return false;
       }
       if (prevProps.data.media.length === 0) {

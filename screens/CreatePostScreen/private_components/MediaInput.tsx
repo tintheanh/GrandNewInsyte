@@ -8,7 +8,7 @@ interface MediaInputProps {
   onOpenVideoCamera: () => void;
 }
 
-export default function MediaInput(props: MediaInputProps) {
+export default React.memo(function MediaInput(props: MediaInputProps) {
   return (
     <View
       style={{
@@ -31,4 +31,4 @@ export default function MediaInput(props: MediaInputProps) {
       </TouchableOpacity>
     </View>
   );
-}
+});

@@ -4,7 +4,8 @@ import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { PostCard } from '../../../components';
 import { AppState } from '../../../redux/store';
-import { deletePost } from '../../../redux/posts/actions';
+import { deletePost, likePost, unlikePost } from '../../../redux/posts/actions';
+import { checkPostChanged } from '../../../utils/functions';
 import { Post } from '../../../models';
 
 interface UserProfilePostCardProps {
@@ -14,18 +15,15 @@ interface UserProfilePostCardProps {
   navigation: any;
   isTabFocused: boolean;
   onDeletePost: (postID: string) => void;
+  onLikePost: (postID: string) => void;
+  onUnlikePost: (postID: string) => void;
 }
 
 class UserProfilePostCard extends Component<UserProfilePostCardProps> {
   shouldComponentUpdate(nextProps: UserProfilePostCardProps) {
     const { currentViewableIndex, index, data, isTabFocused } = this.props;
 
-    if (
-      data.timeLabel !== nextProps.data.timeLabel ||
-      data.likes !== nextProps.data.likes ||
-      data.comments !== nextProps.data.comments ||
-      data.user.avatar !== nextProps.data.user.avatar
-    ) {
+    if (checkPostChanged(data, nextProps.data)) {
       return true;
     }
 
@@ -84,6 +82,14 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
     );
   };
 
+  performLikePost = () => {
+    this.props.onLikePost(this.props.data.id);
+  };
+
+  performUnlikePost = () => {
+    this.props.onUnlikePost(this.props.data.id);
+  };
+
   render() {
     const {
       data,
@@ -103,6 +109,8 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
         navigateWhenClickOnPostOrComment={this.navigateToPost}
         navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
         userPostControl={this.postControl}
+        performLikePost={this.performLikePost}
+        performUnlikePost={this.performUnlikePost}
       />
     );
   }
@@ -115,6 +123,8 @@ interface HOCHomePostCardProps {
   index: number;
   isTabFocused: boolean;
   onDeletePost: (postID: string) => void;
+  onLikePost: (postID: string) => void;
+  onUnlikePost: (postID: string) => void;
 }
 
 const mapStateToProps = (state: AppState) => ({
@@ -123,6 +133,8 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispathToProps = {
   onDeletePost: deletePost,
+  onLikePost: likePost,
+  onUnlikePost: unlikePost,
 };
 
 export default connect(
@@ -137,12 +149,7 @@ export default connect(
       return <UserProfilePostCard {...props} navigation={navigation} />;
     },
     (prevProps, nextProps) => {
-      if (
-        prevProps.data.timeLabel !== nextProps.data.timeLabel ||
-        prevProps.data.likes !== nextProps.data.likes ||
-        prevProps.data.comments !== nextProps.data.comments ||
-        prevProps.data.user.avatar !== nextProps.data.user.avatar
-      ) {
+      if (checkPostChanged(prevProps.data, nextProps.data)) {
         return false;
       }
       if (prevProps.data.media.length === 0) {

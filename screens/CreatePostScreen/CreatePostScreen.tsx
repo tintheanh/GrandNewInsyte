@@ -1,5 +1,12 @@
 import React, { Component } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Keyboard,
+} from 'react-native';
 import { connect } from 'react-redux';
 import { filterImageArray, alertDialog } from '../../utils/functions';
 import ImagePicker, { Image } from 'react-native-image-crop-picker';
@@ -9,9 +16,10 @@ import {
   TextPostInput,
   MediaInput,
   MediaView,
+  TaggingList,
 } from './private_components';
 import { createPost } from '../../redux/posts/actions';
-import { Colors } from '../../constants';
+import { Colors, Layout } from '../../constants';
 
 // const DismissKeyboard = ({ children }: any): JSX.Element => (
 //   <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -20,22 +28,66 @@ import { Colors } from '../../constants';
 // );
 
 interface CreatePostScreenState {
-  privacy: 'public' | 'followers' | 'private';
-  caption: string;
-  media: Array<{
-    uri: string;
-    mime: string;
-    size: number;
-    width: number;
-    height: number;
-  }>;
+  post: {
+    privacy: 'public' | 'followers' | 'private';
+    caption: string;
+    media: Array<{
+      uri: string;
+      mime: string;
+      size: number;
+      width: number;
+      height: number;
+    }>;
+  };
+  selection: any;
+  tagIndex: number;
+  keyboardOffset: number;
+  tagListPosition: number;
 }
 
 class CreatePostScreen extends Component<any, CreatePostScreenState> {
-  state = {
-    privacy: 'public' as 'public',
-    caption: '',
-    media: [],
+  private keyboardDidShowListener: any;
+  private keyboardDidHideListener: any;
+
+  state: CreatePostScreenState = {
+    post: {
+      privacy: 'public' as 'public',
+      caption: '',
+      media: [],
+    },
+    selection: null,
+    tagIndex: -1,
+    keyboardOffset: 0,
+    tagListPosition: 0,
+  };
+
+  componentDidMount() {
+    this.keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      this._keyboardDidShow,
+    );
+    this.keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      this._keyboardDidHide,
+    );
+  }
+
+  componentWillUnmount() {
+    this.keyboardDidShowListener.remove();
+    this.keyboardDidHideListener.remove();
+  }
+
+  _keyboardDidShow = (event: any) => {
+    this.setState({
+      keyboardOffset: event.endCoordinates.screenY,
+    });
+  };
+
+  _keyboardDidHide = () => {
+    this.setState({
+      keyboardOffset: 0,
+      tagIndex: -1,
+    });
   };
 
   setPrivacy = () => {
@@ -45,15 +97,27 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       [
         {
           text: 'Public',
-          onPress: () => this.setState({ privacy: 'public' }),
+          onPress: () => {
+            const newState = { ...this.state };
+            newState.post.privacy = 'public';
+            this.setState(newState);
+          },
         },
         {
           text: 'Followers',
-          onPress: () => this.setState({ privacy: 'followers' }),
+          onPress: () => {
+            const newState = { ...this.state };
+            newState.post.privacy = 'followers';
+            this.setState(newState);
+          },
         },
         {
           text: 'Private',
-          onPress: () => this.setState({ privacy: 'private' }),
+          onPress: () => {
+            const newState = { ...this.state };
+            newState.post.privacy = 'private';
+            this.setState(newState);
+          },
         },
         {
           text: 'Cancel',
@@ -64,7 +128,51 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     );
   };
 
-  setCaption = (text: string) => this.setState({ caption: text });
+  setCaption = (text: string) => {
+    const newState = { ...this.state };
+    newState.post.caption = text;
+    this.setState(newState, () => {
+      const newly = this.getNewlyEnteredLetters();
+      const { start } = this.state.selection;
+      if (newly === '@' && (start === text.length || text[start] === ' ')) {
+        console.log('start tag');
+        const newState2 = { ...this.state };
+        newState2.tagIndex = start;
+        this.setState(newState2);
+      } else if (newly === ' ') {
+        console.log('end tag');
+        const newState2 = { ...this.state };
+        newState2.tagIndex = -1;
+        this.setState(newState2);
+      } else if (
+        this.state.tagIndex !== -1 &&
+        (text.slice(this.state.tagIndex, start).includes(' ') ||
+          start < this.state.tagIndex)
+      ) {
+        console.log('end tag');
+        const newState2 = { ...this.state };
+        newState2.tagIndex = -1;
+        this.setState(newState2);
+      }
+    });
+  };
+
+  handleCaptionSelectionChange = (event: any) => {
+    const newState = { ...this.state };
+    const { selection } = event.nativeEvent;
+    newState.selection = selection;
+    this.setState(newState);
+  };
+
+  getNewlyEnteredLetters = (): string => {
+    const { selection } = this.state;
+    const { caption } = this.state.post;
+    if (selection === null) {
+      return caption[caption.length - 1];
+    }
+    const { start, end } = selection;
+    return start === end ? caption[start - 1] : caption[caption.length - 1];
+  };
 
   onGoback = () => {
     Alert.alert(
@@ -93,8 +201,6 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
         maxFiles: 10,
       })) as Image[];
 
-      // console.log(media);
-
       const mediaItems = media.map((md) => ({
         uri: md.path,
         mime: md.mime,
@@ -103,12 +209,15 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
         height: md.height,
       }));
 
-      // console.log(mediaItems);
+      const newState = { ...this.state };
 
-      const newMedia = (this.state.media as any[]).concat(mediaItems);
-      const filtered = filterImageArray(newMedia);
+      const currentMedia = [...this.state.post.media];
 
-      this.setState({ media: filtered });
+      const newMedia = currentMedia.concat(mediaItems);
+      const filteredMedia = filterImageArray(newMedia);
+      newState.post.media = filteredMedia;
+
+      this.setState(newState);
     } catch (err) {
       if (err.code !== 'E_PICKER_CANCELLED') {
         alertDialog('Error occured. Please try again!');
@@ -117,10 +226,11 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   };
 
   removeMedia = (index: number) => {
-    // console.log(index);
-    const currentMedia = [...this.state.media];
+    const newState = { ...this.state };
+    const currentMedia = [...this.state.post.media];
     currentMedia.splice(index, 1);
-    this.setState({ media: currentMedia });
+    newState.post.media = currentMedia;
+    this.setState(newState);
   };
 
   openPhotoCamera = async () => {
@@ -128,15 +238,17 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       const image = (await ImagePicker.openCamera({
         mediaType: 'photo',
       })) as Image;
-      const newMedia: any[] = [...this.state.media];
-      newMedia.push({
+      const newState = { ...this.state };
+      const currentMedia = [...this.state.post.media];
+      currentMedia.push({
         uri: image.path,
         mime: image.mime,
         size: image.size,
         width: image.width,
         height: image.height,
       });
-      this.setState({ media: newMedia });
+      newState.post.media = currentMedia;
+      this.setState(newState);
     } catch (err) {
       if (err.code !== 'E_PICKER_CANCELLED') {
         alertDialog('Error occured. Please try again!');
@@ -150,15 +262,17 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
         mediaType: 'video',
       })) as Image;
 
-      const newMedia: any[] = [...this.state.media];
-      newMedia.push({
+      const newState = { ...this.state };
+      const currentMedia = [...this.state.post.media];
+      currentMedia.push({
         uri: video.path,
         mime: video.mime,
         size: video.size,
         width: video.width,
         height: video.height,
       });
-      this.setState({ media: newMedia });
+      newState.post.media = currentMedia;
+      this.setState(newState);
     } catch (err) {
       if (err.code !== 'E_PICKER_CANCELLED') {
         alertDialog('Error occured. Please try again!');
@@ -167,14 +281,15 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   };
 
   performSubmitPost = () => {
-    const { caption, media } = this.state;
-    if (caption === '' && media.length === 0) {
+    const { post } = this.state;
+    if (post.caption === '' && post.media.length === 0) {
       return alertDialog('Your post cannot be empty.');
     }
-    this.props.onCreatePost(this.state, this.props.navigation.goBack);
+    this.props.onCreatePost(post, this.props.navigation.goBack);
   };
 
   render() {
+    const { post } = this.state;
     return (
       <View style={styles.container}>
         <View style={styles.wrapper}>
@@ -202,22 +317,37 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
           </View>
           <Text style={styles.createPostText}>Create post</Text>
           <PrivacySelection
-            label={this.state.privacy}
+            label={post.privacy}
             onSetPrivacy={this.setPrivacy}
           />
           <LocationSelection />
           <TextPostInput
-            value={this.state.caption}
+            value={post.caption}
             onChangeText={this.setCaption}
+            onSelectionChange={this.handleCaptionSelectionChange}
           />
-          <MediaInput
-            onOpenPhotoLibrary={this.pickMedia}
-            onOpenPhotoCamera={this.openPhotoCamera}
-            onOpenVideoCamera={this.openVideoCamera}
-          />
-          {this.state.media.length > 0 ? (
-            <MediaView media={this.state.media} onRemove={this.removeMedia} />
-          ) : null}
+          {this.state.tagIndex !== -1 ? (
+            <View
+              style={{
+                height: this.state.keyboardOffset - this.state.tagListPosition,
+              }}
+              onLayout={({ nativeEvent }) =>
+                this.setState({ tagListPosition: nativeEvent.layout.y })
+              }>
+              <TaggingList />
+            </View>
+          ) : (
+            <View>
+              <MediaInput
+                onOpenPhotoLibrary={this.pickMedia}
+                onOpenPhotoCamera={this.openPhotoCamera}
+                onOpenVideoCamera={this.openVideoCamera}
+              />
+              {post.media.length > 0 ? (
+                <MediaView media={post.media} onRemove={this.removeMedia} />
+              ) : null}
+            </View>
+          )}
         </View>
       </View>
     );
