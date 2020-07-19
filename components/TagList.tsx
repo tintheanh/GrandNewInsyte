@@ -7,7 +7,6 @@ import {
   Image,
   StyleSheet,
 } from 'react-native';
-import { Colors } from '../../../constants';
 
 const DATA = [
   {
@@ -54,21 +53,30 @@ const DATA = [
   },
 ];
 
-export default function TaggingList() {
+export default function TagList({
+  userTags,
+}: {
+  userTags: Array<{
+    id: string;
+    avatar: string;
+    username: string;
+    name: string;
+  }>;
+}) {
   return (
     <SafeAreaView>
       <FlatList
-        data={DATA}
+        data={userTags}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View style={styles.cardContainer}>
             <Image
-              source={{
-                uri: item.avatar.length
-                  ? item.avatar
-                  : require('../../../assets/user.png'),
-              }}
-              defaultSource={require('../../../assets/user.png')}
+              source={
+                item.avatar.length
+                  ? { uri: item.avatar }
+                  : require('../assets/user.png')
+              }
+              defaultSource={require('../assets/user.png')}
               style={styles.avatar}
             />
             <View style={styles.nameWrapper}>

@@ -11,7 +11,7 @@ import {
   FirebaseAuthTypes,
   FirebaseFirestoreTypes,
 } from '../config';
-import { Post } from '../models';
+import { Post, UserResult } from '../models';
 import { Colors } from '../constants';
 
 const alertDialog = (alertText: string) => {
@@ -229,6 +229,32 @@ const fetchUser = async (uid: string) => {
     (myErr as any).code = 'my-custom-error/firestore-off';
     throw myErr;
   }
+};
+
+const checkUserTagsChanged = (
+  list1: Array<UserResult>,
+  list2: Array<UserResult>,
+) => {
+  if (list1.length !== list2.length) {
+    return true;
+  }
+
+  const len = list1.length;
+  for (let i = 0; i < len; i++) {
+    const user1 = list1[i];
+    const user2 = list2[i];
+
+    if (
+      user1.avatar !== user2.avatar ||
+      user1.id !== user2.id ||
+      user1.name !== user2.name ||
+      user1.username !== user2.username
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 const checkPostListChanged = (list1: Array<Post>, list2: Array<Post>) => {
@@ -537,6 +563,7 @@ export {
   getCurrentUser,
   getCurrentUnixTime,
   checkPostListChanged,
+  checkUserTagsChanged,
   checkPostChanged,
   docFStoPostArray,
   docFBtoPostArray,

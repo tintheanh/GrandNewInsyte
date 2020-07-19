@@ -3,7 +3,7 @@ import LocationSelection from './LocationSelection';
 import TextPostInput from './TextPostInput';
 import MediaInput from './MediaInput';
 import MediaView from './MediaView';
-import TaggingList from './TaggingList';
+import CreatePostUserTag from './CreatePostUserTag';
 
 export {
   PrivacySelection,
@@ -11,5 +11,5 @@ export {
   TextPostInput,
   MediaInput,
   MediaView,
-  TaggingList,
+  CreatePostUserTag,
 };

@@ -16,7 +16,7 @@ import {
   TextPostInput,
   MediaInput,
   MediaView,
-  TaggingList,
+  CreatePostUserTag,
 } from './private_components';
 import { createPost } from '../../redux/posts/actions';
 import { Colors, Layout } from '../../constants';
@@ -43,6 +43,7 @@ interface CreatePostScreenState {
   tagIndex: number;
   keyboardOffset: number;
   tagListPosition: number;
+  tagQuery: string;
 }
 
 class CreatePostScreen extends Component<any, CreatePostScreenState> {
@@ -59,6 +60,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     tagIndex: -1,
     keyboardOffset: 0,
     tagListPosition: 0,
+    tagQuery: '',
   };
 
   componentDidMount() {
@@ -128,26 +130,39 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     );
   };
 
-  setCaption = (text: string) => {
+  setCaption = async (text: string) => {
     const newState = { ...this.state };
+    const { start } = this.state.selection;
     newState.post.caption = text;
+
+    if (this.state.tagIndex !== -1) {
+      // console.log(
+      //   'tagquery',
+      //   text.slice(this.state.tagIndex, this.state.selection.start),
+      // );
+      const newState2 = { ...this.state };
+      newState2.tagQuery = text.slice(
+        this.state.tagIndex,
+        this.state.selection.start,
+      );
+      await this.setState(newState2);
+    }
     this.setState(newState, () => {
       const newly = this.getNewlyEnteredLetters();
-      const { start } = this.state.selection;
+
       if (newly === '@' && (start === text.length || text[start] === ' ')) {
         console.log('start tag');
         const newState2 = { ...this.state };
         newState2.tagIndex = start;
-        this.setState(newState2);
-      } else if (newly === ' ') {
-        console.log('end tag');
-        const newState2 = { ...this.state };
-        newState2.tagIndex = -1;
+        // console.log('tagindex', newState2.tagIndex);
+        // newState2.tagQuery = text.slice(newState2.tagIndex, text.length);
+        // console.log('tagquery', text.slice(newState2.tagIndex, text.length));
         this.setState(newState2);
       } else if (
-        this.state.tagIndex !== -1 &&
-        (text.slice(this.state.tagIndex, start).includes(' ') ||
-          start < this.state.tagIndex)
+        newly === ' ' ||
+        (this.state.tagIndex !== -1 &&
+          (text.slice(this.state.tagIndex, start).includes(' ') ||
+            start < this.state.tagIndex))
       ) {
         console.log('end tag');
         const newState2 = { ...this.state };
@@ -334,7 +349,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
               onLayout={({ nativeEvent }) =>
                 this.setState({ tagListPosition: nativeEvent.layout.y })
               }>
-              <TaggingList />
+              <CreatePostUserTag tagQuery={this.state.tagQuery} />
             </View>
           ) : (
             <View>
