@@ -19,7 +19,8 @@ import {
   CreatePostUserTag,
 } from './private_components';
 import { createPost } from '../../redux/posts/actions';
-import { Colors, Layout } from '../../constants';
+import { clear } from '../../redux/tag/actions';
+import { Colors } from '../../constants';
 
 // const DismissKeyboard = ({ children }: any): JSX.Element => (
 //   <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
@@ -131,32 +132,27 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   };
 
   setCaption = async (text: string) => {
-    const newState = { ...this.state };
-    const { start } = this.state.selection;
-    newState.post.caption = text;
-
+    // set user search query when tagging is activated
     if (this.state.tagIndex !== -1) {
-      // console.log(
-      //   'tagquery',
-      //   text.slice(this.state.tagIndex, this.state.selection.start),
-      // );
       const newState2 = { ...this.state };
       newState2.tagQuery = text.slice(
         this.state.tagIndex,
         this.state.selection.start,
       );
+      newState2.post.caption = text;
       await this.setState(newState2);
+      // console.log('out', this.state.tagQuery);
     }
+    const newState = { ...this.state };
+    const { start } = this.state.selection;
+    newState.post.caption = text;
     this.setState(newState, () => {
       const newly = this.getNewlyEnteredLetters();
 
       if (newly === '@' && (start === text.length || text[start] === ' ')) {
-        console.log('start tag');
+        // activate tagging
         const newState2 = { ...this.state };
         newState2.tagIndex = start;
-        // console.log('tagindex', newState2.tagIndex);
-        // newState2.tagQuery = text.slice(newState2.tagIndex, text.length);
-        // console.log('tagquery', text.slice(newState2.tagIndex, text.length));
         this.setState(newState2);
       } else if (
         newly === ' ' ||
@@ -164,7 +160,8 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
           (text.slice(this.state.tagIndex, start).includes(' ') ||
             start < this.state.tagIndex))
       ) {
-        console.log('end tag');
+        // deactivate tagging
+        this.props.onClearTag();
         const newState2 = { ...this.state };
         newState2.tagIndex = -1;
         this.setState(newState2);
@@ -371,6 +368,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
 
 const mapDisPatchToProps = {
   onCreatePost: createPost,
+  onClearTag: clear,
 };
 
 const styles = StyleSheet.create({

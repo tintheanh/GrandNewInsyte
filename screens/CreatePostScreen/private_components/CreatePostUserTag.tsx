@@ -26,6 +26,9 @@ interface CreatePostUserTagProps {
 
 class CreatePostUserTag extends Component<CreatePostUserTagProps> {
   shouldComponentUpdate(nextProps: CreatePostUserTagProps) {
+    // if (!checkUserTagsChanged(this.props.userTags, nextProps.userTags)) {
+    //   return false;
+    // }
     if (this.props.tagQuery !== nextProps.tagQuery) {
       return true;
     }
@@ -39,26 +42,30 @@ class CreatePostUserTag extends Component<CreatePostUserTagProps> {
   }
 
   componentDidMount() {
-    if (this.props.tagQuery !== '') {
-      this.props.onCreatePostTagNew(this.props.tagQuery);
-    }
+    this.props.onCreatePostTagNew(this.props.tagQuery);
   }
 
   componentDidUpdate(prevProps: CreatePostUserTagProps) {
     // console.log('update', this.props.tagQuery);
     if (
       this.props.tagQuery !== prevProps.tagQuery &&
-      this.props.tagQuery !== ''
+      this.props.loading === false &&
+      prevProps.loading === false
     ) {
       this.props.onCreatePostTagNew(this.props.tagQuery);
     }
   }
 
+  performFetchUserTag = () => {
+    this.props.onCreatePostTag(this.props.tagQuery);
+  };
+
   render() {
     // console.log('render');
-    const { loading, userTags } = this.props;
+    console.log(this.props.tagQuery);
+    const { loading, userTags, tagQuery } = this.props;
     console.log(userTags);
-    if (loading) {
+    if (loading && userTags.length === 0) {
       return (
         <View
           style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -66,7 +73,7 @@ class CreatePostUserTag extends Component<CreatePostUserTagProps> {
         </View>
       );
     }
-    if (userTags.length === 0) {
+    if (userTags.length === 0 || tagQuery === '') {
       return (
         <View
           style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -75,7 +82,9 @@ class CreatePostUserTag extends Component<CreatePostUserTagProps> {
       );
     }
 
-    return <TagList userTags={userTags} />;
+    return (
+      <TagList userTags={userTags} onEndReached={this.performFetchUserTag} />
+    );
   }
 }
 

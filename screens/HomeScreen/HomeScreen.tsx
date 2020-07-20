@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import faker from 'faker';
 import { Loading } from '../../components';
 import { AppState } from '../../redux/store';
 import HomeAuth from './private_components/HomeAuth';
 import HomeNotAuth from './private_components/HomeNotAuth';
+import { fsDB } from '../../config';
+import { generateSubstrForUsername } from '../../utils/functions';
 
 // interface FeedProps {
 //   onFetchPublicNewPosts: () => void;
@@ -51,6 +54,29 @@ class HomeScreen extends Component<any> {
     // }
 
     for (let i = 0; i < 10; i++) {
+      // const user = {
+      //   avatar: '',
+      //   bio: 'test',
+      //   followers: 0,
+      //   following: 1,
+      //   name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+      //   username: faker.internet.userName(),
+      //   total_posts: 0,
+      // };
+
+      // await fsDB
+      //   .collection('users')
+      //   .doc('fake' + i)
+      //   .set(user);
+      // await fsDB
+      //   .collection('users')
+      //   .doc('9DHOf4becGfrx7fmUXPcYdqtc2I3')
+      //   .collection('follower_for_search')
+      //   .doc('fake' + i)
+      //   .set({
+      //     prefix: generateSubstrForUsername(user.username),
+      //   });
+
       // const post = {
       //   posted_by: 'BQ9bdkbxiicCYG8ZNnL5wW6EZ823',
       //   caption: faker.lorem.sentence(),

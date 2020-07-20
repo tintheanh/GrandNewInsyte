@@ -7,6 +7,8 @@ import {
   Image,
   StyleSheet,
 } from 'react-native';
+import { checkUserTagsChanged } from '../utils/functions';
+import { UserResult } from '../models';
 
 const DATA = [
   {
@@ -44,52 +46,67 @@ const DATA = [
     avatar:
       'https://api.time.com/wp-content/uploads/2017/12/terry-crews-person-of-year-2017-time-magazine-2.jpg',
   },
-  {
-    id: '6',
-    username: 'test',
-    name: 'Anh Nguyen',
-    avatar:
-      'https://api.time.com/wp-content/uploads/2017/12/terry-crews-person-of-year-2017-time-magazine-2.jpg',
-  },
 ];
 
-export default function TagList({
-  userTags,
-}: {
-  userTags: Array<{
-    id: string;
-    avatar: string;
-    username: string;
-    name: string;
-  }>;
-}) {
-  return (
-    <SafeAreaView>
-      <FlatList
-        data={userTags}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.cardContainer}>
-            <Image
-              source={
-                item.avatar.length
-                  ? { uri: item.avatar }
-                  : require('../assets/user.png')
-              }
-              defaultSource={require('../assets/user.png')}
-              style={styles.avatar}
-            />
-            <View style={styles.nameWrapper}>
-              <Text style={styles.username}>{item.username}</Text>
-              <Text style={styles.name}>{item.name}</Text>
-            </View>
-          </View>
-        )}
-        showsVerticalScrollIndicator={false}
-      />
-    </SafeAreaView>
-  );
+interface TagListProps {
+  userTags: Array<UserResult>;
+  onEndReached: () => void;
 }
+
+export default React.memo(
+  function TagList({ userTags, onEndReached }: TagListProps) {
+    const _onEndReached = ({
+      distanceFromEnd,
+    }: {
+      distanceFromEnd: number;
+    }) => {
+      if (distanceFromEnd < 0) {
+        return;
+      }
+      console.log('end');
+      onEndReached();
+    };
+
+    return (
+      <SafeAreaView>
+        <FlatList
+          data={userTags}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <View style={styles.cardContainer}>
+              <Image
+                source={
+                  item.avatar.length
+                    ? { uri: item.avatar }
+                    : require('../assets/user.png')
+                }
+                defaultSource={require('../assets/user.png')}
+                style={styles.avatar}
+              />
+              <View style={styles.nameWrapper}>
+                <Text style={styles.username}>{item.username}</Text>
+                <Text style={styles.name}>{item.name}</Text>
+              </View>
+            </View>
+          )}
+          removeClippedSubviews={false}
+          onEndReached={_onEndReached}
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={5}
+          // maxToRenderPerBatch={1}
+          onEndReachedThreshold={0.1}
+          // windowSize={3}
+        />
+      </SafeAreaView>
+    );
+  },
+  (prevProps, nextProps) => {
+    if (checkUserTagsChanged(prevProps.userTags, nextProps.userTags)) {
+      return false;
+    }
+    return true;
+  },
+);
 
 const styles = StyleSheet.create({
   cardContainer: {

@@ -111,11 +111,12 @@ const checkURL = (url: string) => {
 };
 
 const generateSubstrForUsername = (username: string) => {
+  const toLower = username.toLocaleLowerCase();
   const result = new Set<string>();
-  const len = username.length;
+  const len = toLower.length;
   for (let i = 0; i < len; i++) {
     for (let j = i + 1; j < len + 1; j++) {
-      result.add(username.slice(i, j));
+      result.add(toLower.slice(i, j));
     }
   }
   return [...result];
@@ -499,6 +500,19 @@ const removeDuplicatesFromPostsArray = (arr: Array<Post>) => {
   return filteredArr;
 };
 
+const removeDuplicatesFromUserResultsArray = (arr: Array<UserResult>) => {
+  const filteredArr = arr.reduce((acc: Array<UserResult>, current) => {
+    const x = acc.find((ur) => ur.id === current.id);
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, []);
+
+  return filteredArr;
+};
+
 const uploadMedia = async (
   uid: string,
   media: Array<{
@@ -572,6 +586,7 @@ export {
   uploadMedia,
   deleteMedia,
   removeDuplicatesFromPostsArray,
+  removeDuplicatesFromUserResultsArray,
   wrapPostCaption,
   generateCaptionTextArray,
   checkURL,

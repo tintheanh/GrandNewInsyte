@@ -7,6 +7,7 @@ import {
   CREATE_POST_TAG_NEW_FAILURE,
   CREATE_POST_TAG_NEW_STARTED,
   CREATE_POST_TAG_NEW_SUCCESS,
+  CLEAR,
   TagAction,
 } from './types';
 import { fsDB, FirebaseFirestoreTypes } from '../../config';
@@ -98,9 +99,9 @@ export const createPostTag = (tagQuery: string) => async (
         .collection('users')
         .doc(uid)
         .collection('follower_for_search')
+        .startAfter(lastVisible)
         .where('prefix', 'array-contains', tagQuery)
         .limit(5)
-        .startAfter(lastVisible)
         .get();
     }
 
@@ -134,6 +135,13 @@ export const createPostTag = (tagQuery: string) => async (
     console.log(err.message);
     dispatch(createPostTagFailure(err));
   }
+};
+
+export const clear = () => async (dispatch: (action: TagAction) => void) => {
+  dispatch({
+    type: CLEAR,
+    payload: null,
+  });
 };
 
 /* ---------------- end post tag actions ---------------- */

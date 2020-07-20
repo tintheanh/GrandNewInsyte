@@ -10,6 +10,8 @@ export const CREATE_POST_TAG_NEW_SUCCESS = 'CREATE_POST_TAG_NEW_SUCCESS';
 export const CREATE_POST_TAG_NEW_FAILURE = 'CREATE_POST_TAG_NEW_FAILURE';
 export const CREATE_POST_TAG_NEW_END = 'CREATE_POST_TAG_NEW_END';
 
+export const CLEAR = 'CLEAR';
+
 export interface TagAction {
   type: string;
   payload:
