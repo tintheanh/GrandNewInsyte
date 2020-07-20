@@ -1,12 +1,12 @@
 import {
-  CREATE_POST_TAG_FAILURE,
-  CREATE_POST_TAG_STARTED,
-  CREATE_POST_TAG_SUCCESS,
-  CREATE_POST_TAG_END,
-  CREATE_POST_TAG_NEW_END,
-  CREATE_POST_TAG_NEW_FAILURE,
-  CREATE_POST_TAG_NEW_STARTED,
-  CREATE_POST_TAG_NEW_SUCCESS,
+  FETCH_USER_RESULTS_FAILURE,
+  FETCH_USER_RESULTS_STARTED,
+  FETCH_USER_RESULTS_SUCCESS,
+  FETCH_USER_RESULTS_END,
+  FETCH_NEW_USER_RESULTS_END,
+  FETCH_NEW_USER_RESULTS_FAILURE,
+  FETCH_NEW_USER_RESULTS_STARTED,
+  FETCH_NEW_USER_RESULTS_SUCCESS,
   CLEAR,
   TagAction,
 } from './types';
@@ -15,17 +15,17 @@ import { AppState } from '../store';
 
 /* ------------------ post tag actions ------------------ */
 
-export const createPostTagNew = (tagQuery: string) => async (
+export const fetchNewUserResults = (tagQuery: string) => async (
   dispatch: (action: TagAction) => void,
   getState: () => AppState,
 ) => {
   const { user } = getState().auth;
   if (!user) {
     return dispatch(
-      createPostTagNewFailure(new Error('Unauthorized. Please sign in.')),
+      fetchNewUserResultsFailure(new Error('Unauthorized. Please sign in.')),
     );
   }
-  dispatch(createPostTagNewStarted());
+  dispatch(fetchNewUserResultsStarted());
   try {
     const uid = user.id;
 
@@ -39,7 +39,7 @@ export const createPostTagNew = (tagQuery: string) => async (
 
     if (userSnapshots.empty) {
       console.log('new action end');
-      return dispatch(createPostTagNewEnd());
+      return dispatch(fetchNewUserResultsEnd());
     }
 
     const users = [];
@@ -63,24 +63,24 @@ export const createPostTagNew = (tagQuery: string) => async (
     }
 
     const newLastVisible = userSnapshots.docs[userSnapshots.docs.length - 1];
-    dispatch(createPostTagNewSuccess(users, newLastVisible));
+    dispatch(fetchNewUserResultsSuccess(users, newLastVisible));
   } catch (err) {
     console.log(err.message);
-    dispatch(createPostTagFailure(err));
+    dispatch(fetchUserResultsFailure(err));
   }
 };
 
-export const createPostTag = (tagQuery: string) => async (
+export const fetchUserResults = (tagQuery: string) => async (
   dispatch: (action: TagAction) => void,
   getState: () => AppState,
 ) => {
   const { user } = getState().auth;
   if (!user) {
     return dispatch(
-      createPostTagFailure(new Error('Unauthorized. Please sign in.')),
+      fetchUserResultsFailure(new Error('Unauthorized. Please sign in.')),
     );
   }
-  dispatch(createPostTagStarted());
+  dispatch(fetchUserResultsStarted());
   try {
     const uid = user.id;
     const { lastVisible } = getState().tag.createPost;
@@ -106,7 +106,7 @@ export const createPostTag = (tagQuery: string) => async (
     }
 
     if (userSnapshots.empty) {
-      return dispatch(createPostTagEnd());
+      return dispatch(fetchUserResultsEnd());
     }
 
     const users = [];
@@ -130,10 +130,10 @@ export const createPostTag = (tagQuery: string) => async (
     }
 
     const newLastVisible = userSnapshots.docs[userSnapshots.docs.length - 1];
-    dispatch(createPostTagSuccess(users, newLastVisible));
+    dispatch(fetchUserResultsSuccess(users, newLastVisible));
   } catch (err) {
     console.log(err.message);
-    dispatch(createPostTagFailure(err));
+    dispatch(fetchUserResultsFailure(err));
   }
 };
 
@@ -148,12 +148,12 @@ export const clear = () => async (dispatch: (action: TagAction) => void) => {
 
 /* ----------------- post tag dispatches ---------------- */
 
-const createPostTagStarted = (): TagAction => ({
-  type: CREATE_POST_TAG_STARTED,
+const fetchUserResultsStarted = (): TagAction => ({
+  type: FETCH_USER_RESULTS_STARTED,
   payload: null,
 });
 
-const createPostTagSuccess = (
+const fetchUserResultsSuccess = (
   users: Array<{
     id: string;
     avatar: string;
@@ -162,26 +162,26 @@ const createPostTagSuccess = (
   }>,
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
 ): TagAction => ({
-  type: CREATE_POST_TAG_SUCCESS,
+  type: FETCH_USER_RESULTS_SUCCESS,
   payload: { users, lastVisible },
 });
 
-const createPostTagFailure = (error: Error): TagAction => ({
-  type: CREATE_POST_TAG_FAILURE,
+const fetchUserResultsFailure = (error: Error): TagAction => ({
+  type: FETCH_USER_RESULTS_FAILURE,
   payload: error,
 });
 
-const createPostTagEnd = (): TagAction => ({
-  type: CREATE_POST_TAG_END,
+const fetchUserResultsEnd = (): TagAction => ({
+  type: FETCH_USER_RESULTS_END,
   payload: null,
 });
 
-const createPostTagNewStarted = (): TagAction => ({
-  type: CREATE_POST_TAG_NEW_STARTED,
+const fetchNewUserResultsStarted = (): TagAction => ({
+  type: FETCH_NEW_USER_RESULTS_STARTED,
   payload: null,
 });
 
-const createPostTagNewSuccess = (
+const fetchNewUserResultsSuccess = (
   users: Array<{
     id: string;
     avatar: string;
@@ -190,17 +190,17 @@ const createPostTagNewSuccess = (
   }>,
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
 ): TagAction => ({
-  type: CREATE_POST_TAG_NEW_SUCCESS,
+  type: FETCH_NEW_USER_RESULTS_SUCCESS,
   payload: { users, lastVisible },
 });
 
-const createPostTagNewFailure = (error: Error): TagAction => ({
-  type: CREATE_POST_TAG_NEW_FAILURE,
+const fetchNewUserResultsFailure = (error: Error): TagAction => ({
+  type: FETCH_NEW_USER_RESULTS_FAILURE,
   payload: error,
 });
 
-const createPostTagNewEnd = (): TagAction => ({
-  type: CREATE_POST_TAG_NEW_END,
+const fetchNewUserResultsEnd = (): TagAction => ({
+  type: FETCH_NEW_USER_RESULTS_END,
   payload: null,
 });
 

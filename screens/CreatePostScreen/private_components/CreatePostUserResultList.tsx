@@ -10,23 +10,28 @@ import {
 } from 'react-native';
 import { connect } from 'react-redux';
 import { Colors } from '../../../constants';
-import { checkUserTagsChanged } from '../../../utils/functions';
-import { TagList, Loading } from '../../../components';
+import { checkUserResultListChanged } from '../../../utils/functions';
+import { List, UserResultCard } from '../../../components';
 import { UserResult } from '../../../models';
-import { createPostTag, createPostTagNew } from '../../../redux/tag/actions';
+import {
+  fetchUserResults,
+  fetchNewUserResults,
+} from '../../../redux/tag/actions';
 import { AppState } from '../../../redux/store';
 
-interface CreatePostUserTagProps {
+interface CreatePostUserResultListProps {
   tagQuery: string;
   userTags: Array<UserResult>;
   loading: boolean;
-  onCreatePostTag: (tagQuery: string) => void;
-  onCreatePostTagNew: (tagQuery: string) => void;
+  onFetchUserResults: (tagQuery: string) => void;
+  onFetchNewUserResults: (tagQuery: string) => void;
 }
 
-class CreatePostUserTag extends Component<CreatePostUserTagProps> {
-  shouldComponentUpdate(nextProps: CreatePostUserTagProps) {
-    // if (!checkUserTagsChanged(this.props.userTags, nextProps.userTags)) {
+class CreatePostUserResultList extends Component<
+  CreatePostUserResultListProps
+> {
+  shouldComponentUpdate(nextProps: CreatePostUserResultListProps) {
+    // if (!checkUserResultListChanged(this.props.userTags, nextProps.userTags)) {
     //   return false;
     // }
     if (this.props.tagQuery !== nextProps.tagQuery) {
@@ -35,34 +40,34 @@ class CreatePostUserTag extends Component<CreatePostUserTagProps> {
     if (this.props.loading !== nextProps.loading) {
       return true;
     }
-    if (checkUserTagsChanged(this.props.userTags, nextProps.userTags)) {
+    if (checkUserResultListChanged(this.props.userTags, nextProps.userTags)) {
       return true;
     }
     return false;
   }
 
   componentDidMount() {
-    this.props.onCreatePostTagNew(this.props.tagQuery);
+    this.props.onFetchNewUserResults(this.props.tagQuery);
   }
 
-  componentDidUpdate(prevProps: CreatePostUserTagProps) {
+  componentDidUpdate(prevProps: CreatePostUserResultListProps) {
     // console.log('update', this.props.tagQuery);
     if (
       this.props.tagQuery !== prevProps.tagQuery &&
       this.props.loading === false &&
       prevProps.loading === false
     ) {
-      this.props.onCreatePostTagNew(this.props.tagQuery);
+      this.props.onFetchNewUserResults(this.props.tagQuery);
     }
   }
 
   performFetchUserTag = () => {
-    this.props.onCreatePostTag(this.props.tagQuery);
+    this.props.onFetchUserResults(this.props.tagQuery);
   };
 
   render() {
     // console.log('render');
-    console.log(this.props.tagQuery);
+    // console.log(this.props.tagQuery);
     const { loading, userTags, tagQuery } = this.props;
     console.log(userTags);
     if (loading && userTags.length === 0) {
@@ -83,7 +88,16 @@ class CreatePostUserTag extends Component<CreatePostUserTagProps> {
     }
 
     return (
-      <TagList userTags={userTags} onEndReached={this.performFetchUserTag} />
+      <List
+        data={userTags}
+        card={UserResultCard as React.ReactNode}
+        onEndReached={this.performFetchUserTag}
+        initialNumToRender={5}
+        onEndReachedThreshold={0.1}
+        checkChangesToUpdate={checkUserResultListChanged}
+        maxToRenderPerBatch={undefined}
+        windowSize={undefined}
+      />
     );
   }
 }
@@ -94,8 +108,11 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = {
-  onCreatePostTag: createPostTag,
-  onCreatePostTagNew: createPostTagNew,
+  onFetchUserResults: fetchUserResults,
+  onFetchNewUserResults: fetchNewUserResults,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(CreatePostUserTag);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(CreatePostUserResultList);

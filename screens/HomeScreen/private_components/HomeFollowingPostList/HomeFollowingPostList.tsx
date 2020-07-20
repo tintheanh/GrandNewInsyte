@@ -138,6 +138,7 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
             }
             refreshing={pullLoading}
             listHeaderComponent={<SortFollowingPostList />}
+            checkChangesToUpdate={checkPostListChanged}
           />
         </View>
         <View style={styles.loadingWrapper}>

@@ -21,6 +21,11 @@ interface ListProps {
   onEndReached: () => void;
   listHeaderComponent?: JSX.Element;
   listFooterComponent?: JSX.Element;
+  onEndReachedThreshold?: number;
+  checkChangesToUpdate: (
+    prevProps: Array<any>,
+    nextProps: Array<any>,
+  ) => boolean;
   onRefresh?: () => void;
   refreshing?: boolean;
 }
@@ -32,7 +37,7 @@ export default class List extends Component<ListProps> {
       return true;
     }
     // if (this.props.data.length !== nextProps.data.length) return true;
-    if (checkPostListChanged(this.props.data, nextProps.data)) {
+    if (this.props.checkChangesToUpdate(this.props.data, nextProps.data)) {
       return true;
     }
     return false;
@@ -61,8 +66,10 @@ export default class List extends Component<ListProps> {
       maxToRenderPerBatch = 1,
       windowSize = 3,
       listHeaderComponent = undefined,
+      onEndReachedThreshold = 0.5,
       listFooterComponent = undefined,
       refreshing = false,
+      onRefresh,
     } = this.props;
     // console.log(data);
     const Card = card as React.ComponentClass<any>;
@@ -79,15 +86,17 @@ export default class List extends Component<ListProps> {
           viewabilityConfig={viewabilityConfig}
           removeClippedSubviews={false}
           onEndReached={this._onEndReached}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={onEndReachedThreshold}
           ListHeaderComponent={listHeaderComponent}
           ListFooterComponent={listFooterComponent}
           refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={this.refresh}
-              tintColor="#fff"
-            />
+            onRefresh ? (
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={this.refresh}
+                tintColor="#fff"
+              />
+            ) : undefined
           }
         />
       </SafeAreaView>

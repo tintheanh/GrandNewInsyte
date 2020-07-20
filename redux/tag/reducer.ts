@@ -1,12 +1,12 @@
 import {
-  CREATE_POST_TAG_FAILURE,
-  CREATE_POST_TAG_STARTED,
-  CREATE_POST_TAG_SUCCESS,
-  CREATE_POST_TAG_END,
-  CREATE_POST_TAG_NEW_END,
-  CREATE_POST_TAG_NEW_FAILURE,
-  CREATE_POST_TAG_NEW_STARTED,
-  CREATE_POST_TAG_NEW_SUCCESS,
+  FETCH_USER_RESULTS_FAILURE,
+  FETCH_USER_RESULTS_STARTED,
+  FETCH_USER_RESULTS_SUCCESS,
+  FETCH_USER_RESULTS_END,
+  FETCH_NEW_USER_RESULTS_END,
+  FETCH_NEW_USER_RESULTS_FAILURE,
+  FETCH_NEW_USER_RESULTS_STARTED,
+  FETCH_NEW_USER_RESULTS_SUCCESS,
   CLEAR,
   TagState,
   TagAction,
@@ -28,14 +28,14 @@ export default function tagReducer(
   action: TagAction,
 ): TagState {
   switch (action.type) {
-    case CREATE_POST_TAG_NEW_STARTED:
-    case CREATE_POST_TAG_STARTED: {
+    case FETCH_NEW_USER_RESULTS_STARTED:
+    case FETCH_USER_RESULTS_STARTED: {
       const newState = { ...state };
       newState.createPost.loading = true;
       newState.createPost.error = null;
       return newState;
     }
-    case CREATE_POST_TAG_SUCCESS: {
+    case FETCH_USER_RESULTS_SUCCESS: {
       const newState = { ...state };
       const payload = action.payload as {
         users: Array<{
@@ -55,7 +55,7 @@ export default function tagReducer(
       newState.createPost.users = filterDuplicates;
       return newState;
     }
-    case CREATE_POST_TAG_NEW_SUCCESS: {
+    case FETCH_NEW_USER_RESULTS_SUCCESS: {
       const newState = { ...state };
       const payload = action.payload as {
         users: Array<{
@@ -75,19 +75,19 @@ export default function tagReducer(
       newState.createPost.users = filterDuplicates;
       return newState;
     }
-    case CREATE_POST_TAG_END: {
+    case FETCH_USER_RESULTS_END: {
       const newState = { ...state };
       newState.createPost.loading = false;
       return newState;
     }
-    case CREATE_POST_TAG_NEW_END: {
+    case FETCH_NEW_USER_RESULTS_END: {
       const newState = { ...state };
       newState.createPost.loading = false;
       newState.createPost.users = [];
       return newState;
     }
-    case CREATE_POST_TAG_NEW_FAILURE:
-    case CREATE_POST_TAG_FAILURE: {
+    case FETCH_NEW_USER_RESULTS_FAILURE:
+    case FETCH_USER_RESULTS_FAILURE: {
       const newState = { ...state };
       newState.createPost.loading = false;
       newState.createPost.lastVisible = null;

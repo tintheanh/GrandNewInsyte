@@ -16,7 +16,7 @@ import {
   TextPostInput,
   MediaInput,
   MediaView,
-  CreatePostUserTag,
+  CreatePostUserResultList,
 } from './private_components';
 import { createPost } from '../../redux/posts/actions';
 import { clear } from '../../redux/tag/actions';
@@ -346,7 +346,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
               onLayout={({ nativeEvent }) =>
                 this.setState({ tagListPosition: nativeEvent.layout.y })
               }>
-              <CreatePostUserTag tagQuery={this.state.tagQuery} />
+              <CreatePostUserResultList tagQuery={this.state.tagQuery} />
             </View>
           ) : (
             <View>

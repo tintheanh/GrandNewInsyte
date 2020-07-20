@@ -232,7 +232,7 @@ const fetchUser = async (uid: string) => {
   }
 };
 
-const checkUserTagsChanged = (
+const checkUserResultListChanged = (
   list1: Array<UserResult>,
   list2: Array<UserResult>,
 ) => {
@@ -577,7 +577,7 @@ export {
   getCurrentUser,
   getCurrentUnixTime,
   checkPostListChanged,
-  checkUserTagsChanged,
+  checkUserResultListChanged,
   checkPostChanged,
   docFStoPostArray,
   docFBtoPostArray,

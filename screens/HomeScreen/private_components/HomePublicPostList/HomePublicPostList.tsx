@@ -144,6 +144,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
             listFooterComponent={
               <View style={{ paddingBottom: height / 10 }} />
             }
+            checkChangesToUpdate={checkPostListChanged}
           />
         </View>
         <View style={styles.loadingWrapper}>

@@ -10,7 +10,7 @@ import PlaceCard from './PlaceCard';
 import ErrorView from './ErrorView';
 import NothingView from './NothingView';
 import ProfilePostList from './ProfilePostList/ProfilePostList';
-import TagList from './TagList';
+import UserResultCard from './UserResultCard';
 
 export {
   TextBox,
@@ -25,5 +25,5 @@ export {
   ErrorView,
   NothingView,
   ProfilePostList,
-  TagList,
+  UserResultCard,
 };
