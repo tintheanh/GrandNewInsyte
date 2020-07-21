@@ -40,7 +40,6 @@ export const fetchNewUserResults = (tagQuery: string) => async (
       .get();
 
     if (userSnapshots.empty) {
-      console.log('new action end');
       return dispatch(fetchNewUserResultsEnd());
     }
 

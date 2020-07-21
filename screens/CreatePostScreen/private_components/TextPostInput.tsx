@@ -8,11 +8,13 @@ export default React.memo(
     onChangeText,
     onSelectionChange,
     onDeleteHandle,
+    userTags,
   }: {
     value: string;
     onChangeText: (text: string) => void;
     onSelectionChange: (event: any) => void;
     onDeleteHandle: () => void;
+    userTags: Array<string>;
   }) {
     const scrollViewRef: React.MutableRefObject<
       ScrollView | undefined
@@ -33,9 +35,18 @@ export default React.memo(
       }
     };
 
+    const checkTasInCurrentTags = (str: string) => {
+      for (const tag of userTags) {
+        if (str === tag || str.includes(tag)) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     const splitted = value.split(/(?=\n)| /);
     const textChunks = splitted.map((str) => {
-      if (str.includes('\u200B')) {
+      if (checkTasInCurrentTags(str)) {
         return {
           type: 'tag',
           value: str,

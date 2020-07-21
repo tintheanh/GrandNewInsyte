@@ -194,7 +194,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
 
     // console.log(' ' === '\u2002');
 
-    userTags.push({ id, username: username + '\u200B' });
+    userTags.push({ id, username: '@' + username + '\u200B' });
     const uids = userTags.map((u) => u.id);
     newState.post.userTags = userTags;
     newState.tagQuery = '';
@@ -354,7 +354,22 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     if (post.caption === '' && post.media.length === 0) {
       return alertDialog('Your post cannot be empty.');
     }
-    this.props.onCreatePost(post, this.props.navigation.goBack);
+    // console.log(post.caption);
+    // console.log(post.caption.match(/@([^\u200B]*)\u200B/g));
+    // const replaced = post.caption.replace(/@([^\u200B]*)\u200B/g, '@test');
+    // console.log(replaced);
+    // this.props.onCreatePost(post, this.props.navigation.goBack);
+    let caption = post.caption;
+
+    const matches = post.caption.match(/@([^\u200B][^\n]*)\u200B/g);
+    // let replaced = '';
+    if (matches) {
+      for (const m of matches) {
+        // console.log(m);
+        caption = caption.replace(m, 'test');
+      }
+    }
+    console.log(caption);
   };
 
   render() {
@@ -392,6 +407,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
           <LocationSelection />
           <TextPostInput
             value={post.caption}
+            userTags={post.userTags.map((u) => u.username)}
             onChangeText={this.setCaption}
             onDeleteHandle={this.onDeleteUserTag}
             onSelectionChange={this.handleCaptionSelectionChange}
