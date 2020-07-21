@@ -5,6 +5,10 @@ export const oneWeek = 6.048e8;
 export const oneMonth = 2.628e9;
 export const oneYear = 3.154e10;
 
+export const tokenForTag = '\u200B';
+// export const tokenForTag = '\u01AA';
+export const separatorForTag = '\u01B1';
+
 export const pendingPostID = 'pending-post-69';
 export const pendingDeletePostFlag = '--pending-delete-post';
 

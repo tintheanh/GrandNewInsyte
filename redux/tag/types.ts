@@ -11,7 +11,8 @@ export const FETCH_NEW_USER_RESULTS_FAILURE = 'FETCH_NEW_USER_RESULTS_FAILURE';
 export const FETCH_NEW_USER_RESULTS_END = 'FETCH_NEW_USER_RESULTS_END';
 
 export const SET_SELECTED_USER_RESULTS = 'SET_SELECTED_USER_RESULTS';
-export const CLEAR = 'CLEAR';
+export const CLEAR_BUT_KEEP_SELECTED = 'CLEAR_BUT_KEEP_SELECTED';
+export const CLEAR_ALL = 'CLEAR_ALL';
 
 export interface TagAction {
   type: string;

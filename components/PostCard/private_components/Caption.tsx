@@ -3,7 +3,7 @@ import { TouchableWithoutFeedback, Text, StyleSheet } from 'react-native';
 import { Colors } from '../../../constants';
 import {
   wrapPostCaption,
-  generateCaptionTextArray,
+  generateCaptionWithTagsAndUrls,
   openURL,
 } from '../../../utils/functions';
 
@@ -20,7 +20,7 @@ export default function Caption({
     <TouchableWithoutFeedback onPress={navigateWhenClickOnPostOrComment}>
       {caption.length <= 200 ? (
         <Text style={styles.caption}>
-          {generateCaptionTextArray(caption).map((text, i) => {
+          {/* {generateCaptionTextArray(caption).map((text, i) => {
             if (text.type === 'url') {
               return (
                 <Text
@@ -32,20 +32,64 @@ export default function Caption({
               );
             }
             return <Text key={i}>{text.value}</Text>;
+          })} */}
+          {generateCaptionWithTagsAndUrls(caption).map((element, i) => {
+            if (element.type === 'tag') {
+              const textChunk = element as {
+                value: { text: string; uid: string };
+              };
+              return (
+                <Text
+                  key={i}
+                  style={{ color: Colors.userTag }}
+                  onPress={() => console.log(textChunk.value.uid)}>
+                  {textChunk.value.text}{' '}
+                </Text>
+              );
+            }
+            if (element.type === 'url') {
+              const textChunk = element as {
+                value: string;
+              };
+              return (
+                <Text
+                  key={i}
+                  style={{ color: Colors.tintColor }}
+                  onPress={openURL(textChunk.value)}>
+                  {textChunk.value}
+                </Text>
+              );
+            }
+            return <Text key={i}>{element.value} </Text>;
           })}
         </Text>
       ) : (
         <Text style={styles.caption}>
-          {generateCaptionTextArray(wrapPostCaption(caption)).map((text, i) => {
-            if (text.type === 'url') {
-              return (
-                <Text key={i} style={{ color: Colors.tintColor }}>
-                  {text.value}
-                </Text>
-              );
-            }
-            return <Text key={i}>{text.value}</Text>;
-          })}{' '}
+          {generateCaptionWithTagsAndUrls(wrapPostCaption(caption)).map(
+            (element, i) => {
+              if (element.type === 'tag') {
+                const textChunk = element as {
+                  value: { text: string; uid: string };
+                };
+                return (
+                  <Text key={i} style={{ color: Colors.userTag }}>
+                    {textChunk.value.text}{' '}
+                  </Text>
+                );
+              }
+              if (element.type === 'url') {
+                const textChunk = element as {
+                  value: string;
+                };
+                return (
+                  <Text key={i} style={{ color: Colors.tintColor }}>
+                    {textChunk.value}
+                  </Text>
+                );
+              }
+              return <Text key={i}>{element.value} </Text>;
+            },
+          )}{' '}
           <Text style={{ fontWeight: '500' }}>... See more</Text>
         </Text>
       )}

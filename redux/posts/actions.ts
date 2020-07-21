@@ -71,7 +71,12 @@ import {
   deleteMedia,
   convertTime,
 } from '../../utils/functions';
-import { pendingDeletePostFlag, pendingPostID } from '../../constants';
+import {
+  pendingDeletePostFlag,
+  pendingPostID,
+  tokenForTag,
+  separatorForTag,
+} from '../../constants';
 
 /* -------------------- post actions -------------------- */
 
@@ -946,6 +951,7 @@ export const createPost = (
     privacy,
     caption,
     media,
+    taggedUsers,
   }: {
     privacy: 'public' | 'followers' | 'private';
     caption: string;
@@ -956,6 +962,7 @@ export const createPost = (
       width: number;
       height: number;
     }>;
+    taggedUsers: Array<{ id: string; username: string }>;
   },
   callback: () => void,
 ) => async (
@@ -966,6 +973,7 @@ export const createPost = (
   if (!user) {
     return dispatch(createPostError(new Error('Please sign in first.')));
   }
+  const taggedIDs = taggedUsers.map((u) => u.id);
   const currentDatePosted = getCurrentUnixTime();
   const tempPost = {
     id: pendingPostID,
@@ -984,6 +992,7 @@ export const createPost = (
     timeLabel: convertTime(currentDatePosted),
     likes: 0,
     isLiked: false,
+    taggedUsers: taggedIDs,
     comments: 0,
     user: {
       id: user?.id as string,
@@ -994,25 +1003,80 @@ export const createPost = (
   dispatch(createPostStarted(tempPost));
   try {
     callback();
-    await delay(5000);
+    // await delay(5000);
     // throw new Error('Failed');
     const uid = user?.id;
     const uploadedMedia = await uploadMedia(uid as string, media);
-    // console.log(uploadedMedia);
+
+    let captionWithTags = caption;
+    if (taggedIDs.length > 0) {
+      const regex = new RegExp(
+        `@([^${tokenForTag}][^\n| ]*)${tokenForTag}`,
+        'g',
+      );
+
+      const matches = caption.match(regex);
+      if (matches) {
+        for (const m of matches) {
+          const index = taggedUsers.findIndex((u) => u.username.includes(m));
+          if (index !== -1) {
+            captionWithTags = captionWithTags.replace(
+              m,
+              `@${taggedUsers[index].id}${tokenForTag}`,
+            );
+          }
+        }
+      }
+    }
+
     try {
       // throw new Error('Failed');
       const postRef = await fsDB.collection('posts').add({
-        caption,
+        caption: captionWithTags,
         privacy,
         media: uploadedMedia,
         comments: 0,
         likes: 0,
         posted_by: uid as string,
+        tagged_users: taggedIDs,
         date_posted: currentDatePosted,
       });
+
+      let captionWithTagsDone = captionWithTags;
+      if (taggedIDs.length > 0) {
+        const taggedUsersWithToken = taggedUsers.map((u) => {
+          const pureUsername = u.username
+            .replace('@', '')
+            .replace('\u01AA', '');
+          return {
+            id: u.id,
+            idWithToken: `@${u.id}${tokenForTag}`,
+            username: pureUsername,
+          };
+        });
+        const regex = new RegExp(
+          `@([^${tokenForTag}][^\n| ]*)${tokenForTag}`,
+          'g',
+        );
+        const matches = captionWithTags.match(regex);
+        if (matches) {
+          for (const m of matches) {
+            const index = taggedUsersWithToken.findIndex((u) =>
+              u.idWithToken.includes(m),
+            );
+            if (index !== -1) {
+              captionWithTagsDone = captionWithTagsDone.replace(
+                m,
+                `@${taggedUsersWithToken[index].username}${separatorForTag}${taggedUsersWithToken[index].id}${tokenForTag}`,
+              );
+            }
+          }
+        }
+      }
+
       const newPost = {
         id: postRef.id,
-        caption,
+        caption: captionWithTagsDone,
         privacy,
         media: uploadedMedia,
         datePosted: currentDatePosted,
@@ -1020,6 +1084,7 @@ export const createPost = (
         likes: 0,
         isLiked: false,
         comments: 0,
+        taggedUsers: taggedIDs,
         user: {
           id: user.id,
           avatar: user?.avatar as string,

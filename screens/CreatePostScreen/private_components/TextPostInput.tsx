@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
-import { TextInput, View, Text, ScrollView } from 'react-native';
-import { Layout } from '../../../constants';
+import { TextInput, View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Layout, Colors } from '../../../constants';
 
 export default React.memo(
   function TextPostInput({
@@ -8,13 +8,13 @@ export default React.memo(
     onChangeText,
     onSelectionChange,
     onDeleteHandle,
-    userTags,
+    taggedUsers,
   }: {
     value: string;
     onChangeText: (text: string) => void;
-    onSelectionChange: (event: any) => void;
+    onSelectionChange: ({ nativeEvent }: any) => void;
     onDeleteHandle: () => void;
-    userTags: Array<string>;
+    taggedUsers: Array<string>;
   }) {
     const scrollViewRef: React.MutableRefObject<
       ScrollView | undefined
@@ -35,8 +35,8 @@ export default React.memo(
       }
     };
 
-    const checkTasInCurrentTags = (str: string) => {
-      for (const tag of userTags) {
+    const checkIfChunkIsTagOrText = (str: string) => {
+      for (const tag of taggedUsers) {
         if (str === tag || str.includes(tag)) {
           return true;
         }
@@ -46,7 +46,7 @@ export default React.memo(
 
     const splitted = value.split(/(?=\n)| /);
     const textChunks = splitted.map((str) => {
-      if (checkTasInCurrentTags(str)) {
+      if (checkIfChunkIsTagOrText(str)) {
         return {
           type: 'tag',
           value: str,
@@ -58,18 +58,10 @@ export default React.memo(
       };
     });
 
-    // console.log(textChunks);
-
     return (
       <View>
         <TextInput
-          style={{
-            width: '100%',
-            height: Layout.window.height / 4,
-            color: 'rgba(255, 255, 255, 0)',
-            marginTop: 12,
-            zIndex: 100,
-          }}
+          style={styles.hiddenTextInput}
           value={value}
           onKeyPress={onKeyPress}
           onChangeText={onChangeText}
@@ -82,36 +74,20 @@ export default React.memo(
         />
         <ScrollView
           ref={scrollViewRef as React.MutableRefObject<ScrollView>}
-          style={{
-            width: '100%',
-            position: 'absolute',
-            top: 17,
-            height: Layout.window.height / 4,
-          }}>
-          <Text style={{ color: 'white' }}>
-            {/* {value.replace(/token/g, '')} */}
-            {/* {value} */}
+          style={styles.textScrollView}>
+          <Text style={{ color: 'white', paddingTop: 0 }}>
             {textChunks.map((val, i) => {
               if (val.type === 'text') {
                 return <Text key={i}>{val.value} </Text>;
               }
               return (
-                <Text key={i} style={{ color: '#7ABDED' }}>
+                <Text key={i} style={{ color: Colors.userTag }}>
                   {val.value}{' '}
                 </Text>
               );
             })}
           </Text>
         </ScrollView>
-        {/* <TextInput
-          style={{ height: 0, opacity: 0 }}
-          value={value}
-          onChangeText={onChangeText}
-          onSelectionChange={onSelectionChange}
-          autoCorrect={false}
-          multiline
-          editable={false}
-        /> */}
       </View>
     );
   },
@@ -122,3 +98,20 @@ export default React.memo(
     return true;
   },
 );
+
+const styles = StyleSheet.create({
+  hiddenTextInput: {
+    width: '100%',
+    height: Layout.window.height / 4,
+    color: 'rgba(255, 255, 255, 0)',
+    marginTop: 12,
+    paddingTop: 0,
+    zIndex: 100,
+  },
+  textScrollView: {
+    width: '100%',
+    position: 'absolute',
+    top: 12,
+    height: Layout.window.height / 4,
+  },
+});

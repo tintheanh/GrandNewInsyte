@@ -8,7 +8,8 @@ import {
   FETCH_NEW_USER_RESULTS_STARTED,
   FETCH_NEW_USER_RESULTS_SUCCESS,
   SET_SELECTED_USER_RESULTS,
-  CLEAR,
+  CLEAR_BUT_KEEP_SELECTED,
+  CLEAR_ALL,
   TagState,
   TagAction,
 } from './types';
@@ -108,7 +109,7 @@ export default function tagReducer(
       newState.createPost.selected = action.payload as Array<string>;
       return newState;
     }
-    case CLEAR: {
+    case CLEAR_BUT_KEEP_SELECTED: {
       return {
         createPost: {
           loading: false,
@@ -116,6 +117,17 @@ export default function tagReducer(
           lastVisible: null,
           error: null,
           selected: [...state.createPost.selected],
+        },
+      };
+    }
+    case CLEAR_ALL: {
+      return {
+        createPost: {
+          loading: false,
+          users: [],
+          lastVisible: null,
+          error: null,
+          selected: [],
         },
       };
     }

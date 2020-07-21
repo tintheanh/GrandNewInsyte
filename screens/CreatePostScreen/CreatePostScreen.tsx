@@ -20,14 +20,12 @@ import {
 } from './private_components';
 import { delay } from '../../utils/functions';
 import { createPost } from '../../redux/posts/actions';
-import { clear, setSelectedUserResults } from '../../redux/tag/actions';
-import { Colors } from '../../constants';
-
-// const DismissKeyboard = ({ children }: any): JSX.Element => (
-//   <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-//     {children}
-//   </TouchableWithoutFeedback>
-// );
+import {
+  clearButKeepSelected,
+  setSelectedUserResults,
+  clearAll,
+} from '../../redux/tag/actions';
+import { Colors, tokenForTag } from '../../constants';
 
 interface CreatePostScreenState {
   post: {
@@ -40,13 +38,13 @@ interface CreatePostScreenState {
       width: number;
       height: number;
     }>;
-    userTags: Array<{ id: string; username: string }>;
+    taggedUsers: Array<{ id: string; username: string }>;
   };
-  selection: any;
-  tagIndex: number;
+  currentTextInputSelection: { start: number; end: number } | null;
+  cursorPositionWhenTagIsActivated: number;
   keyboardOffset: number;
-  tagListPosition: number;
-  tagQuery: string;
+  userResultListYCoordinate: number;
+  searchQuery: string;
 }
 
 class CreatePostScreen extends Component<any, CreatePostScreenState> {
@@ -58,14 +56,16 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       privacy: 'public' as 'public',
       caption: '',
       media: [],
-      userTags: [],
+      taggedUsers: [],
     },
-    selection: null,
-    tagIndex: -1,
+    currentTextInputSelection: null,
+    cursorPositionWhenTagIsActivated: -1,
     keyboardOffset: 0,
-    tagListPosition: 0,
-    tagQuery: '',
+    userResultListYCoordinate: 0,
+    searchQuery: '',
   };
+
+  /* ------------- get keyboard position stuff ------------ */
 
   componentDidMount() {
     this.keyboardDidShowListener = Keyboard.addListener(
@@ -92,9 +92,32 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   _keyboardDidHide = () => {
     this.setState({
       keyboardOffset: 0,
-      tagIndex: -1,
+      cursorPositionWhenTagIsActivated: -1,
     });
   };
+
+  /* ----------- end get keyboard position stuff ---------- */
+
+  /* ---------------- TextInput helps stuff --------------- */
+
+  handleCaptionSelectionChange = ({ nativeEvent }: any) => {
+    const newState = { ...this.state };
+    const { selection } = nativeEvent;
+    newState.currentTextInputSelection = selection;
+    this.setState(newState);
+  };
+
+  getNewlyEnteredLetters = (): string => {
+    const { currentTextInputSelection } = this.state;
+    const { caption } = this.state.post;
+    if (currentTextInputSelection === null) {
+      return caption[caption.length - 1];
+    }
+    const { start, end } = currentTextInputSelection;
+    return start === end ? caption[start - 1] : caption[caption.length - 1];
+  };
+
+  /* -------------- end TextInput helps stuff ------------- */
 
   setPrivacy = () => {
     Alert.alert(
@@ -136,111 +159,99 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
 
   setCaption = async (text: string) => {
     // set user search query when tagging is activated
-    if (this.state.tagIndex !== -1) {
-      const newState2 = { ...this.state };
-      newState2.tagQuery = text.slice(
-        this.state.tagIndex,
-        this.state.selection.start,
+    if (this.state.cursorPositionWhenTagIsActivated !== -1) {
+      const newState = { ...this.state };
+      const { cursorPositionWhenTagIsActivated } = this.state;
+      const { start } = this.state.currentTextInputSelection!;
+      newState.searchQuery = text.slice(
+        cursorPositionWhenTagIsActivated,
+        start,
       );
-      newState2.post.caption = text;
-      await this.setState(newState2);
-      // console.log('out', this.state.tagQuery);
+      newState.post.caption = text;
+      await this.setState(newState);
     }
-
     const newState = { ...this.state };
-    const { start } = this.state.selection;
+    const { start } = this.state.currentTextInputSelection!;
     newState.post.caption = text;
-    await this.setState(newState, async () => {
-      const newly = this.getNewlyEnteredLetters();
+    await this.setState(newState, () => {
+      const newEnteredChar = this.getNewlyEnteredLetters();
       if (
-        newly === '@' &&
+        newEnteredChar === '@' &&
         (start === 1 || text[start - 2] === ' ' || text[start - 2] === '\n')
       ) {
         // activate tagging
-        const newState2 = { ...this.state };
-        newState2.tagIndex = start;
-        await this.setState(newState2);
+        const innerNewState = { ...this.state };
+        innerNewState.cursorPositionWhenTagIsActivated = start;
+        this.setState(innerNewState);
       } else if (
-        newly === ' ' ||
-        (this.state.tagIndex !== -1 &&
-          (text.slice(this.state.tagIndex, start).includes(' ') ||
-            start < this.state.tagIndex))
+        newEnteredChar === ' ' ||
+        (this.state.cursorPositionWhenTagIsActivated !== -1 &&
+          (text
+            .slice(this.state.cursorPositionWhenTagIsActivated, start)
+            .includes(' ') ||
+            start < this.state.cursorPositionWhenTagIsActivated))
       ) {
         // deactivate tagging
-        this.props.onClearTag();
-        const newState2 = { ...this.state };
-        newState2.tagIndex = -1;
-        await this.setState(newState2);
+        this.props.onClearButKeepSelected();
+        const innerNewState = { ...this.state };
+        innerNewState.cursorPositionWhenTagIsActivated = -1;
+        this.setState(innerNewState);
       }
     });
   };
 
-  setUserTags = ({ id, username }: { id: string; username: string }) => {
+  tagUser = ({ id, username }: { id: string; username: string }) => {
     const newState = { ...this.state };
-    const { start } = newState.selection;
-    const userTags = [...this.state.post.userTags];
+    const { start } = newState.currentTextInputSelection!;
+    const taggedUsers = [...this.state.post.taggedUsers];
     const currentCaption = this.state.post.caption;
-    const newCap =
-      currentCaption.slice(0, start - this.state.tagQuery.length) +
+
+    // insert user result with token to current caption
+    const newCaption =
+      currentCaption.slice(0, start - this.state.searchQuery.length) +
       username +
-      '\u200B' +
+      tokenForTag +
       ' ' +
       currentCaption.slice(start);
 
-    // console.log(newCap);
-    newState.post.caption = newCap;
+    newState.post.caption = newCaption;
+    taggedUsers.push({ id, username: '@' + username + tokenForTag });
+    const uids = taggedUsers.map((u) => u.id);
 
-    // console.log(newCap.includes('@ss1st\u200B'));
+    newState.post.taggedUsers = taggedUsers;
 
-    // console.log(' ' === '\u2002');
+    // clear search and deactivate tagging after done a tag
+    newState.searchQuery = '';
+    newState.cursorPositionWhenTagIsActivated = -1;
 
-    userTags.push({ id, username: '@' + username + '\u200B' });
-    const uids = userTags.map((u) => u.id);
-    newState.post.userTags = userTags;
-    newState.tagQuery = '';
-    newState.tagIndex = -1;
     this.props.onSetSelectedUserResults(uids);
     this.setState(newState);
   };
 
-  onDeleteUserTag = async () => {
-    const deleteIDs = await this.checkDeletedUserTag();
+  onDeleteTaggedUser = async () => {
+    const deleteIDs = await this.getDeletedUserTags();
     const newState = { ...this.state };
-    const newUserTags = this.state.post.userTags.filter(
+    const newUserTags = this.state.post.taggedUsers.filter(
       (user) => !deleteIDs.includes(user.id),
     );
-    newState.post.userTags = newUserTags;
+    newState.post.taggedUsers = newUserTags;
     const uids = newUserTags.map((u) => u.id);
     this.props.onSetSelectedUserResults(uids);
+    this.setState(newState);
   };
 
-  checkDeletedUserTag = async () => {
+  getDeletedUserTags = async () => {
+    // the only way is to delay because current caption
+    // might not get latest updates since setState is async
     await delay(100);
     const deleted = [];
-    const { userTags, caption } = this.state.post;
-    for (const tag of userTags) {
+    const { taggedUsers, caption } = this.state.post;
+    for (const tag of taggedUsers) {
       if (!caption.includes(tag.username)) {
         deleted.push(tag.id);
       }
     }
     return deleted;
-  };
-
-  handleCaptionSelectionChange = (event: any) => {
-    const newState = { ...this.state };
-    const { selection } = event.nativeEvent;
-    newState.selection = selection;
-    this.setState(newState);
-  };
-
-  getNewlyEnteredLetters = (): string => {
-    const { selection } = this.state;
-    const { caption } = this.state.post;
-    if (selection === null) {
-      return caption[caption.length - 1];
-    }
-    const { start, end } = selection;
-    return start === end ? caption[start - 1] : caption[caption.length - 1];
   };
 
   onGoback = () => {
@@ -250,7 +261,10 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       [
         {
           text: 'Discard',
-          onPress: () => this.props.navigation.goBack(),
+          onPress: () => {
+            this.props.onClearAll();
+            this.props.navigation.goBack();
+          },
         },
 
         {
@@ -261,6 +275,8 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       { cancelable: true },
     );
   };
+
+  /* --------------------- media stuff -------------------- */
 
   pickMedia = async () => {
     try {
@@ -349,28 +365,34 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     }
   };
 
+  /* ------------------- end media stuff ------------------ */
+
   performSubmitPost = () => {
     const { post } = this.state;
     if (post.caption === '' && post.media.length === 0) {
       return alertDialog('Your post cannot be empty.');
     }
+    this.props.onCreatePost(post, this.props.navigation.goBack);
     // console.log(post.caption);
     // console.log(post.caption.match(/@([^\u200B]*)\u200B/g));
     // const replaced = post.caption.replace(/@([^\u200B]*)\u200B/g, '@test');
     // console.log(replaced);
     // this.props.onCreatePost(post, this.props.navigation.goBack);
-    let caption = post.caption;
+    // let caption = post.caption;
 
-    const matches = post.caption.match(/@([^\u200B][^\n| ]*)\u200B/g);
-    // let replaced = '';
-    // console.log(matches);
-    if (matches) {
-      for (const m of matches) {
-        // console.log(m);
-        caption = caption.replace(m, 'test');
-      }
-    }
-    console.log(caption);
+    // const matches = post.caption.match(/@([^\u200B][^\n| ]*)\u200B/g);
+    // // let replaced = '';
+    // // console.log(matches);
+    // const taggedUsers = post.taggedUsers.map((u) => u.username);
+    // if (matches) {
+    //   for (const m of matches) {
+    //     // console.log(m);
+    //     if (taggedUsers.includes(m)) {
+    //       caption = caption.replace(m, 'test');
+    //     }
+    //   }
+    // }
+    // console.log(caption);
   };
 
   render() {
@@ -408,23 +430,27 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
           <LocationSelection />
           <TextPostInput
             value={post.caption}
-            userTags={post.userTags.map((u) => u.username)}
+            taggedUsers={post.taggedUsers.map((u) => u.username)}
             onChangeText={this.setCaption}
-            onDeleteHandle={this.onDeleteUserTag}
+            onDeleteHandle={this.onDeleteTaggedUser}
             onSelectionChange={this.handleCaptionSelectionChange}
           />
-          {this.state.tagIndex !== -1 ? (
+          {this.state.cursorPositionWhenTagIsActivated !== -1 ? (
             <View
               style={{
-                height: this.state.keyboardOffset - this.state.tagListPosition,
+                height:
+                  this.state.keyboardOffset -
+                  this.state.userResultListYCoordinate,
                 marginTop: 10,
               }}
               onLayout={({ nativeEvent }) =>
-                this.setState({ tagListPosition: nativeEvent.layout.y })
+                this.setState({
+                  userResultListYCoordinate: nativeEvent.layout.y,
+                })
               }>
               <CreatePostUserResultList
-                tagQuery={this.state.tagQuery}
-                onSelectUserResult={this.setUserTags}
+                searchQuery={this.state.searchQuery}
+                onSelectUserResult={this.tagUser}
               />
             </View>
           ) : (
@@ -447,7 +473,8 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
 
 const mapDisPatchToProps = {
   onCreatePost: createPost,
-  onClearTag: clear,
+  onClearButKeepSelected: clearButKeepSelected,
+  onClearAll: clearAll,
   onSetSelectedUserResults: setSelectedUserResults,
 };
 

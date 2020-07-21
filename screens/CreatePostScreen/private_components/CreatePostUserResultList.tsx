@@ -11,11 +11,11 @@ import {
 import { AppState } from '../../../redux/store';
 
 interface CreatePostUserResultListProps {
-  tagQuery: string;
+  searchQuery: string;
   userTags: Array<UserResult>;
   loading: boolean;
-  onFetchUserResults: (tagQuery: string) => void;
-  onFetchNewUserResults: (tagQuery: string) => void;
+  onFetchUserResults: (searchQuery: string) => void;
+  onFetchNewUserResults: (searchQuery: string) => void;
   onSelectUserResult: ({
     id,
     username,
@@ -38,7 +38,7 @@ class CreatePostUserResultList extends Component<
     // if (!checkUserResultListChanged(this.props.userTags, nextProps.userTags)) {
     //   return false;
     // }
-    if (this.props.tagQuery !== nextProps.tagQuery) {
+    if (this.props.searchQuery !== nextProps.searchQuery) {
       return true;
     }
     if (this.props.loading !== nextProps.loading) {
@@ -51,31 +51,31 @@ class CreatePostUserResultList extends Component<
   }
 
   componentDidMount() {
-    this.props.onFetchNewUserResults(this.props.tagQuery);
+    this.props.onFetchNewUserResults(this.props.searchQuery);
   }
 
   componentDidUpdate(prevProps: CreatePostUserResultListProps) {
     if (this.timeout) {
       clearTimeout(this.timeout);
     }
-    // console.log('update', this.props.tagQuery);
+    // console.log('update', this.props.searchQuery);
     if (
-      this.props.tagQuery !== prevProps.tagQuery &&
+      this.props.searchQuery !== prevProps.searchQuery &&
       this.props.loading === false &&
       prevProps.loading === false
     ) {
       this.timeout = setTimeout(() => {
-        this.props.onFetchNewUserResults(this.props.tagQuery);
+        this.props.onFetchNewUserResults(this.props.searchQuery);
       }, 500);
     }
   }
 
   performFetchMoreUserResults = () => {
-    this.props.onFetchUserResults(this.props.tagQuery);
+    this.props.onFetchUserResults(this.props.searchQuery);
   };
 
   render() {
-    const { loading, userTags, tagQuery, onSelectUserResult } = this.props;
+    const { loading, userTags, searchQuery, onSelectUserResult } = this.props;
     // console.log(userTags);
     if (loading && userTags.length === 0) {
       return (
@@ -85,7 +85,7 @@ class CreatePostUserResultList extends Component<
         </View>
       );
     }
-    if (userTags.length === 0 || tagQuery === '') {
+    if (userTags.length === 0 || searchQuery === '') {
       return (
         <View
           style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -100,7 +100,7 @@ class CreatePostUserResultList extends Component<
         card={UserResultCard as React.ReactNode}
         onEndReached={this.performFetchMoreUserResults}
         initialNumToRender={5}
-        onEndReachedThreshold={0.04}
+        onEndReachedThreshold={0.05}
         checkChangesToUpdate={checkUserResultListChanged}
         maxToRenderPerBatch={undefined}
         windowSize={undefined}

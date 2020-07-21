@@ -12,7 +12,7 @@ import {
   FirebaseFirestoreTypes,
 } from '../config';
 import { Post, UserResult } from '../models';
-import { Colors } from '../constants';
+import { Colors, tokenForTag, separatorForTag } from '../constants';
 
 const alertDialog = (alertText: string) => {
   Alert.alert(
@@ -130,22 +130,48 @@ const wrapPostCaption = (caption: string) => {
   return caption.substr(0, caption.lastIndexOf(' ', maxLen));
 };
 
-const generateCaptionTextArray = (source: string) => {
-  const uniqueSeperator =
-    'Lk,dm9kb_"vor{sH{gT-F&sq-$)g&j1`$zj{*vEPBNeDhV3=>mhM7Lj:-:":O#z';
+// const generateCaptionTextArray = (source: string) => {
+//   const uniqueSeperator =
+//     'Lk,dm9kb_"vor{sH{gT-F&sq-$)g&j1`$zj{*vEPBNeDhV3=>mhM7Lj:-:":O#z';
 
-  const res = URI.withinString(source, function (url) {
-    return uniqueSeperator + url + uniqueSeperator;
-  });
-  const splited = res.split(uniqueSeperator).filter((str) => str !== '');
-  const fin = splited.map((text) => {
-    if (checkURL(text)) {
-      return { type: 'url', value: text };
+//   const res = URI.withinString(source, function (url) {
+//     return uniqueSeperator + url + uniqueSeperator;
+//   });
+//   const splited = res.split(uniqueSeperator).filter((str) => str !== '');
+//   const fin = splited.map((text) => {
+//     if (checkURL(text)) {
+//       return { type: 'url', value: text };
+//     }
+//     return { type: 'text', value: text };
+//   });
+
+//   return fin;
+// };
+
+const generateCaptionWithTagsAndUrls = (source: string) => {
+  const splitted = source.split(/(?=\n)| /);
+  const chunks = splitted.map((str) => {
+    if (
+      str.includes('@') &&
+      str.includes(tokenForTag) &&
+      str.includes(separatorForTag)
+    ) {
+      const noLinkSymbol = str.split(separatorForTag);
+
+      return {
+        type: 'tag',
+        value: {
+          text: noLinkSymbol[0],
+          uid: noLinkSymbol[1].replace(tokenForTag, ''),
+        },
+      };
     }
-    return { type: 'text', value: text };
+    if (checkURL(str)) {
+      return { type: 'url', value: str };
+    }
+    return { type: 'text', value: str };
   });
-
-  return fin;
+  return chunks;
 };
 
 const openURL = (url: string) => async () => {
@@ -348,6 +374,50 @@ const docFStoPostArray = async (
           avatar: userRef.data()!.avatar,
         };
       }
+      let captionWithTags = postData!.caption;
+      if (postData!.tagged_users.length > 0) {
+        const taggedUsers: Array<{
+          id: string;
+          idWithToken: string;
+          username: string;
+        }> = [];
+        for (const tagID of postData!.tagged_users) {
+          try {
+            const uTagRef = await fsDB.collection('users').doc(tagID).get();
+            if (!uTagRef.exists) {
+              continue;
+            }
+            const taggedUser = {
+              id: tagID,
+              idWithToken: `@${tagID}${tokenForTag}`,
+              username: uTagRef.data()!.username,
+            };
+            taggedUsers.push(taggedUser);
+          } catch (err) {
+            continue;
+          }
+        }
+
+        const regex = new RegExp(
+          `@([^${tokenForTag}][^\n| ]*)${tokenForTag}`,
+          'g',
+        );
+
+        const matches = postData!.caption.match(regex);
+        if (matches) {
+          for (const m of matches) {
+            const index = taggedUsers.findIndex((u) =>
+              u.idWithToken.includes(m),
+            );
+            if (index !== -1) {
+              captionWithTags = captionWithTags.replace(
+                m,
+                `@${taggedUsers[index].username}${separatorForTag}${taggedUsers[index].id}${tokenForTag}`,
+              );
+            }
+          }
+        }
+      }
 
       let isLiked = false;
       if (currentUser) {
@@ -369,12 +439,13 @@ const docFStoPostArray = async (
           username: userData.username,
           avatar: userData.avatar,
         },
-        caption: postData!.caption,
+        caption: captionWithTags,
         datePosted: postData!.date_posted,
         timeLabel: convertTime(postData!.date_posted),
         likes: postData!.likes,
         comments: postData!.comments,
         media: postData!.media,
+        taggedUsers: postData!.tagged_users,
         isLiked,
         privacy: postData!.privacy,
       };
@@ -431,6 +502,51 @@ const docFBtoPostArray = async (
         };
       }
 
+      let captionWithTags = postData!.caption;
+      if (postData!.tagged_users.length > 0) {
+        const taggedUsers: Array<{
+          id: string;
+          idWithToken: string;
+          username: string;
+        }> = [];
+        for (const tagID of postData!.tagged_users) {
+          try {
+            const uTagRef = await fsDB.collection('users').doc(tagID).get();
+            if (!uTagRef.exists) {
+              continue;
+            }
+            const taggedUser = {
+              id: tagID,
+              idWithToken: `@${tagID}${tokenForTag}`,
+              username: uTagRef.data()!.username,
+            };
+            taggedUsers.push(taggedUser);
+          } catch (err) {
+            continue;
+          }
+        }
+
+        const regex = new RegExp(
+          `@([^${tokenForTag}][^\n| ]*)${tokenForTag}`,
+          'g',
+        );
+
+        const matches = postData!.caption.match(regex);
+        if (matches) {
+          for (const m of matches) {
+            const index = taggedUsers.findIndex((u) =>
+              u.idWithToken.includes(m),
+            );
+            if (index !== -1) {
+              captionWithTags = captionWithTags.replace(
+                m,
+                `@${taggedUsers[index].username}${separatorForTag}${taggedUsers[index].id}${tokenForTag}`,
+              );
+            }
+          }
+        }
+      }
+
       let isLiked = false;
       if (currentUser) {
         const likeRef = await fsDB
@@ -451,13 +567,14 @@ const docFBtoPostArray = async (
           username: userData.username,
           avatar: userData.avatar,
         },
-        caption: postData!.caption,
+        caption: captionWithTags,
         datePosted: postData!.date_posted,
         timeLabel: convertTime(postData!.date_posted),
         likes: postData!.likes,
         comments: postData!.comments,
         media: postData!.media,
         isLiked,
+        taggedUsers: postData!.tagged_users,
         privacy: postData!.privacy,
       };
       newPosts.push(post);
@@ -588,8 +705,8 @@ export {
   removeDuplicatesFromPostsArray,
   removeDuplicatesFromUserResultsArray,
   wrapPostCaption,
-  generateCaptionTextArray,
   checkURL,
   openURL,
   generateSubstrForUsername,
+  generateCaptionWithTagsAndUrls,
 };

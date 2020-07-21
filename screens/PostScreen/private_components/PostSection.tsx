@@ -17,7 +17,7 @@ import { Carousel } from '../../../components';
 import {
   convertNumber,
   convertTime,
-  generateCaptionTextArray,
+  generateCaptionWithTagsAndUrls,
   openURL,
 } from '../../../utils/functions';
 
@@ -84,18 +84,34 @@ export default function PostSection({
       </View>
       {/* <Text style={styles.caption}>{caption}</Text> */}
       <Text style={styles.caption}>
-        {generateCaptionTextArray(caption).map((text, i) => {
-          if (text.type === 'url') {
+        {generateCaptionWithTagsAndUrls(caption).map((element, i) => {
+          if (element.type === 'tag') {
+            const textChunk = element as {
+              value: { text: string; uid: string };
+            };
+            return (
+              <Text
+                key={i}
+                style={{ color: Colors.userTag }}
+                onPress={() => console.log(textChunk.value.uid)}>
+                {textChunk.value.text}{' '}
+              </Text>
+            );
+          }
+          if (element.type === 'url') {
+            const textChunk = element as {
+              value: string;
+            };
             return (
               <Text
                 key={i}
                 style={{ color: Colors.tintColor }}
-                onPress={openURL(text.value)}>
-                {text.value}
+                onPress={openURL(textChunk.value)}>
+                {textChunk.value}
               </Text>
             );
           }
-          return <Text key={i}>{text.value}</Text>;
+          return <Text key={i}>{element.value} </Text>;
         })}
       </Text>
       {media.length ? <Carousel items={media} shouldPlayMedia /> : null}

@@ -17,6 +17,7 @@ export default interface Post {
     avatar: string;
     username: string;
   };
+  taggedUsers: Array<string>;
   isLiked: boolean;
   privacy: 'public' | 'followers' | 'private';
 }

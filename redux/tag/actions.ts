@@ -8,7 +8,8 @@ import {
   FETCH_NEW_USER_RESULTS_STARTED,
   FETCH_NEW_USER_RESULTS_SUCCESS,
   SET_SELECTED_USER_RESULTS,
-  CLEAR,
+  CLEAR_BUT_KEEP_SELECTED,
+  CLEAR_ALL,
   TagAction,
 } from './types';
 import { delay } from '../../utils/functions';
@@ -138,9 +139,18 @@ export const fetchUserResults = (tagQuery: string) => async (
   }
 };
 
-export const clear = () => (dispatch: (action: TagAction) => void) => {
+export const clearButKeepSelected = () => (
+  dispatch: (action: TagAction) => void,
+) => {
   dispatch({
-    type: CLEAR,
+    type: CLEAR_BUT_KEEP_SELECTED,
+    payload: null,
+  });
+};
+
+export const clearAll = () => (dispatch: (action: TagAction) => void) => {
+  dispatch({
+    type: CLEAR_ALL,
     payload: null,
   });
 };
