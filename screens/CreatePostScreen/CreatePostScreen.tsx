@@ -361,8 +361,9 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     // this.props.onCreatePost(post, this.props.navigation.goBack);
     let caption = post.caption;
 
-    const matches = post.caption.match(/@([^\u200B][^\n]*)\u200B/g);
+    const matches = post.caption.match(/@([^\u200B][^\n| ]*)\u200B/g);
     // let replaced = '';
+    // console.log(matches);
     if (matches) {
       for (const m of matches) {
         // console.log(m);
