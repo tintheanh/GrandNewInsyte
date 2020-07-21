@@ -10,6 +10,7 @@ export const FETCH_NEW_USER_RESULTS_SUCCESS = 'FETCH_NEW_USER_RESULTS_SUCCESS';
 export const FETCH_NEW_USER_RESULTS_FAILURE = 'FETCH_NEW_USER_RESULTS_FAILURE';
 export const FETCH_NEW_USER_RESULTS_END = 'FETCH_NEW_USER_RESULTS_END';
 
+export const SET_SELECTED_USER_RESULTS = 'SET_SELECTED_USER_RESULTS';
 export const CLEAR = 'CLEAR';
 
 export interface TagAction {
@@ -24,6 +25,7 @@ export interface TagAction {
         }>;
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
       }
+    | Array<string>
     | Error
     | null;
 }
@@ -37,6 +39,7 @@ export interface TagState {
       username: string;
       name: string;
     }>;
+    selected: Array<string>;
     lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
     error: Error | null;
   };

@@ -1,15 +1,6 @@
 import React, { Component } from 'react';
-import {
-  View,
-  Text,
-  SafeAreaView,
-  FlatList,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { connect } from 'react-redux';
-import { Colors } from '../../../constants';
 import { checkUserResultListChanged } from '../../../utils/functions';
 import { List, UserResultCard } from '../../../components';
 import { UserResult } from '../../../models';
@@ -25,11 +16,24 @@ interface CreatePostUserResultListProps {
   loading: boolean;
   onFetchUserResults: (tagQuery: string) => void;
   onFetchNewUserResults: (tagQuery: string) => void;
+  onSelectUserResult: ({
+    id,
+    username,
+  }: {
+    id: string;
+    username: string;
+  }) => void;
 }
 
 class CreatePostUserResultList extends Component<
   CreatePostUserResultListProps
 > {
+  private timeout: NodeJS.Timeout | null;
+  constructor(props: CreatePostUserResultListProps) {
+    super(props);
+    this.timeout = null;
+  }
+
   shouldComponentUpdate(nextProps: CreatePostUserResultListProps) {
     // if (!checkUserResultListChanged(this.props.userTags, nextProps.userTags)) {
     //   return false;
@@ -51,25 +55,28 @@ class CreatePostUserResultList extends Component<
   }
 
   componentDidUpdate(prevProps: CreatePostUserResultListProps) {
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+    }
     // console.log('update', this.props.tagQuery);
     if (
       this.props.tagQuery !== prevProps.tagQuery &&
       this.props.loading === false &&
       prevProps.loading === false
     ) {
-      this.props.onFetchNewUserResults(this.props.tagQuery);
+      this.timeout = setTimeout(() => {
+        this.props.onFetchNewUserResults(this.props.tagQuery);
+      }, 500);
     }
   }
 
-  performFetchUserTag = () => {
+  performFetchMoreUserResults = () => {
     this.props.onFetchUserResults(this.props.tagQuery);
   };
 
   render() {
-    // console.log('render');
-    // console.log(this.props.tagQuery);
-    const { loading, userTags, tagQuery } = this.props;
-    console.log(userTags);
+    const { loading, userTags, tagQuery, onSelectUserResult } = this.props;
+    // console.log(userTags);
     if (loading && userTags.length === 0) {
       return (
         <View
@@ -91,12 +98,14 @@ class CreatePostUserResultList extends Component<
       <List
         data={userTags}
         card={UserResultCard as React.ReactNode}
-        onEndReached={this.performFetchUserTag}
+        onEndReached={this.performFetchMoreUserResults}
         initialNumToRender={5}
-        onEndReachedThreshold={0.1}
+        onEndReachedThreshold={0.04}
         checkChangesToUpdate={checkUserResultListChanged}
         maxToRenderPerBatch={undefined}
         windowSize={undefined}
+        keyboardShouldPersistTaps="always"
+        onSelectCard={onSelectUserResult}
       />
     );
   }

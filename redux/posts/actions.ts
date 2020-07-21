@@ -1181,7 +1181,7 @@ export const unlikePost = (postID: string) => async (
   }
 };
 
-export const clear = () => async (dispatch: (action: PostAction) => void) => {
+export const clear = () => (dispatch: (action: PostAction) => void) => {
   dispatch({
     type: CLEAR,
     payload: null,

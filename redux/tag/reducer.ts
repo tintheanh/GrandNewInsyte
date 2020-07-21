@@ -7,6 +7,7 @@ import {
   FETCH_NEW_USER_RESULTS_FAILURE,
   FETCH_NEW_USER_RESULTS_STARTED,
   FETCH_NEW_USER_RESULTS_SUCCESS,
+  SET_SELECTED_USER_RESULTS,
   CLEAR,
   TagState,
   TagAction,
@@ -20,6 +21,7 @@ const initialState: TagState = {
     users: [],
     lastVisible: null,
     error: null,
+    selected: [],
   },
 };
 
@@ -48,11 +50,15 @@ export default function tagReducer(
       };
       const users = [...state.createPost.users];
       const newUsers = users.concat(payload.users);
-      const filterDuplicates = removeDuplicatesFromUserResultsArray(newUsers);
+      const removedDuplicates = removeDuplicatesFromUserResultsArray(newUsers);
+      const filteredSelected = removedDuplicates.filter(
+        (result) => !newState.createPost.selected.includes(result.id),
+      );
+
       newState.createPost.error = null;
       newState.createPost.loading = false;
       newState.createPost.lastVisible = payload.lastVisible;
-      newState.createPost.users = filterDuplicates;
+      newState.createPost.users = filteredSelected;
       return newState;
     }
     case FETCH_NEW_USER_RESULTS_SUCCESS: {
@@ -66,13 +72,16 @@ export default function tagReducer(
         }>;
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
       };
-      const filterDuplicates = removeDuplicatesFromUserResultsArray(
+      const removedDuplicates = removeDuplicatesFromUserResultsArray(
         payload.users,
+      );
+      const filteredSelected = removedDuplicates.filter(
+        (result) => !newState.createPost.selected.includes(result.id),
       );
       newState.createPost.error = null;
       newState.createPost.loading = false;
       newState.createPost.lastVisible = payload.lastVisible;
-      newState.createPost.users = filterDuplicates;
+      newState.createPost.users = filteredSelected;
       return newState;
     }
     case FETCH_USER_RESULTS_END: {
@@ -94,6 +103,11 @@ export default function tagReducer(
       newState.createPost.users = [];
       return newState;
     }
+    case SET_SELECTED_USER_RESULTS: {
+      const newState = { ...state };
+      newState.createPost.selected = action.payload as Array<string>;
+      return newState;
+    }
     case CLEAR: {
       return {
         createPost: {
@@ -101,6 +115,7 @@ export default function tagReducer(
           users: [],
           lastVisible: null,
           error: null,
+          selected: [...state.createPost.selected],
         },
       };
     }

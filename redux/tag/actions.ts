@@ -7,9 +7,11 @@ import {
   FETCH_NEW_USER_RESULTS_FAILURE,
   FETCH_NEW_USER_RESULTS_STARTED,
   FETCH_NEW_USER_RESULTS_SUCCESS,
+  SET_SELECTED_USER_RESULTS,
   CLEAR,
   TagAction,
 } from './types';
+import { delay } from '../../utils/functions';
 import { fsDB, FirebaseFirestoreTypes } from '../../config';
 import { AppState } from '../store';
 
@@ -27,8 +29,8 @@ export const fetchNewUserResults = (tagQuery: string) => async (
   }
   dispatch(fetchNewUserResultsStarted());
   try {
+    // await delay(500);
     const uid = user.id;
-
     const userSnapshots = await fsDB
       .collection('users')
       .doc(uid)
@@ -137,10 +139,19 @@ export const fetchUserResults = (tagQuery: string) => async (
   }
 };
 
-export const clear = () => async (dispatch: (action: TagAction) => void) => {
+export const clear = () => (dispatch: (action: TagAction) => void) => {
   dispatch({
     type: CLEAR,
     payload: null,
+  });
+};
+
+export const setSelectedUserResults = (uids: Array<string>) => (
+  dispatch: (action: TagAction) => void,
+) => {
+  dispatch({
+    type: SET_SELECTED_USER_RESULTS,
+    payload: uids,
   });
 };
 

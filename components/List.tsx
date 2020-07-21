@@ -18,10 +18,12 @@ interface ListProps {
   initialNumToRender?: number;
   maxToRenderPerBatch?: number;
   windowSize?: number;
+  onSelectCard?: (arg: any) => void;
   onEndReached: () => void;
   listHeaderComponent?: JSX.Element;
   listFooterComponent?: JSX.Element;
   onEndReachedThreshold?: number;
+  keyboardShouldPersistTaps?: 'always' | 'never' | 'handled';
   checkChangesToUpdate: (
     prevProps: Array<any>,
     nextProps: Array<any>,
@@ -62,6 +64,8 @@ export default class List extends Component<ListProps> {
       card,
       onViewableItemsChanged = undefined,
       viewabilityConfig = undefined,
+      keyboardShouldPersistTaps = 'never',
+      onSelectCard,
       initialNumToRender = 1,
       maxToRenderPerBatch = 1,
       windowSize = 3,
@@ -77,7 +81,9 @@ export default class List extends Component<ListProps> {
       <SafeAreaView style={{ height: '100%' }}>
         <FlatList
           data={data}
-          renderItem={({ item, index }) => <Card index={index} data={item} />}
+          renderItem={({ item, index }) => (
+            <Card index={index} data={item} onSelect={onSelectCard} />
+          )}
           keyExtractor={(item) => item.id}
           onViewableItemsChanged={onViewableItemsChanged}
           initialNumToRender={initialNumToRender}
@@ -89,6 +95,7 @@ export default class List extends Component<ListProps> {
           onEndReachedThreshold={onEndReachedThreshold}
           ListHeaderComponent={listHeaderComponent}
           ListFooterComponent={listFooterComponent}
+          keyboardShouldPersistTaps={keyboardShouldPersistTaps}
           refreshControl={
             onRefresh ? (
               <RefreshControl

@@ -18,8 +18,9 @@ import {
   MediaView,
   CreatePostUserResultList,
 } from './private_components';
+import { delay } from '../../utils/functions';
 import { createPost } from '../../redux/posts/actions';
-import { clear } from '../../redux/tag/actions';
+import { clear, setSelectedUserResults } from '../../redux/tag/actions';
 import { Colors } from '../../constants';
 
 // const DismissKeyboard = ({ children }: any): JSX.Element => (
@@ -39,6 +40,7 @@ interface CreatePostScreenState {
       width: number;
       height: number;
     }>;
+    userTags: Array<{ id: string; username: string }>;
   };
   selection: any;
   tagIndex: number;
@@ -56,6 +58,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       privacy: 'public' as 'public',
       caption: '',
       media: [],
+      userTags: [],
     },
     selection: null,
     tagIndex: -1,
@@ -143,17 +146,20 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       await this.setState(newState2);
       // console.log('out', this.state.tagQuery);
     }
+
     const newState = { ...this.state };
     const { start } = this.state.selection;
     newState.post.caption = text;
-    this.setState(newState, () => {
+    await this.setState(newState, async () => {
       const newly = this.getNewlyEnteredLetters();
-
-      if (newly === '@' && (start === text.length || text[start] === ' ')) {
+      if (
+        newly === '@' &&
+        (start === 1 || text[start - 2] === ' ' || text[start - 2] === '\n')
+      ) {
         // activate tagging
         const newState2 = { ...this.state };
         newState2.tagIndex = start;
-        this.setState(newState2);
+        await this.setState(newState2);
       } else if (
         newly === ' ' ||
         (this.state.tagIndex !== -1 &&
@@ -164,9 +170,60 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
         this.props.onClearTag();
         const newState2 = { ...this.state };
         newState2.tagIndex = -1;
-        this.setState(newState2);
+        await this.setState(newState2);
       }
     });
+  };
+
+  setUserTags = ({ id, username }: { id: string; username: string }) => {
+    const newState = { ...this.state };
+    const { start } = newState.selection;
+    const userTags = [...this.state.post.userTags];
+    const currentCaption = this.state.post.caption;
+    const newCap =
+      currentCaption.slice(0, start - this.state.tagQuery.length) +
+      username +
+      '\u200B' +
+      ' ' +
+      currentCaption.slice(start);
+
+    // console.log(newCap);
+    newState.post.caption = newCap;
+
+    // console.log(newCap.includes('@ss1st\u200B'));
+
+    // console.log(' ' === '\u2002');
+
+    userTags.push({ id, username: username + '\u200B' });
+    const uids = userTags.map((u) => u.id);
+    newState.post.userTags = userTags;
+    newState.tagQuery = '';
+    newState.tagIndex = -1;
+    this.props.onSetSelectedUserResults(uids);
+    this.setState(newState);
+  };
+
+  onDeleteUserTag = async () => {
+    const deleteIDs = await this.checkDeletedUserTag();
+    const newState = { ...this.state };
+    const newUserTags = this.state.post.userTags.filter(
+      (user) => !deleteIDs.includes(user.id),
+    );
+    newState.post.userTags = newUserTags;
+    const uids = newUserTags.map((u) => u.id);
+    this.props.onSetSelectedUserResults(uids);
+  };
+
+  checkDeletedUserTag = async () => {
+    await delay(100);
+    const deleted = [];
+    const { userTags, caption } = this.state.post;
+    for (const tag of userTags) {
+      if (!caption.includes(tag.username)) {
+        deleted.push(tag.id);
+      }
+    }
+    return deleted;
   };
 
   handleCaptionSelectionChange = (event: any) => {
@@ -336,17 +393,22 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
           <TextPostInput
             value={post.caption}
             onChangeText={this.setCaption}
+            onDeleteHandle={this.onDeleteUserTag}
             onSelectionChange={this.handleCaptionSelectionChange}
           />
           {this.state.tagIndex !== -1 ? (
             <View
               style={{
                 height: this.state.keyboardOffset - this.state.tagListPosition,
+                marginTop: 10,
               }}
               onLayout={({ nativeEvent }) =>
                 this.setState({ tagListPosition: nativeEvent.layout.y })
               }>
-              <CreatePostUserResultList tagQuery={this.state.tagQuery} />
+              <CreatePostUserResultList
+                tagQuery={this.state.tagQuery}
+                onSelectUserResult={this.setUserTags}
+              />
             </View>
           ) : (
             <View>
@@ -369,6 +431,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
 const mapDisPatchToProps = {
   onCreatePost: createPost,
   onClearTag: clear,
+  onSetSelectedUserResults: setSelectedUserResults,
 };
 
 const styles = StyleSheet.create({
