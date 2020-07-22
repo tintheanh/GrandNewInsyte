@@ -74,6 +74,12 @@ class CreatePostUserResultList extends Component<
     this.props.onFetchUserResults(this.props.searchQuery);
   };
 
+  renderItem = ({ item, index }: { item: UserResult; index: number }) => {
+    return (
+      <UserResultCard data={item} onSelect={this.props.onSelectUserResult} />
+    );
+  };
+
   render() {
     const { loading, userTags, searchQuery, onSelectUserResult } = this.props;
     // console.log(userTags);
@@ -97,8 +103,8 @@ class CreatePostUserResultList extends Component<
     return (
       <List
         data={userTags}
-        card={UserResultCard as React.ReactNode}
         onEndReached={this.performFetchMoreUserResults}
+        renderItem={this.renderItem}
         initialNumToRender={5}
         onEndReachedThreshold={0.05}
         checkChangesToUpdate={checkUserResultListChanged}

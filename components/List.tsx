@@ -1,17 +1,15 @@
 import React, { Component } from 'react';
 import { SafeAreaView, FlatList, RefreshControl } from 'react-native';
-import { checkPostListChanged } from '../utils/functions';
 
 interface ListProps {
   data: Array<any>;
-  card: React.ComponentClass<any> | React.ReactNode;
   viewabilityConfig?: {
     minimumViewTime?: number;
     viewAreaCoveragePercentThreshold?: number;
     itemVisiblePercentThreshold?: number;
     waitForInteraction?: boolean;
   };
-  isTabFocused: boolean;
+  renderItem: ({ item, index }: { item: any; index: number }) => JSX.Element;
   onViewableItemsChanged?:
     | ((info: { viewableItems: any[]; changed: any[] }) => void)
     | null
@@ -19,7 +17,6 @@ interface ListProps {
   initialNumToRender?: number;
   maxToRenderPerBatch?: number;
   windowSize?: number;
-  onSelectCard?: (arg: any) => void;
   onEndReached: () => void;
   listHeaderComponent?: JSX.Element;
   listFooterComponent?: JSX.Element;
@@ -31,6 +28,7 @@ interface ListProps {
   ) => boolean;
   onRefresh?: () => void;
   refreshing?: boolean;
+  isFocused?: boolean;
 }
 
 export default class List extends Component<ListProps> {
@@ -41,6 +39,9 @@ export default class List extends Component<ListProps> {
     }
     // if (this.props.data.length !== nextProps.data.length) return true;
     if (this.props.checkChangesToUpdate(this.props.data, nextProps.data)) {
+      return true;
+    }
+    if (this.props.isFocused !== nextProps.isFocused) {
       return true;
     }
     return false;
@@ -62,11 +63,9 @@ export default class List extends Component<ListProps> {
   render() {
     const {
       data,
-      card,
       onViewableItemsChanged = undefined,
       viewabilityConfig = undefined,
       keyboardShouldPersistTaps = 'never',
-      onSelectCard,
       initialNumToRender = 1,
       maxToRenderPerBatch = 1,
       windowSize = 3,
@@ -74,23 +73,15 @@ export default class List extends Component<ListProps> {
       onEndReachedThreshold = 0.5,
       listFooterComponent = undefined,
       refreshing = false,
-      isTabFocused,
+      renderItem,
       onRefresh,
     } = this.props;
     // console.log(data);
-    const Card = card as React.ComponentClass<any>;
     return (
       <SafeAreaView style={{ height: '100%' }}>
         <FlatList
           data={data}
-          renderItem={({ item, index }) => (
-            <Card
-              index={index}
-              data={item}
-              onSelect={onSelectCard}
-              isTabFocused={isTabFocused}
-            />
-          )}
+          renderItem={renderItem}
           keyExtractor={(item) => item.id}
           onViewableItemsChanged={onViewableItemsChanged}
           initialNumToRender={initialNumToRender}

@@ -45,6 +45,9 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
   }
 
   shouldComponentUpdate(nextProps: HomeFollowingPostListProps) {
+    if (this.props.currentTabIndex !== nextProps.currentTabIndex) {
+      return true;
+    }
     if (
       (this.props.posts.length === 0 || nextProps.posts.length === 0) &&
       this.props.loading !== nextProps.loading
@@ -78,6 +81,17 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
     this.props.onFetchFollowingNewPosts();
   };
 
+  renderItem = ({ item, index }: { item: Post; index: number }) => {
+    const { currentTabIndex } = this.props;
+    return (
+      <HomePostCard
+        index={index}
+        data={item}
+        isTabFocused={currentTabIndex ? currentTabIndex === 1 : false}
+      />
+    );
+  };
+
   render() {
     const {
       posts,
@@ -86,8 +100,8 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
       onPullToFetchFollowingNewPosts,
       onPullToFetchFollowingHotPosts,
       pullLoading,
-      loading,
       currentTabIndex,
+      loading,
       feedChoice,
       error,
     } = this.props;
@@ -124,7 +138,7 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
         <View style={{ zIndex: 100 }}>
           <List
             data={posts}
-            card={HomePostCard as React.ReactNode}
+            renderItem={this.renderItem}
             onViewableItemsChanged={this.onViewableItemsChanged}
             viewabilityConfig={this.viewabilityConfig}
             onEndReached={
@@ -137,10 +151,10 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
                 ? onPullToFetchFollowingNewPosts
                 : onPullToFetchFollowingHotPosts
             }
-            isTabFocused={currentTabIndex ? currentTabIndex === 1 : false}
             refreshing={pullLoading}
             listHeaderComponent={<SortFollowingPostList />}
             checkChangesToUpdate={checkPostListChanged}
+            isFocused={currentTabIndex ? currentTabIndex === 1 : false}
           />
         </View>
         <View style={styles.loadingWrapper}>

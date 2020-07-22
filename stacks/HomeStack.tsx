@@ -1,12 +1,28 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
-
+import {
+  createStackNavigator,
+  HeaderBackButton,
+} from '@react-navigation/stack';
+import { connect } from 'react-redux';
 import { HomeScreen, PostScreen, ReplyScreen, UserScreen } from '../screens';
 import { Colors } from '../constants';
+import { popPostLayer } from '../redux/postComments/actions';
 
 const Stack = createStackNavigator();
 
-export default function HomeStack() {
+const mapDispatchToProps = {
+  onPopPostLayer: popPostLayer,
+};
+
+export default connect(
+  null,
+  mapDispatchToProps,
+)(function HomeStack(props: any) {
+  const goBackAndPopPostStack = (goBack: () => void, pop: () => void) => () => {
+    goBack();
+    pop();
+  };
+
   return (
     <Stack.Navigator
       initialRouteName="Home"
@@ -22,9 +38,18 @@ export default function HomeStack() {
       <Stack.Screen
         name="Post"
         component={PostScreen}
-        options={({ route }: any) => ({
+        options={({ navigation, route }: any) => ({
           title: route.params.title,
           avatar: route.params.avatar,
+          headerLeft: (headerProps) => (
+            <HeaderBackButton
+              {...headerProps}
+              onPress={goBackAndPopPostStack(
+                navigation.goBack,
+                props.onPopPostLayer,
+              )}
+            />
+          ),
         })}
       />
       <Stack.Screen
@@ -42,4 +67,4 @@ export default function HomeStack() {
       />
     </Stack.Navigator>
   );
-}
+});

@@ -32,6 +32,8 @@ export default class PostStack {
 
   isEmpty = () => this.stack.length === 0;
 
+  size = () => this.stack.length;
+
   private toArray = () => this.stack;
 
   static clone = (stackForClone: PostStack) => {

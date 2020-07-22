@@ -1,9 +1,11 @@
 import {
   PostCommentsState,
   PostCommentsAction,
-  FETCH_NEW_COMMENTS_FAILURE,
-  FETCH_NEW_COMMENTS_STARTED,
-  FETCH_NEW_COMMENTS_SUCCESS,
+  FETCH_COMMENTS_FAILURE,
+  FETCH_COMMENTS_STARTED,
+  FETCH_COMMENTS_SUCCESS,
+  PUSH_POSTLAYER,
+  POP_POSTLAYER,
 } from './types';
 import { PostStack, PostComment } from '../../models';
 
@@ -16,21 +18,19 @@ export default function postCommentsReducer(
   action: PostCommentsAction,
 ): PostCommentsState {
   switch (action.type) {
-    case FETCH_NEW_COMMENTS_STARTED: {
+    case FETCH_COMMENTS_STARTED: {
       const newState = { ...state };
-      const postLayer = {
-        postID: action.payload as string,
-        loading: true,
-        error: null,
-        lastVisible: 0,
-        commentList: [],
-      };
-      const newStack = PostStack.clone(state.stack);
-      newStack.push(postLayer);
-      newState.stack = newStack;
+      const topLayer = state.stack.top();
+      if (topLayer) {
+        const newStack = PostStack.clone(state.stack);
+        topLayer.loading = true;
+        topLayer.error = null;
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
       return newState;
     }
-    case FETCH_NEW_COMMENTS_SUCCESS: {
+    case FETCH_COMMENTS_SUCCESS: {
       const newState = { ...state };
       const payload = action.payload as {
         lastVisible: number;
@@ -40,7 +40,7 @@ export default function postCommentsReducer(
       if (topLayer) {
         const newStack = PostStack.clone(state.stack);
         topLayer.loading = false;
-        topLayer.commentList = payload.commentList;
+        topLayer.commentList = topLayer.commentList.concat(payload.commentList);
         topLayer.lastVisible = payload.lastVisible;
         topLayer.error = null;
         newStack.updateTop(topLayer);
@@ -48,7 +48,7 @@ export default function postCommentsReducer(
       }
       return newState;
     }
-    case FETCH_NEW_COMMENTS_FAILURE: {
+    case FETCH_COMMENTS_FAILURE: {
       const newState = { ...state };
       const topLayer = state.stack.top();
       if (topLayer) {
@@ -60,6 +60,27 @@ export default function postCommentsReducer(
         newStack.updateTop(topLayer);
         newState.stack = newStack;
       }
+      return newState;
+    }
+    case PUSH_POSTLAYER: {
+      const newState = { ...state };
+      const postLayer = {
+        postID: action.payload as string,
+        loading: false,
+        error: null,
+        lastVisible: 0,
+        commentList: [],
+      };
+      const newStack = PostStack.clone(state.stack);
+      newStack.push(postLayer);
+      newState.stack = newStack;
+      return newState;
+    }
+    case POP_POSTLAYER: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      newStack.pop();
+      newState.stack = newStack;
       return newState;
     }
     default:

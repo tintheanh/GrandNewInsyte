@@ -5,7 +5,8 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
 } from 'react-native';
-import { NavigationProp, NavigationState } from '@react-navigation/native';
+import { connect } from 'react-redux';
+import { useNavigation } from '@react-navigation/native';
 import {
   Colors,
   Entypo,
@@ -15,28 +16,22 @@ import {
 import Carousel from '../Carousel';
 import { UserSection, Caption, InteractionSection } from './private_components';
 import { checkPostChanged } from '../../utils/functions';
+import { pushPostLayer } from '../../redux/postComments/actions';
 import { Post } from '../../models';
 
 interface PostCardProps {
   data: Post;
   currentViewableIndex: number;
   index: number;
-  navigation: NavigationProp<
-    Record<string, object | undefined>,
-    string,
-    NavigationState,
-    {},
-    {}
-  >;
+  navigation: any;
   isTabFocused?: boolean;
-  navigateWhenClickOnPostOrComment: () => void;
-  navigateWhenClickOnUsernameOrAvatar?: () => void;
   userPostControl?: () => void;
   performLikePost: () => void;
   performUnlikePost: () => void;
+  onPushPostLayer: (postID: string) => void;
 }
 
-export default class PostCard extends Component<PostCardProps> {
+class PostCard extends Component<PostCardProps> {
   state = { shouldPlayMedia: true };
   private onBlur: () => void = () => {};
   private onFocus: () => void = () => {};
@@ -90,6 +85,23 @@ export default class PostCard extends Component<PostCardProps> {
     return false;
   }
 
+  navigateWhenClickOnPostOrComment = () => {
+    const { navigation, data, onPushPostLayer } = this.props;
+    onPushPostLayer(data.id);
+    navigation.push('Post', {
+      data,
+      title: `${data.user.username}'s post`,
+    });
+  };
+
+  navigateWhenClickOnUsernameOrAvatar = () => {
+    //   const { navigation, data } = this.props;
+    //   navigation.push('User', {
+    //     title: data.user.username,
+    //     avatar: data.user.avatar,
+    //   });
+  };
+
   // processMedia = () => this.props.data.media.map((md) => ({ url: md.url }));
 
   render() {
@@ -98,8 +110,6 @@ export default class PostCard extends Component<PostCardProps> {
       currentViewableIndex,
       index,
       isTabFocused = true,
-      navigateWhenClickOnPostOrComment,
-      navigateWhenClickOnUsernameOrAvatar = undefined,
       userPostControl = undefined,
       performLikePost,
       performUnlikePost,
@@ -146,10 +156,10 @@ export default class PostCard extends Component<PostCardProps> {
               timeLabel={data.timeLabel}
               iconPrivacy={iconPrivacy}
               navigateWhenClickOnPostOrComment={
-                navigateWhenClickOnPostOrComment
+                this.navigateWhenClickOnPostOrComment
               }
               navigateWhenClickOnUsernameOrAvatar={
-                navigateWhenClickOnUsernameOrAvatar
+                this.navigateWhenClickOnUsernameOrAvatar
               }
             />
           </View>
@@ -171,7 +181,9 @@ export default class PostCard extends Component<PostCardProps> {
         </View>
         <Caption
           caption={data.caption}
-          navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}
+          navigateWhenClickOnPostOrComment={
+            this.navigateWhenClickOnPostOrComment
+          }
         />
         {data.media.length ? (
           <Carousel
@@ -189,7 +201,9 @@ export default class PostCard extends Component<PostCardProps> {
           comments={data.comments}
           performLikePost={performLikePost}
           performUnlikePost={performUnlikePost}
-          navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}
+          navigateWhenClickOnPostOrComment={
+            this.navigateWhenClickOnPostOrComment
+          }
         />
       </View>
     );
@@ -205,3 +219,62 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
   },
 });
+
+interface HOCPostCardProps {
+  data: Post;
+  currentViewableIndex: number;
+  index: number;
+  isTabFocused?: boolean;
+  userPostControl?: () => void;
+  performLikePost: () => void;
+  performUnlikePost: () => void;
+  onPushPostLayer: (postID: string) => void;
+}
+
+const mapDispatchToProps = {
+  onPushPostLayer: pushPostLayer,
+};
+
+export default connect(
+  null,
+  mapDispatchToProps,
+)(
+  React.memo(
+    function (props: HOCPostCardProps) {
+      const navigation = useNavigation();
+      // console.log('card ', props.index);
+      return <PostCard {...props} navigation={navigation} />;
+    },
+    (prevProps, nextProps) => {
+      if (checkPostChanged(prevProps.data, nextProps.data)) {
+        return false;
+      }
+
+      if (prevProps.data.media.length === 0) {
+        return true;
+      }
+
+      if (
+        prevProps.data.media.length === 1 &&
+        prevProps.data.media[0].type === 'image'
+      ) {
+        return true;
+      }
+
+      if (prevProps.isTabFocused !== nextProps.isTabFocused) {
+        return false;
+      }
+      if (prevProps.currentViewableIndex === nextProps.currentViewableIndex) {
+        return true;
+      }
+      if (
+        prevProps.currentViewableIndex === prevProps.index ||
+        nextProps.currentViewableIndex === prevProps.index
+      ) {
+        return false;
+      }
+
+      return true;
+    },
+  ),
+);

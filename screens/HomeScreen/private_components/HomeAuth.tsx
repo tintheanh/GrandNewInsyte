@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { StyleSheet } from 'react-native';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import { TabView, TabBar } from 'react-native-tab-view';
 import { FontAwesome5 } from '../../../constants';
 import HomePublicPostList from './HomePublicPostList/HomePublicPostList';
 import HomeFollowingPostList from './HomeFollowingPostList/HomeFollowingPostList';
@@ -10,20 +10,18 @@ import Colors from '../../../constants/Colors';
 const initialLayout = { width: Layout.window.width };
 
 export default function HomeAuth() {
-  const [index, setIndex] = useState(0);
+  const [tabIndex, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'first', title: 'First' },
     { key: 'second', title: 'Second' },
   ]);
 
-  const FirstRoute = () => <HomePublicPostList currentTabIndex={index} />;
-
-  const SecondRoute = () => <HomeFollowingPostList currentTabIndex={index} />;
-
-  const renderScene = SceneMap({
-    first: FirstRoute,
-    second: SecondRoute,
-  });
+  const renderScene = ({ route }: any) => {
+    if (route.key === 'first') {
+      return <HomePublicPostList currentTabIndex={tabIndex} />;
+    }
+    return <HomeFollowingPostList currentTabIndex={tabIndex} />;
+  };
 
   const renderLabel = ({ route, focused }: any) => {
     return route.key === 'first' ? (
@@ -58,10 +56,10 @@ export default function HomeAuth() {
   // console.log('home auth');
   return (
     <TabView
-      navigationState={{ index, routes }}
+      navigationState={{ index: tabIndex, routes }}
       renderScene={renderScene}
       renderTabBar={renderTabBar}
-      onIndexChange={setIndex}
+      onIndexChange={(index) => setIndex(index)}
       initialLayout={initialLayout}
       lazy
     />

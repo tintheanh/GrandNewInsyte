@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { Colors } from '../../constants';
 import { CommentCard } from '../../components';
 import { PostSection } from './private_components';
-import { fetchNewComments } from '../../redux/postComments/actions';
+import { fetchComments } from '../../redux/postComments/actions';
 import { AppState } from '../../redux/store';
 
 const comments = [
@@ -103,7 +103,7 @@ for (let i = 0; i < 50; i++) {
 class PostScreen extends Component<any> {
   componentDidMount() {
     const postID = this.props.route.params.data.id;
-    this.props.onFetchNewComments(postID);
+    this.props.onFetchComments(postID);
   }
 
   selectCommentFilter = () => {
@@ -204,7 +204,7 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = {
-  onFetchNewComments: fetchNewComments,
+  onFetchComments: fetchComments,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(PostScreen);
