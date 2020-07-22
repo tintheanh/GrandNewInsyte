@@ -14,6 +14,7 @@ import {
   FontAwesome5,
 } from '../../../constants';
 import { Carousel } from '../../../components';
+import SortComments from './SortComments';
 import {
   convertNumber,
   convertTime,
@@ -22,6 +23,7 @@ import {
 } from '../../../utils/functions';
 
 interface PostSectionProps {
+  id: string;
   avatar: string;
   username: string;
   datePosted: number;
@@ -37,10 +39,10 @@ interface PostSectionProps {
   likes: number;
   comments: number;
   navigateWhenClickOnUsernameOrAvatar?: () => void;
-  selectCommentFilter: () => void;
 }
 
 export default function PostSection({
+  id,
   avatar,
   username,
   datePosted,
@@ -50,10 +52,9 @@ export default function PostSection({
   likes,
   comments,
   navigateWhenClickOnUsernameOrAvatar = undefined,
-  selectCommentFilter,
 }: PostSectionProps) {
   return (
-    <View>
+    <View style={{ backgroundColor: Colors.darkColor }}>
       <View style={styles.userWrapper}>
         <TouchableWithoutFeedback onPress={navigateWhenClickOnUsernameOrAvatar}>
           <Image
@@ -135,12 +136,7 @@ export default function PostSection({
           </View>
         </View>
       </View>
-      <TouchableWithoutFeedback onPress={selectCommentFilter}>
-        <View style={styles.filterComment}>
-          <Text style={styles.filterCommentText}>Top comments </Text>
-          <AntDesign name="caretdown" size={11} color="white" />
-        </View>
-      </TouchableWithoutFeedback>
+      <SortComments postID={id} />
     </View>
   );
 }
@@ -209,18 +205,5 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginTop: 6,
     marginLeft: 2,
-  },
-  filterComment: {
-    flexDirection: 'row',
-    paddingTop: 16,
-    paddingBottom: 16,
-    marginLeft: 16,
-    alignSelf: 'flex-start',
-  },
-  filterCommentText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
   },
 });

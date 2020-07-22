@@ -9,7 +9,9 @@ export default function Avatar({ avatar }: AvatarProps) {
   return (
     <TouchableWithoutFeedback onPress={() => console.log('to user profile')}>
       <Image
-        source={{ uri: avatar }}
+        source={
+          avatar.length ? { uri: avatar } : require('../../../assets/user.png')
+        }
         defaultSource={require('../../../assets/user.png')}
         style={{
           width: 40,

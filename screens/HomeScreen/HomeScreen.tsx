@@ -54,6 +54,19 @@ class HomeScreen extends Component<any> {
     // }
 
     for (let i = 0; i < 10; i++) {
+      // const comment = {
+      //   content: faker.lorem.sentence(),
+      //   date_posted: faker.date.between('2020-07-11', '2020-07-21').getTime(),
+      //   likes: faker.random.number(100),
+      //   replies: 0,
+      //   posted_by: '9DHOf4becGfrx7fmUXPcYdqtc2I3',
+      // };
+      // await fsDB
+      //   .collection('posts')
+      //   .doc('bvPdeR0lhaVTCYsm8tNw')
+      //   .collection('comment_list')
+      //   .add(comment);
+
       // const user = {
       //   avatar: '',
       //   bio: 'test',

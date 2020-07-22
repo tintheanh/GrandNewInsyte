@@ -9,44 +9,40 @@ import {
 } from './private_components';
 
 interface CommentCardProps {
-  avatar: string;
-  username: string;
+  id: string;
+  user: {
+    id: string;
+    avatar: string;
+    username: string;
+  };
   content: string;
   datePosted: number;
   likes: number;
-  firstReply: {
-    avatar: string;
-    username: string;
-    content: string;
-    datePosted: number;
-    likes: number;
-  } | null;
-  totalReplies: number;
+  replies: number;
+  // firstReply: {
+  //   avatar: string;
+  //   username: string;
+  //   content: string;
+  //   datePosted: number;
+  //   likes: number;
+  // } | null;
 }
 
 export default class CommentCard extends PureComponent<CommentCardProps> {
   render() {
-    const {
-      avatar,
-      username,
-      content,
-      datePosted,
-      likes,
-      firstReply,
-      totalReplies,
-    } = this.props;
+    const { user, content, datePosted, likes } = this.props;
 
     return (
       <View style={styles.container}>
-        <Avatar avatar={avatar} />
+        <Avatar avatar={user.avatar} />
         <View style={{ marginLeft: 12 }}>
           <CommentSection
-            username={username}
+            username={user.username}
             datePosted={datePosted}
             content={content}
           />
           <InteractionSection likes={likes} />
-          {firstReply ? (
+          {/* {firstReply ? (
             <ReplySection
               avatar={firstReply.avatar}
               username={firstReply.username}
@@ -55,7 +51,7 @@ export default class CommentCard extends PureComponent<CommentCardProps> {
               likes={firstReply.likes}
               totalReplies={totalReplies}
             />
-          ) : null}
+          ) : null} */}
         </View>
       </View>
     );
@@ -64,6 +60,7 @@ export default class CommentCard extends PureComponent<CommentCardProps> {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: Colors.darkColor,
     flexDirection: 'row',
     flex: 1,
     width: '100%',

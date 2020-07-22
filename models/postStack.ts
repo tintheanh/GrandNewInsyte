@@ -44,14 +44,15 @@ export default class PostStack {
       const newError = postLayer.error
         ? new Error(postLayer.error.message)
         : null;
-      const clonePost = {
+      const clonedPostLayer = {
         postID: postLayer.postID,
         loading: postLayer.loading,
         lastVisible: postLayer.lastVisible,
         error: newError,
+        type: postLayer.type,
         commentList: postLayer.commentList.map((comment) => ({ ...comment })),
       };
-      newStack.push(clonePost);
+      newStack.push(clonedPostLayer);
     }
 
     return newStack;

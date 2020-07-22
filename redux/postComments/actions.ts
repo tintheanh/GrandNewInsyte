@@ -1,9 +1,14 @@
 import {
-  FETCH_COMMENTS_FAILURE,
-  FETCH_COMMENTS_STARTED,
-  FETCH_COMMENTS_SUCCESS,
-  FETCH_COMMENTS_END,
+  FETCH_NEW_COMMENTS_FAILURE,
+  FETCH_NEW_COMMENTS_STARTED,
+  FETCH_NEW_COMMENTS_SUCCESS,
+  FETCH_NEW_COMMENTS_END,
+  FETCH_TOP_COMMENTS_END,
+  FETCH_TOP_COMMENTS_FAILURE,
+  FETCH_TOP_COMMENTS_STARTED,
+  FETCH_TOP_COMMENTS_SUCCESS,
   PUSH_POSTLAYER,
+  SET_SORT_COMMENTS,
   POP_POSTLAYER,
   PostCommentsAction,
 } from './types';
@@ -12,13 +17,16 @@ import { PostComment, PostStackLayer } from '../../models';
 import { docFStoCommentArray } from '../../utils/functions';
 import { AppState } from '../store';
 
-export const fetchComments = (postID: string) => async (
+export const fetchNewComments = (postID: string) => async (
   dispatch: (action: PostCommentsAction) => void,
   getState: () => AppState,
 ) => {
-  dispatch(fetchCommentsStarted(postID));
+  dispatch(fetchNewCommentsStarted(postID));
   try {
-    console.log('fetch comments');
+    // const percent = Math.floor(Math.random() * 100);
+    // if (percent > 50) {
+    //   throw new Error('dummy error');
+    // }
     const { user } = getState().auth;
     const lastVisible = getState().postComments.stack.top()?.lastVisible;
     let currentUser;
@@ -31,7 +39,7 @@ export const fetchComments = (postID: string) => async (
     }
     let query: FirebaseFirestoreTypes.Query;
 
-    if (lastVisible === 0) {
+    if (lastVisible === null) {
       query = fsDB
         .collection('posts')
         .doc(postID)
@@ -43,15 +51,15 @@ export const fetchComments = (postID: string) => async (
         .collection('posts')
         .doc(postID)
         .collection('comment_list')
-        .where('date_posted', '<', lastVisible)
         .orderBy('date_posted')
+        .startAfter(lastVisible)
         .limit(commentsPerBatch);
     }
 
     const documentSnapshots = await query.get();
 
     if (documentSnapshots.empty) {
-      return dispatch(fetchCommentsEnd());
+      return dispatch(fetchNewCommentsEnd());
     }
 
     const comments = await docFStoCommentArray(
@@ -60,15 +68,80 @@ export const fetchComments = (postID: string) => async (
     );
 
     if (comments.length === 0) {
-      return dispatch(fetchCommentsEnd());
+      return dispatch(fetchNewCommentsEnd());
+    }
+
+    // console.log('in action', comments);
+
+    const newLastVisible =
+      documentSnapshots.docs[documentSnapshots.docs.length - 1];
+    dispatch(fetchNewCommentsSuccess(newLastVisible, comments));
+  } catch (err) {
+    console.log(err.message);
+    dispatch(fetchNewCommentsFailure(new Error('Internal server error.')));
+  }
+};
+
+export const fetchTopComments = (postID: string) => async (
+  dispatch: (action: PostCommentsAction) => void,
+  getState: () => AppState,
+) => {
+  dispatch(fetchTopCommentsStarted(postID));
+  try {
+    // const percent = Math.floor(Math.random() * 100);
+    // if (percent > 50) {
+    //   throw new Error('dummy error');
+    // }
+    const { user } = getState().auth;
+    const lastVisible = getState().postComments.stack.top()?.lastVisible;
+    let currentUser;
+    if (user) {
+      currentUser = {
+        id: user.id,
+        avatar: user.avatar,
+        username: user.username,
+      };
+    }
+    let query: FirebaseFirestoreTypes.Query;
+
+    if (lastVisible === null) {
+      query = fsDB
+        .collection('posts')
+        .doc(postID)
+        .collection('comment_list')
+        .orderBy('likes', 'desc')
+        .limit(commentsPerBatch);
+    } else {
+      query = fsDB
+        .collection('posts')
+        .doc(postID)
+        .collection('comment_list')
+        .orderBy('likes', 'desc')
+        .startAfter(lastVisible)
+        .limit(commentsPerBatch);
+    }
+
+    const documentSnapshots = await query.get();
+
+    if (documentSnapshots.empty) {
+      return dispatch(fetchTopCommentsEnd());
+    }
+
+    const comments = await docFStoCommentArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
+
+    if (comments.length === 0) {
+      return dispatch(fetchTopCommentsEnd());
     }
 
     const newLastVisible =
-      comments.length > 0 ? comments[comments.length - 1].datePosted : 0;
-    dispatch(fetchCommentsSuccess(newLastVisible, comments));
+      documentSnapshots.docs[documentSnapshots.docs.length - 1];
+    dispatch(fetchTopCommentsSuccess(newLastVisible, comments));
   } catch (err) {
     console.log(err.message);
-    dispatch(fetchCommentsFailure(new Error('Internal server error.')));
+    dispatch(fetchTopCommentsFailure(new Error('Internal server error.')));
   }
 };
 
@@ -90,25 +163,57 @@ export const popPostLayer = () => (
   });
 };
 
-const fetchCommentsStarted = (postID: string): PostCommentsAction => ({
-  type: FETCH_COMMENTS_STARTED,
+export const setSortComments = (by: 'new' | 'top') => (
+  dispatch: (action: PostCommentsAction) => void,
+) => {
+  dispatch({
+    type: SET_SORT_COMMENTS,
+    payload: by,
+  });
+};
+
+const fetchNewCommentsStarted = (postID: string): PostCommentsAction => ({
+  type: FETCH_NEW_COMMENTS_STARTED,
   payload: postID,
 });
 
-const fetchCommentsEnd = (): PostCommentsAction => ({
-  type: FETCH_COMMENTS_END,
+const fetchNewCommentsEnd = (): PostCommentsAction => ({
+  type: FETCH_NEW_COMMENTS_END,
   payload: null,
 });
 
-const fetchCommentsSuccess = (
-  lastVisible: number,
+const fetchNewCommentsSuccess = (
+  lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot,
   commentList: Array<PostComment>,
 ): PostCommentsAction => ({
-  type: FETCH_COMMENTS_SUCCESS,
+  type: FETCH_NEW_COMMENTS_SUCCESS,
   payload: { lastVisible, commentList },
 });
 
-const fetchCommentsFailure = (error: Error): PostCommentsAction => ({
-  type: FETCH_COMMENTS_FAILURE,
+const fetchNewCommentsFailure = (error: Error): PostCommentsAction => ({
+  type: FETCH_NEW_COMMENTS_FAILURE,
+  payload: error,
+});
+
+const fetchTopCommentsStarted = (postID: string): PostCommentsAction => ({
+  type: FETCH_TOP_COMMENTS_STARTED,
+  payload: postID,
+});
+
+const fetchTopCommentsEnd = (): PostCommentsAction => ({
+  type: FETCH_TOP_COMMENTS_END,
+  payload: null,
+});
+
+const fetchTopCommentsSuccess = (
+  lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot,
+  commentList: Array<PostComment>,
+): PostCommentsAction => ({
+  type: FETCH_TOP_COMMENTS_SUCCESS,
+  payload: { lastVisible, commentList },
+});
+
+const fetchTopCommentsFailure = (error: Error): PostCommentsAction => ({
+  type: FETCH_TOP_COMMENTS_FAILURE,
   payload: error,
 });

@@ -11,7 +11,7 @@ import {
   FirebaseAuthTypes,
   FirebaseFirestoreTypes,
 } from '../config';
-import { Post, UserResult } from '../models';
+import { Post, UserResult, PostComment } from '../models';
 import { Colors, tokenForTag, separatorForTag } from '../constants';
 
 const alertDialog = (alertText: string) => {
@@ -277,6 +277,27 @@ const checkUserResultListChanged = (
       user1.name !== user2.name ||
       user1.username !== user2.username
     ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const checkPostCommentListChanged = (
+  list1: Array<PostComment>,
+  list2: Array<PostComment>,
+) => {
+  if (list1.length !== list2.length) {
+    return true;
+  }
+
+  const len = list1.length;
+  for (let i = 0; i < len; i++) {
+    const user1 = list1[i];
+    const user2 = list2[i];
+
+    if (user1.likes !== user2.likes || user1.replies !== user2.replies) {
       return true;
     }
   }
@@ -676,6 +697,19 @@ const removeDuplicatesFromUserResultsArray = (arr: Array<UserResult>) => {
   return filteredArr;
 };
 
+const removeDuplicatesFromCommentsArray = (arr: Array<PostComment>) => {
+  const filteredArr = arr.reduce((acc: Array<PostComment>, current) => {
+    const x = acc.find((ur) => ur.id === current.id);
+    if (!x) {
+      return acc.concat([current]);
+    } else {
+      return acc;
+    }
+  }, []);
+
+  return filteredArr;
+};
+
 const uploadMedia = async (
   uid: string,
   media: Array<{
@@ -741,6 +775,7 @@ export {
   getCurrentUnixTime,
   checkPostListChanged,
   checkUserResultListChanged,
+  checkPostCommentListChanged,
   checkPostChanged,
   docFStoPostArray,
   docFBtoPostArray,
@@ -750,6 +785,7 @@ export {
   deleteMedia,
   removeDuplicatesFromPostsArray,
   removeDuplicatesFromUserResultsArray,
+  removeDuplicatesFromCommentsArray,
   wrapPostCaption,
   checkURL,
   openURL,
