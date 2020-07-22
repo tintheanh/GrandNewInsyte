@@ -1,26 +1,26 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { PostCard } from '../../../components';
-import { AppState } from '../../../redux/store';
-import { deletePost, likePost, unlikePost } from '../../../redux/posts/actions';
-import { checkPostChanged } from '../../../utils/functions';
-import { Post } from '../../../models';
+import { PostCard } from '../../../../components';
+import { AppState } from '../../../../redux/store';
+import { likePost, unlikePost } from '../../../../redux/posts/actions';
+import { checkPostChanged } from '../../../../utils/functions';
+import { Post } from '../../../../models';
 
-interface UserProfilePostCardProps {
+interface UserProfileTaggedPostCardProps {
   data: Post;
   currentViewableIndex: number;
   index: number;
   navigation: any;
   isTabFocused: boolean;
-  onDeletePost: (postID: string) => void;
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
 }
 
-class UserProfilePostCard extends Component<UserProfilePostCardProps> {
-  shouldComponentUpdate(nextProps: UserProfilePostCardProps) {
+class UserProfileTaggedPostCard extends Component<
+  UserProfileTaggedPostCardProps
+> {
+  shouldComponentUpdate(nextProps: UserProfileTaggedPostCardProps) {
     const { currentViewableIndex, index, data, isTabFocused } = this.props;
 
     if (checkPostChanged(data, nextProps.data)) {
@@ -61,27 +61,6 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
     });
   };
 
-  performDeletePost = () => this.props.onDeletePost(this.props.data.id);
-
-  postControl = () => {
-    Alert.alert(
-      '',
-      'Do you want to delete your post?',
-      [
-        {
-          text: 'Delete',
-          onPress: this.performDeletePost,
-        },
-
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ],
-      { cancelable: true },
-    );
-  };
-
   performLikePost = () => {
     this.props.onLikePost(this.props.data.id);
   };
@@ -98,7 +77,7 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
       navigation,
       isTabFocused,
     } = this.props;
-    // console.log('user post card ', index);
+    // console.log('taged post card ', index);
     return (
       <PostCard
         data={data}
@@ -108,7 +87,6 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
         isTabFocused={isTabFocused}
         navigateWhenClickOnPostOrComment={this.navigateToPost}
         navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
-        userPostControl={this.postControl}
         performLikePost={this.performLikePost}
         performUnlikePost={this.performUnlikePost}
       />
@@ -122,17 +100,15 @@ interface HOCHomePostCardProps {
   currentViewableIndex: number;
   index: number;
   isTabFocused: boolean;
-  onDeletePost: (postID: string) => void;
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
 }
 
 const mapStateToProps = (state: AppState) => ({
-  currentViewableIndex: state.postListIndices.currentUserListPostIndex,
+  currentViewableIndex: state.postListIndices.currentUserTaggedListPostIndex,
 });
 
 const mapDispathToProps = {
-  onDeletePost: deletePost,
   onLikePost: likePost,
   onUnlikePost: unlikePost,
 };
@@ -146,7 +122,7 @@ export default connect(
       const navigation = useNavigation();
       // console.log('user card out ', props.index);
 
-      return <UserProfilePostCard {...props} navigation={navigation} />;
+      return <UserProfileTaggedPostCard {...props} navigation={navigation} />;
     },
     (prevProps, nextProps) => {
       if (checkPostChanged(prevProps.data, nextProps.data)) {

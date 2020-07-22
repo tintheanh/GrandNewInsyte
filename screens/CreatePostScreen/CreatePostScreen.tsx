@@ -261,10 +261,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       [
         {
           text: 'Discard',
-          onPress: () => {
-            this.props.onClearAll();
-            this.props.navigation.goBack();
-          },
+          onPress: () => this.goBackAndClear(),
         },
 
         {
@@ -274,6 +271,11 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       ],
       { cancelable: true },
     );
+  };
+
+  goBackAndClear = () => {
+    this.props.onClearAll();
+    this.props.navigation.goBack();
   };
 
   /* --------------------- media stuff -------------------- */
@@ -372,27 +374,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     if (post.caption === '' && post.media.length === 0) {
       return alertDialog('Your post cannot be empty.');
     }
-    this.props.onCreatePost(post, this.props.navigation.goBack);
-    // console.log(post.caption);
-    // console.log(post.caption.match(/@([^\u200B]*)\u200B/g));
-    // const replaced = post.caption.replace(/@([^\u200B]*)\u200B/g, '@test');
-    // console.log(replaced);
-    // this.props.onCreatePost(post, this.props.navigation.goBack);
-    // let caption = post.caption;
-
-    // const matches = post.caption.match(/@([^\u200B][^\n| ]*)\u200B/g);
-    // // let replaced = '';
-    // // console.log(matches);
-    // const taggedUsers = post.taggedUsers.map((u) => u.username);
-    // if (matches) {
-    //   for (const m of matches) {
-    //     // console.log(m);
-    //     if (taggedUsers.includes(m)) {
-    //       caption = caption.replace(m, 'test');
-    //     }
-    //   }
-    // }
-    // console.log(caption);
+    this.props.onCreatePost(post, this.goBackAndClear);
   };
 
   render() {

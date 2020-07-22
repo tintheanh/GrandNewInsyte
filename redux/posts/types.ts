@@ -66,6 +66,18 @@ export const PULL_TO_FETCH_USER_POSTS_SUCCESS =
 export const PULL_TO_FETCH_USER_POSTS_FAILURE =
   'PULL_TO_FETCH_USER_POSTS_FAILURE';
 
+export const FETCH_TAGGED_POSTS_STARTED = 'FETCH_TAGGED_POSTS_STARTED';
+export const FETCH_TAGGED_POSTS_SUCCESS = 'FETCH_TAGGED_POSTS_SUCCESS';
+export const FETCH_TAGGED_POSTS_FAILURE = 'FETCH_TAGGED_POSTS_FAILURE';
+export const FETCH_TAGGED_POSTS_END = 'FETCH_TAGGED_POSTS_END';
+
+export const PULL_TO_FETCH_TAGGED_POSTS_STARTED =
+  'PULL_TO_FETCH_TAGGED_POSTS_STARTED';
+export const PULL_TO_FETCH_TAGGED_POSTS_SUCCESS =
+  'PULL_TO_FETCH_TAGGED_POSTS_SUCCESS';
+export const PULL_TO_FETCH_TAGGED_POSTS_FAILURE =
+  'PULL_TO_FETCH_TAGGED_POSTS_FAILURE';
+
 export const SET_PUBLIC_HOTTIME = 'SET_PUBLIC_HOTTIME';
 export const SET_FOLLOWING_HOTTIME = 'SET_FOLLOWING_HOTTIME';
 export const SET_PUBLIC_FEED_CHOICE = 'SET_PUBLIC_FEED_CHOICE';
@@ -129,6 +141,13 @@ export interface PostState {
     error: Error | null;
   };
   userPosts: {
+    posts: Array<Post>;
+    loading: boolean;
+    pullLoading: boolean;
+    error: Error | null;
+    lastVisible: number;
+  };
+  taggedPosts: {
     posts: Array<Post>;
     loading: boolean;
     pullLoading: boolean;

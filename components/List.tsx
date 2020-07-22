@@ -11,6 +11,7 @@ interface ListProps {
     itemVisiblePercentThreshold?: number;
     waitForInteraction?: boolean;
   };
+  isTabFocused: boolean;
   onViewableItemsChanged?:
     | ((info: { viewableItems: any[]; changed: any[] }) => void)
     | null
@@ -73,6 +74,7 @@ export default class List extends Component<ListProps> {
       onEndReachedThreshold = 0.5,
       listFooterComponent = undefined,
       refreshing = false,
+      isTabFocused,
       onRefresh,
     } = this.props;
     // console.log(data);
@@ -82,7 +84,12 @@ export default class List extends Component<ListProps> {
         <FlatList
           data={data}
           renderItem={({ item, index }) => (
-            <Card index={index} data={item} onSelect={onSelectCard} />
+            <Card
+              index={index}
+              data={item}
+              onSelect={onSelectCard}
+              isTabFocused={isTabFocused}
+            />
           )}
           keyExtractor={(item) => item.id}
           onViewableItemsChanged={onViewableItemsChanged}

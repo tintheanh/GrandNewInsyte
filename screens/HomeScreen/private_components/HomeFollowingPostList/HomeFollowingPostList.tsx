@@ -27,6 +27,7 @@ interface HomeFollowingPostListProps {
   onPullToFetchFollowingHotPosts: () => void;
   onClear: () => void;
   pullLoading: boolean;
+  currentTabIndex?: number;
   loading: boolean;
   error: Error | null;
   feedChoice: string;
@@ -86,6 +87,7 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
       onPullToFetchFollowingHotPosts,
       pullLoading,
       loading,
+      currentTabIndex,
       feedChoice,
     } = this.props;
     // console.log('home list');
@@ -136,6 +138,7 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
                 ? onPullToFetchFollowingNewPosts
                 : onPullToFetchFollowingHotPosts
             }
+            isTabFocused={currentTabIndex ? currentTabIndex === 1 : true}
             refreshing={pullLoading}
             listHeaderComponent={<SortFollowingPostList />}
             checkChangesToUpdate={checkPostListChanged}

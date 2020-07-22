@@ -34,6 +34,13 @@ import {
   PULL_TO_FETCH_USER_POSTS_FAILURE,
   PULL_TO_FETCH_USER_POSTS_STARTED,
   PULL_TO_FETCH_USER_POSTS_SUCCESS,
+  FETCH_TAGGED_POSTS_END,
+  FETCH_TAGGED_POSTS_FAILURE,
+  FETCH_TAGGED_POSTS_STARTED,
+  FETCH_TAGGED_POSTS_SUCCESS,
+  PULL_TO_FETCH_TAGGED_POSTS_FAILURE,
+  PULL_TO_FETCH_TAGGED_POSTS_STARTED,
+  PULL_TO_FETCH_TAGGED_POSTS_SUCCESS,
   SET_PUBLIC_HOTTIME,
   SET_FOLLOWING_HOTTIME,
   CREATE_POST_FAILURE,
@@ -80,6 +87,13 @@ const initialState: PostState = {
     error: null,
   },
   userPosts: {
+    posts: [],
+    lastVisible: 0,
+    pullLoading: false,
+    loading: false,
+    error: null,
+  },
+  taggedPosts: {
     posts: [],
     lastVisible: 0,
     pullLoading: false,
@@ -394,6 +408,75 @@ export default function postsReducer(
 
     /* ---------------- end user posts cases ---------------- */
 
+    /* ----------------- tagged posts cases ----------------- */
+
+    case FETCH_TAGGED_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.taggedPosts.loading = true;
+      newState.taggedPosts.error = null;
+      return newState;
+    }
+    case FETCH_TAGGED_POSTS_SUCCESS: {
+      const payload = action.payload as {
+        posts: Array<any>;
+        lastVisible: number;
+      };
+
+      const newState = { ...state };
+      const newTaggedPosts = newState.taggedPosts.posts.concat(payload.posts);
+      const filteredNewTaggedPosts = newTaggedPosts.filter(
+        (post) =>
+          post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
+      );
+
+      // ensure no duplicates
+      const removedDuplicates = removeDuplicatesFromPostsArray(
+        filteredNewTaggedPosts,
+      );
+
+      newState.taggedPosts.posts = removedDuplicates;
+      newState.taggedPosts.lastVisible = payload.lastVisible;
+      newState.taggedPosts.loading = false;
+      return newState;
+    }
+    case FETCH_TAGGED_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.taggedPosts.error = action.payload as Error;
+      newState.taggedPosts.posts = [];
+      newState.taggedPosts.loading = false;
+      return newState;
+    }
+    case FETCH_TAGGED_POSTS_END: {
+      const newState = { ...state };
+      newState.taggedPosts.loading = false;
+      return newState;
+    }
+    case PULL_TO_FETCH_TAGGED_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.taggedPosts.pullLoading = true;
+      return newState;
+    }
+    case PULL_TO_FETCH_TAGGED_POSTS_SUCCESS: {
+      const payload = action.payload as {
+        posts: Array<any>;
+        lastVisible: number;
+      };
+      const newState = { ...state };
+      newState.taggedPosts.posts = payload.posts;
+      newState.taggedPosts.lastVisible = payload.lastVisible;
+      newState.taggedPosts.pullLoading = false;
+      return newState;
+    }
+    case PULL_TO_FETCH_TAGGED_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.taggedPosts.error = action.payload as Error;
+      newState.taggedPosts.posts = [];
+      newState.taggedPosts.pullLoading = false;
+      return newState;
+    }
+
+    /* --------------- end tagged posts cases --------------- */
+
     /* ------------------ create post cases ----------------- */
 
     case CREATE_POST_STARTED: {
@@ -671,6 +754,7 @@ export default function postsReducer(
       const publicPosts = [...state.public.posts];
       const followingPosts = [...state.following.posts];
       const userPosts = [...state.userPosts.posts];
+      const taggedPosts = [...state.taggedPosts.posts];
       const postID = action.payload as string;
 
       const publicPostIndex = publicPosts.findIndex(
@@ -680,6 +764,9 @@ export default function postsReducer(
         (post) => post.id === postID,
       );
       const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === postID,
+      );
 
       if (publicPostIndex !== -1) {
         const post = { ...publicPosts[publicPostIndex] };
@@ -699,10 +786,17 @@ export default function postsReducer(
         post.isLiked = true;
         userPosts[userPostIndex] = post;
       }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        taggedPosts[taggedPostIndex] = post;
+      }
 
       newState.public.posts = publicPosts;
       newState.following.posts = followingPosts;
       newState.userPosts.posts = userPosts;
+      newState.taggedPosts.posts = taggedPosts;
       return newState;
     }
     case LIKE_POST_SUCCESS: {
@@ -713,6 +807,7 @@ export default function postsReducer(
       const publicPosts = [...state.public.posts];
       const followingPosts = [...state.following.posts];
       const userPosts = [...state.userPosts.posts];
+      const taggedPosts = [...state.taggedPosts.posts];
       const payload = action.payload as { error: Error | null; postID: string };
 
       newState.likePost.error = payload.error;
@@ -729,6 +824,9 @@ export default function postsReducer(
       const userPostIndex = userPosts.findIndex(
         (post) => post.id === payload.postID,
       );
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
 
       if (publicPostIndex !== -1) {
         const post = { ...publicPosts[publicPostIndex] };
@@ -748,10 +846,17 @@ export default function postsReducer(
         post.isLiked = false;
         userPosts[userPostIndex] = post;
       }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        taggedPosts[taggedPostIndex] = post;
+      }
 
       newState.public.posts = publicPosts;
       newState.following.posts = followingPosts;
       newState.userPosts.posts = userPosts;
+      newState.taggedPosts.posts = taggedPosts;
       return newState;
     }
     case UNLIKE_POST_STARTED: {
@@ -759,6 +864,7 @@ export default function postsReducer(
       const publicPosts = [...state.public.posts];
       const followingPosts = [...state.following.posts];
       const userPosts = [...state.userPosts.posts];
+      const taggedPosts = [...state.taggedPosts.posts];
       const postID = action.payload as string;
 
       const publicPostIndex = publicPosts.findIndex(
@@ -768,6 +874,9 @@ export default function postsReducer(
         (post) => post.id === postID,
       );
       const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === postID,
+      );
 
       if (publicPostIndex !== -1) {
         const post = { ...publicPosts[publicPostIndex] };
@@ -787,10 +896,17 @@ export default function postsReducer(
         post.isLiked = false;
         userPosts[userPostIndex] = post;
       }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        taggedPosts[taggedPostIndex] = post;
+      }
 
       newState.public.posts = publicPosts;
       newState.following.posts = followingPosts;
       newState.userPosts.posts = userPosts;
+      newState.taggedPosts.posts = taggedPosts;
       return newState;
     }
     case UNLIKE_POST_SUCCESS: {
@@ -801,6 +917,7 @@ export default function postsReducer(
       const publicPosts = [...state.public.posts];
       const followingPosts = [...state.following.posts];
       const userPosts = [...state.userPosts.posts];
+      const taggedPosts = [...state.taggedPosts.posts];
       const payload = action.payload as { error: Error | null; postID: string };
 
       newState.unlikePost.error = payload.error;
@@ -817,6 +934,9 @@ export default function postsReducer(
       const userPostIndex = userPosts.findIndex(
         (post) => post.id === payload.postID,
       );
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
 
       if (publicPostIndex !== -1) {
         const post = { ...publicPosts[publicPostIndex] };
@@ -836,10 +956,17 @@ export default function postsReducer(
         post.isLiked = true;
         userPosts[userPostIndex] = post;
       }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        taggedPosts[taggedPostIndex] = post;
+      }
 
       newState.public.posts = publicPosts;
       newState.following.posts = followingPosts;
       newState.userPosts.posts = userPosts;
+      newState.taggedPosts.posts = taggedPosts;
       return newState;
     }
 
@@ -899,6 +1026,13 @@ export default function postsReducer(
           error: null,
         },
         userPosts: {
+          posts: [],
+          lastVisible: 0,
+          pullLoading: false,
+          loading: false,
+          error: null,
+        },
+        taggedPosts: {
           posts: [],
           lastVisible: 0,
           pullLoading: false,

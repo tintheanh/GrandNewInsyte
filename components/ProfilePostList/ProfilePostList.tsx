@@ -15,7 +15,7 @@ interface ProfilePostListProps {
   onScrollToTop: () => void;
   headerHeight: number;
   tabBarHeight: number;
-  currentTabIndex: number;
+  isTabFocused: boolean;
   onEndReached: () => void;
   onViewableItemsChanged?:
     | ((info: { viewableItems: any[]; changed: any[] }) => void)
@@ -41,6 +41,9 @@ export default class ProfilePostList extends Component<ProfilePostListProps> {
 
   shouldComponentUpdate(nextProps: ProfilePostListProps) {
     // console.log(this.props.data.length, nextProps.data.length);
+    if (this.props.isTabFocused !== nextProps.isTabFocused) {
+      return true;
+    }
     if (this.props.refreshing !== nextProps.refreshing) {
       return true;
     }
@@ -87,7 +90,7 @@ export default class ProfilePostList extends Component<ProfilePostListProps> {
       onScrollToTop,
       headerHeight,
       tabBarHeight,
-      currentTabIndex,
+      isTabFocused,
       onViewableItemsChanged = undefined,
       viewabilityConfig = undefined,
       posts,
@@ -114,11 +117,7 @@ export default class ProfilePostList extends Component<ProfilePostListProps> {
         }}
         data={posts}
         renderItem={({ item, index }: { item: any; index: number }) => (
-          <Card
-            index={index}
-            data={item}
-            isTabFocused={currentTabIndex === 0}
-          />
+          <Card index={index} data={item} isTabFocused={isTabFocused} />
         )}
         onScrollToTop={onScrollToTop}
         keyExtractor={(item: any) => item.id}

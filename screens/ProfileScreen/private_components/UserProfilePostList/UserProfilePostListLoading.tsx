@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { connect } from 'react-redux';
-import { MaterialIcons } from '../../../constants';
-import { AppState } from '../../../redux/store';
+import { MaterialIcons } from '../../../../constants';
+import { AppState } from '../../../../redux/store';
 
-function UserProfilePostListLoading({ loading }: { loading?: boolean }) {
+function UserProfilePostListLoading({ loading }: { loading: boolean }) {
   return loading ? (
     <View style={styles.container}>
       <ActivityIndicator size="small" color="white" />

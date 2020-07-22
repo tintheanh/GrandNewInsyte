@@ -28,6 +28,7 @@ interface HomePublicPostListProps {
   onPullToFetchPublicNewPosts: () => void;
   onPullToFetchPublicHotPosts: () => void;
   onClear: () => void;
+  currentTabIndex?: number;
   pullLoading: boolean;
   loading: boolean;
   error: Error | null;
@@ -76,6 +77,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
   }
 
   emptyHandler = () => {
+    // TODO work with this
     this.props.onClear();
     this.props.onFetchPublicNewPosts();
   };
@@ -89,6 +91,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
       onPullToFetchPublicHotPosts,
       pullLoading,
       loading,
+      currentTabIndex,
       feedChoice,
     } = this.props;
     // console.log('home list', posts);
@@ -139,6 +142,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
                 ? onPullToFetchPublicNewPosts
                 : onPullToFetchPublicHotPosts
             }
+            isTabFocused={currentTabIndex ? currentTabIndex === 0 : true}
             refreshing={pullLoading}
             listHeaderComponent={<SortPublicPostList />}
             listFooterComponent={

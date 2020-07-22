@@ -1,24 +1,24 @@
 import React, { Component } from 'react';
 import { Animated, FlatList, StyleSheet, View } from 'react-native';
 import { connect } from 'react-redux';
-import Layout from '../../../constants/Layout';
-import { setCurrentUserListPostIndex } from '../../../redux/curentViewableItem/actions';
+import Layout from '../../../../constants/Layout';
+import { setCurrentUserListPostIndex } from '../../../../redux/curentViewableItem/actions';
 import {
   fetchUserPosts,
   pullToFetchUserPosts,
-} from '../../../redux/posts/actions';
+} from '../../../../redux/posts/actions';
 import UserProfilePostCard from './UserProfilePostCard';
 import {
   ErrorView,
   NothingView,
   Loading,
   ProfilePostList,
-} from '../../../components';
+} from '../../../../components';
 import UserProfilePostListLoading from './UserProfilePostListLoading';
-import { checkPostListChanged } from '../../../utils/functions';
-import { Colors } from '../../../constants';
-import { AppState } from '../../../redux/store';
-import { Post } from '../../../models';
+import { checkPostListChanged } from '../../../../utils/functions';
+import { Colors } from '../../../../constants';
+import { AppState } from '../../../../redux/store';
+import { Post } from '../../../../models';
 
 const windowHeight = Layout.window.height;
 
@@ -92,6 +92,7 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
 
   render() {
     // console.log('user list');
+
     const {
       onGetRef,
       scrollY,
@@ -153,51 +154,6 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
 
     return (
       <View style={{ backgroundColor: Colors.brightColor }}>
-        {/* <Animated.FlatList
-          style={styles.container}
-          scrollToOverflowEnabled={true}
-          ref={onGetRef}
-          // scrollEventThrottle={16}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-            { useNativeDriver: true }
-          )}
-          onMomentumScrollBegin={() => {
-            onMomentumScrollBegin();
-            this.onEndReachedCalledDuringMomentum = false;
-          }}
-          onScrollEndDrag={onScrollEndDrag}
-          onMomentumScrollEnd={onMomentumScrollEnd}
-          contentContainerStyle={{
-            paddingTop: headerHeight + tabBarHeight,
-            minHeight: windowHeight - tabBarHeight,
-          }}
-          data={posts}
-          renderItem={({ item, index }: { item: any; index: number }) => (
-            <UserProfilePostCard
-              index={index}
-              data={item}
-              isTabFocused={currentTabIndex === 0}
-            />
-          )}
-          onScrollToTop={onScrollToTop}
-          keyExtractor={(item: any) => item.id}
-          onViewableItemsChanged={this.onViewableItemsChanged}
-          viewabilityConfig={this.viewabilityConfig}
-          initialNumToRender={1}
-          maxToRenderPerBatch={1}
-          windowSize={3}
-          // onEndReached={onFetchUserPosts}
-          onEndReached={() => {
-            if (!this.onEndReachedCalledDuringMomentum) {
-              // console.log('end');
-              onFetchUserPosts();
-              this.onEndReachedCalledDuringMomentum = true;
-            }
-          }}
-          onEndReachedThreshold={0.05}
-        /> */}
-
         <ProfilePostList
           onGetRef={onGetRef}
           scrollY={scrollY}
@@ -212,7 +168,7 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
           onViewableItemsChanged={this.onViewableItemsChanged}
           viewabilityConfig={this.viewabilityConfig}
           onEndReached={onFetchUserPosts}
-          currentTabIndex={currentTabIndex}
+          isTabFocused={currentTabIndex === 0}
           refreshing={pullLoading}
           onRefresh={onPullToFetchUserPosts}
         />

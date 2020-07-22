@@ -34,6 +34,13 @@ import {
   PULL_TO_FETCH_USER_POSTS_FAILURE,
   PULL_TO_FETCH_USER_POSTS_STARTED,
   PULL_TO_FETCH_USER_POSTS_SUCCESS,
+  FETCH_TAGGED_POSTS_END,
+  FETCH_TAGGED_POSTS_FAILURE,
+  FETCH_TAGGED_POSTS_STARTED,
+  FETCH_TAGGED_POSTS_SUCCESS,
+  PULL_TO_FETCH_TAGGED_POSTS_FAILURE,
+  PULL_TO_FETCH_TAGGED_POSTS_STARTED,
+  PULL_TO_FETCH_TAGGED_POSTS_SUCCESS,
   PostAction,
   SET_PUBLIC_HOTTIME,
   SET_FOLLOWING_HOTTIME,
@@ -773,7 +780,7 @@ export const fetchUserPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
-  console.log('fetch user posts');
+  // TODO check auth
   dispatch(fetchUserPostsStarted());
   try {
     const { user } = getState().auth;
@@ -900,7 +907,7 @@ export const pullToFetchUserPosts = () => async (
       allPosts = noPending;
     }
 
-    const newLastVisible = allPosts[newPosts.length - 1].datePosted;
+    const newLastVisible = allPosts[allPosts.length - 1].datePosted;
     dispatch(pullToFetchUserPostsSuccess(allPosts, newLastVisible));
   } catch (err) {
     console.log(err.message);
@@ -909,6 +916,106 @@ export const pullToFetchUserPosts = () => async (
 };
 
 /* --------------- end user posts methods --------------- */
+
+/* ---------------- tagged posts methods ---------------- */
+
+export const fetchTaggedPosts = () => async (
+  dispatch: (action: PostAction) => void,
+  getState: () => AppState,
+) => {
+  // TODO check auth
+  console.log('fetch tagged posts');
+  dispatch(fetchTaggedPostsStarted());
+  try {
+    const { user } = getState().auth;
+    const currentUser = {
+      id: user?.id,
+      avatar: user?.avatar,
+      username: user?.username,
+    };
+    const { lastVisible } = getState().allPosts.taggedPosts;
+
+    let query: FirebaseFirestoreTypes.Query;
+    if (lastVisible === 0) {
+      query = fsDB
+        .collection('posts')
+        .where('tagged_users', 'array-contains', currentUser.id)
+        .orderBy('date_posted', 'desc')
+        .limit(postsPerBatch);
+    } else {
+      query = fsDB
+        .collection('posts')
+        .where('tagged_users', 'array-contains', currentUser.id)
+        .where('date_posted', '<', lastVisible)
+        .orderBy('date_posted', 'desc')
+        .limit(postsPerBatch);
+    }
+
+    const documentSnapshots = await query.get();
+
+    if (documentSnapshots.empty) {
+      return dispatch(fetchTaggedPostsEnd());
+    }
+
+    const newPosts = await docFStoPostArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
+
+    if (newPosts.length === 0) {
+      return dispatch(fetchTaggedPostsEnd());
+    }
+
+    const newLastVisible = newPosts[newPosts.length - 1].datePosted;
+    dispatch(fetchTaggedPostsSuccess(newPosts, newLastVisible));
+  } catch (err) {
+    // console.log(err.message);
+    dispatch(fetchTaggedPostsFailure(err));
+  }
+};
+
+export const pullToFetchTaggedPosts = () => async (
+  dispatch: (action: PostAction) => void,
+  getState: () => AppState,
+) => {
+  dispatch(pullToFetchTaggedPostsStarted());
+  try {
+    const { user } = getState().auth;
+    const currentUser = {
+      id: user?.id,
+      avatar: user?.avatar,
+      username: user?.username,
+    };
+
+    const documentSnapshots = await fsDB
+      .collection('posts')
+      .where('tagged_users', 'array-contains', currentUser.id)
+      .orderBy('date_posted', 'desc')
+      .limit(postsPerBatch)
+      .get();
+
+    if (documentSnapshots.empty) {
+      return dispatch(fetchTaggedPostsEnd());
+    }
+
+    const newPosts = await docFStoPostArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
+
+    if (newPosts.length === 0) {
+      return dispatch(fetchTaggedPostsEnd());
+    }
+
+    const newLastVisible = newPosts[newPosts.length - 1].datePosted;
+    dispatch(pullToFetchTaggedPostsSuccess(newPosts, newLastVisible));
+  } catch (err) {
+    console.log(err.message);
+    dispatch(pullToFetchTaggedPostsFailure(err));
+  }
+};
+
+/* -------------- end tagged posts methods -------------- */
 
 export const setPublicHotTime = (time: number) => async (
   dispatch: (action: PostAction) => void,
@@ -1465,6 +1572,47 @@ const pullToFetchUserPostsSuccess = (
 
 const pullToFetchUserPostsFailure = (error: Error): PostAction => ({
   type: PULL_TO_FETCH_USER_POSTS_FAILURE,
+  payload: error,
+});
+
+const fetchTaggedPostsStarted = (): PostAction => ({
+  type: FETCH_TAGGED_POSTS_STARTED,
+  payload: null,
+});
+
+const fetchTaggedPostsSuccess = (
+  posts: Array<any>,
+  lastVisible: number,
+): PostAction => ({
+  type: FETCH_TAGGED_POSTS_SUCCESS,
+  payload: { posts, lastVisible },
+});
+
+const fetchTaggedPostsFailure = (error: Error): PostAction => ({
+  type: FETCH_TAGGED_POSTS_FAILURE,
+  payload: error,
+});
+
+const fetchTaggedPostsEnd = (): PostAction => ({
+  type: FETCH_TAGGED_POSTS_END,
+  payload: null,
+});
+
+const pullToFetchTaggedPostsStarted = (): PostAction => ({
+  type: PULL_TO_FETCH_TAGGED_POSTS_STARTED,
+  payload: null,
+});
+
+const pullToFetchTaggedPostsSuccess = (
+  posts: Array<any>,
+  lastVisible: number,
+): PostAction => ({
+  type: PULL_TO_FETCH_TAGGED_POSTS_SUCCESS,
+  payload: { posts, lastVisible },
+});
+
+const pullToFetchTaggedPostsFailure = (error: Error): PostAction => ({
+  type: PULL_TO_FETCH_TAGGED_POSTS_FAILURE,
   payload: error,
 });
 

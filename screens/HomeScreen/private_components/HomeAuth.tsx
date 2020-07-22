@@ -7,10 +7,6 @@ import HomeFollowingPostList from './HomeFollowingPostList/HomeFollowingPostList
 import Layout from '../../../constants/Layout';
 import Colors from '../../../constants/Colors';
 
-const FirstRoute = () => <HomePublicPostList />;
-
-const SecondRoute = () => <HomeFollowingPostList />;
-
 const initialLayout = { width: Layout.window.width };
 
 export default function HomeAuth() {
@@ -19,6 +15,10 @@ export default function HomeAuth() {
     { key: 'first', title: 'First' },
     { key: 'second', title: 'Second' },
   ]);
+
+  const FirstRoute = () => <HomePublicPostList currentTabIndex={index} />;
+
+  const SecondRoute = () => <HomeFollowingPostList currentTabIndex={index} />;
 
   const renderScene = SceneMap({
     first: FirstRoute,

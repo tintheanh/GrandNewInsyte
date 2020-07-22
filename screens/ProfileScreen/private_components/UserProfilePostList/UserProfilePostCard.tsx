@@ -1,35 +1,40 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { PostCard } from '../../../components';
-import { AppState } from '../../../redux/store';
-import { Post } from '../../../models';
+import { PostCard } from '../../../../components';
+import { AppState } from '../../../../redux/store';
+import {
+  deletePost,
+  likePost,
+  unlikePost,
+} from '../../../../redux/posts/actions';
+import { checkPostChanged } from '../../../../utils/functions';
+import { Post } from '../../../../models';
 
-interface UserProfileTaggedPostCardProps {
+interface UserProfilePostCardProps {
   data: Post;
   currentViewableIndex: number;
   index: number;
   navigation: any;
   isTabFocused: boolean;
+  onDeletePost: (postID: string) => void;
+  onLikePost: (postID: string) => void;
+  onUnlikePost: (postID: string) => void;
 }
 
-class UserProfileTaggedPostCard extends Component<
-  UserProfileTaggedPostCardProps
-> {
-  shouldComponentUpdate(nextProps: UserProfileTaggedPostCardProps) {
+class UserProfilePostCard extends Component<UserProfilePostCardProps> {
+  shouldComponentUpdate(nextProps: UserProfilePostCardProps) {
     const { currentViewableIndex, index, data, isTabFocused } = this.props;
 
-    if (
-      data.id !== nextProps.data.id ||
-      data.caption !== nextProps.data.caption ||
-      data.likes !== nextProps.data.likes ||
-      data.comments !== nextProps.data.comments ||
-      data.user.avatar !== nextProps.data.user.avatar
-    ) {
+    if (checkPostChanged(data, nextProps.data)) {
       return true;
     }
 
     if (data.media.length === 0) {
+      return false;
+    }
+    if (data.media.length === 1 && data.media[0].type === 'image') {
       return false;
     }
     if (
@@ -60,6 +65,35 @@ class UserProfileTaggedPostCard extends Component<
     });
   };
 
+  performDeletePost = () => this.props.onDeletePost(this.props.data.id);
+
+  postControl = () => {
+    Alert.alert(
+      '',
+      'Do you want to delete your post?',
+      [
+        {
+          text: 'Delete',
+          onPress: this.performDeletePost,
+        },
+
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  performLikePost = () => {
+    this.props.onLikePost(this.props.data.id);
+  };
+
+  performUnlikePost = () => {
+    this.props.onUnlikePost(this.props.data.id);
+  };
+
   render() {
     const {
       data,
@@ -68,7 +102,7 @@ class UserProfileTaggedPostCard extends Component<
       navigation,
       isTabFocused,
     } = this.props;
-    // console.log('user tagged card ', index);
+    // console.log('user post card ', index);
     return (
       <PostCard
         data={data}
@@ -78,6 +112,9 @@ class UserProfileTaggedPostCard extends Component<
         isTabFocused={isTabFocused}
         navigateWhenClickOnPostOrComment={this.navigateToPost}
         navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
+        userPostControl={this.postControl}
+        performLikePost={this.performLikePost}
+        performUnlikePost={this.performUnlikePost}
       />
     );
   }
@@ -89,30 +126,43 @@ interface HOCHomePostCardProps {
   currentViewableIndex: number;
   index: number;
   isTabFocused: boolean;
+  onDeletePost: (postID: string) => void;
+  onLikePost: (postID: string) => void;
+  onUnlikePost: (postID: string) => void;
 }
 
 const mapStateToProps = (state: AppState) => ({
-  currentViewableIndex: state.postListIndices.currentUserTaggedListPostIndex,
+  currentViewableIndex: state.postListIndices.currentUserListPostIndex,
 });
 
-export default connect(mapStateToProps)(
+const mapDispathToProps = {
+  onDeletePost: deletePost,
+  onLikePost: likePost,
+  onUnlikePost: unlikePost,
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispathToProps,
+)(
   React.memo(
     function (props: HOCHomePostCardProps) {
       const navigation = useNavigation();
+      // console.log('user card out ', props.index);
 
-      return <UserProfileTaggedPostCard {...props} navigation={navigation} />;
+      return <UserProfilePostCard {...props} navigation={navigation} />;
     },
     (prevProps, nextProps) => {
-      if (
-        prevProps.data.id !== nextProps.data.id ||
-        prevProps.data.caption !== nextProps.data.caption ||
-        prevProps.data.likes !== nextProps.data.likes ||
-        prevProps.data.comments !== nextProps.data.comments ||
-        prevProps.data.user.avatar !== nextProps.data.user.avatar
-      ) {
+      if (checkPostChanged(prevProps.data, nextProps.data)) {
         return false;
       }
       if (prevProps.data.media.length === 0) {
+        return true;
+      }
+      if (
+        prevProps.data.media.length === 1 &&
+        prevProps.data.media[0].type === 'image'
+      ) {
         return true;
       }
       if (

@@ -14,6 +14,7 @@ interface HomePostCardProps {
   index: number;
   currentUID: string | undefined;
   navigation: any;
+  isTabFocused: boolean;
   onDeletePost: (postID: string) => void;
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
@@ -93,6 +94,7 @@ class HomePostCard extends Component<HomePostCardProps> {
       index,
       navigation,
       currentUID,
+      isTabFocused,
     } = this.props;
 
     // console.log('home card', data);
@@ -102,6 +104,7 @@ class HomePostCard extends Component<HomePostCardProps> {
         data={data}
         currentViewableIndex={currentViewableIndex}
         index={index}
+        isTabFocused={isTabFocused}
         navigation={navigation}
         navigateWhenClickOnPostOrComment={this.navigateToPost}
         navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
