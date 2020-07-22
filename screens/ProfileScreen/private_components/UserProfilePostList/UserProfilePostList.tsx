@@ -90,6 +90,10 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
     this.props.onFetchUserPosts();
   }
 
+  emptyHandler = () => {
+    this.props.onFetchUserPosts();
+  };
+
   render() {
     // console.log('user list');
 
@@ -113,6 +117,18 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
 
     // console.log('profile list post', posts);
 
+    if (error) {
+      return (
+        <View
+          style={{
+            paddingTop: headerHeight + tabBarHeight,
+            minHeight: windowHeight - tabBarHeight,
+          }}>
+          <ErrorView errorText={error.message} handle={this.emptyHandler} />
+        </View>
+      );
+    }
+
     if (loading && posts.length === 0) {
       return (
         <View
@@ -132,22 +148,7 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
             paddingTop: headerHeight + tabBarHeight,
             minHeight: windowHeight - tabBarHeight,
           }}>
-          <NothingView handle={() => console.log('profile refresh')} />
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View
-          style={{
-            paddingTop: headerHeight + tabBarHeight,
-            minHeight: windowHeight - tabBarHeight,
-          }}>
-          <ErrorView
-            errorText={error.message}
-            handle={() => console.log('profile refresh')}
-          />
+          <NothingView handle={this.emptyHandler} />
         </View>
       );
     }

@@ -74,7 +74,7 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
   }
 
   emptyHandler = () => {
-    this.props.onClear();
+    // this.props.onClear();
     this.props.onFetchFollowingNewPosts();
   };
 
@@ -89,8 +89,18 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
       loading,
       currentTabIndex,
       feedChoice,
+      error,
     } = this.props;
     // console.log('home list');
+
+    if (error) {
+      return (
+        <View style={styles.container}>
+          <SortFollowingPostList />
+          <ErrorView errorText={error.message} handle={this.emptyHandler} />
+        </View>
+      );
+    }
 
     if (loading && posts.length === 0) {
       return (
@@ -105,17 +115,6 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
         <View style={styles.container}>
           <SortFollowingPostList />
           <NothingView handle={this.emptyHandler} />
-        </View>
-      );
-    }
-    if (this.props.error) {
-      return (
-        <View style={styles.container}>
-          <SortFollowingPostList />
-          <ErrorView
-            errorText={this.props.error.message}
-            handle={this.emptyHandler}
-          />
         </View>
       );
     }
@@ -138,7 +137,7 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
                 ? onPullToFetchFollowingNewPosts
                 : onPullToFetchFollowingHotPosts
             }
-            isTabFocused={currentTabIndex ? currentTabIndex === 1 : true}
+            isTabFocused={currentTabIndex ? currentTabIndex === 1 : false}
             refreshing={pullLoading}
             listHeaderComponent={<SortFollowingPostList />}
             checkChangesToUpdate={checkPostListChanged}

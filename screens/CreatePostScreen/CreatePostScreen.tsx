@@ -174,6 +174,9 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     const { start } = this.state.currentTextInputSelection!;
     newState.post.caption = text;
     await this.setState(newState, () => {
+      if (this.state.post.privacy === 'private') {
+        return;
+      }
       const newEnteredChar = this.getNewlyEnteredLetters();
       if (
         newEnteredChar === '@' &&

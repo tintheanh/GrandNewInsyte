@@ -78,7 +78,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
 
   emptyHandler = () => {
     // TODO work with this
-    this.props.onClear();
+    // this.props.onClear();
     this.props.onFetchPublicNewPosts();
   };
 
@@ -93,8 +93,21 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
       loading,
       currentTabIndex,
       feedChoice,
+      error,
     } = this.props;
     // console.log('home list', posts);
+
+    if (error) {
+      return (
+        <View style={styles.container}>
+          <SortPublicPostList />
+          <ErrorView
+            errorText={this.props.error.message}
+            handle={this.emptyHandler}
+          />
+        </View>
+      );
+    }
 
     if (loading && posts.length === 0) {
       return (
@@ -109,17 +122,6 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
         <View style={styles.container}>
           <SortPublicPostList />
           <NothingView handle={this.emptyHandler} />
-        </View>
-      );
-    }
-    if (this.props.error) {
-      return (
-        <View style={styles.container}>
-          <SortPublicPostList />
-          <ErrorView
-            errorText={this.props.error.message}
-            handle={this.emptyHandler}
-          />
         </View>
       );
     }

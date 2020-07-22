@@ -92,6 +92,10 @@ class UserProfileTaggedPostList extends Component<
     this.props.onFetchTaggedPosts();
   }
 
+  emptyHandler = () => {
+    this.props.onFetchTaggedPosts();
+  };
+
   render() {
     // console.log('user list');
     const {
@@ -133,7 +137,7 @@ class UserProfileTaggedPostList extends Component<
             paddingTop: headerHeight + tabBarHeight,
             minHeight: windowHeight - tabBarHeight,
           }}>
-          <NothingView handle={() => console.log('profile refresh')} />
+          <NothingView handle={this.emptyHandler} />
         </View>
       );
     }
@@ -145,10 +149,7 @@ class UserProfileTaggedPostList extends Component<
             paddingTop: headerHeight + tabBarHeight,
             minHeight: windowHeight - tabBarHeight,
           }}>
-          <ErrorView
-            errorText={error.message}
-            handle={() => console.log('profile refresh')}
-          />
+          <ErrorView errorText={error.message} handle={this.emptyHandler} />
         </View>
       );
     }

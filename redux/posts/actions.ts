@@ -100,6 +100,7 @@ export const fetchPublicNewPosts = () => async (
     // const percent = Math.floor(Math.random() * 100);
     // console.log(percent);
     // if (percent > 50) throw new Error('dummy error');
+    // throw new Error('dummy error');
 
     const { lastNewVisible } = getState().allPosts.public;
     const { user } = getState().auth;
@@ -830,7 +831,7 @@ export const fetchUserPosts = () => async (
     dispatch(fetchUserPostsSuccess(newPosts, newLastVisible));
   } catch (err) {
     console.log(err.message);
-    dispatch(fetchUserPostsFailure(err));
+    dispatch(fetchUserPostsFailure(new Error('Internal server error')));
   }
 };
 
@@ -911,7 +912,7 @@ export const pullToFetchUserPosts = () => async (
     dispatch(pullToFetchUserPostsSuccess(allPosts, newLastVisible));
   } catch (err) {
     console.log(err.message);
-    dispatch(pullToFetchUserPostsFailure(err));
+    dispatch(pullToFetchUserPostsFailure(new Error('Internal server error')));
   }
 };
 
@@ -924,7 +925,6 @@ export const fetchTaggedPosts = () => async (
   getState: () => AppState,
 ) => {
   // TODO check auth
-  console.log('fetch tagged posts');
   dispatch(fetchTaggedPostsStarted());
   try {
     const { user } = getState().auth;
@@ -1011,7 +1011,7 @@ export const pullToFetchTaggedPosts = () => async (
     dispatch(pullToFetchTaggedPostsSuccess(newPosts, newLastVisible));
   } catch (err) {
     console.log(err.message);
-    dispatch(pullToFetchTaggedPostsFailure(err));
+    dispatch(pullToFetchTaggedPostsFailure(new Error('Internal server error')));
   }
 };
 
@@ -1313,6 +1313,10 @@ export const likePost = (postID: string) => async (
         .doc(postID)
         .collection('like_list')
         .doc(user.id);
+      const like = await likeRef.get();
+      if (like.exists) {
+        throw new Error('Invalid operation.');
+      }
       trans.set(likeRef, { c: 1 });
     });
     dispatch(likePostSuccess());
