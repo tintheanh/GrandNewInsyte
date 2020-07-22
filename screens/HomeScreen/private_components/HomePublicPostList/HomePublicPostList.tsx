@@ -101,10 +101,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
       return (
         <View style={styles.container}>
           <SortPublicPostList />
-          <ErrorView
-            errorText={this.props.error.message}
-            handle={this.emptyHandler}
-          />
+          <ErrorView errorText={error.message} handle={this.emptyHandler} />
         </View>
       );
     }

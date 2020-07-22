@@ -585,6 +585,52 @@ const docFBtoPostArray = async (
   return newPosts;
 };
 
+const docFStoCommentArray = async (
+  docs: Array<FirebaseFirestoreTypes.QueryDocumentSnapshot>,
+  currentUser?: {
+    id: string;
+    username: string;
+    avatar: string;
+  },
+) => {
+  const comments = [];
+  for (const snapshot of docs) {
+    try {
+      const commentData = snapshot.data();
+      let postedBy;
+      if (currentUser) {
+        postedBy = currentUser;
+      } else {
+        const userRef = await fsDB
+          .collection('users')
+          .doc(commentData!.posted_by)
+          .get();
+        if (!userRef.exists) {
+          continue;
+        }
+        const userData = userRef.data();
+        postedBy = {
+          id: userRef.id,
+          username: userData!.username as string,
+          avatar: userData!.avatar as string,
+        };
+      }
+      const comment = {
+        id: snapshot.id,
+        content: commentData!.content as string,
+        datePosted: commentData!.date_posted as number,
+        likes: commentData!.likes as number,
+        replies: commentData!.replies as number,
+        user: postedBy,
+      };
+      comments.push(comment);
+    } catch (err) {
+      continue;
+    }
+  }
+  return comments;
+};
+
 const filterImageArray = (arr: any[]) => {
   const filteredArr = arr.reduce((acc, current) => {
     const x = acc.find(
@@ -709,4 +755,5 @@ export {
   openURL,
   generateSubstrForUsername,
   generateCaptionWithTagsAndUrls,
+  docFStoCommentArray,
 };

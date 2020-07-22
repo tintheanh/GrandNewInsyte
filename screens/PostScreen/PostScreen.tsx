@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { Component } from 'react';
 import { View, StyleSheet, FlatList, SafeAreaView, Alert } from 'react-native';
+import { connect } from 'react-redux';
 import { Colors } from '../../constants';
 import { CommentCard } from '../../components';
 import { PostSection } from './private_components';
+import { fetchNewComments } from '../../redux/postComments/actions';
+import { AppState } from '../../redux/store';
 
 const comments = [
   {
@@ -97,8 +100,13 @@ for (let i = 0; i < 50; i++) {
   });
 }
 
-export default function PostScreen({ route, navigation }: any) {
-  const selectCommentFilter = () => {
+class PostScreen extends Component<any> {
+  componentDidMount() {
+    const postID = this.props.route.params.data.id;
+    this.props.onFetchNewComments(postID);
+  }
+
+  selectCommentFilter = () => {
     Alert.alert(
       '',
       'Sort comments by',
@@ -118,64 +126,68 @@ export default function PostScreen({ route, navigation }: any) {
     );
   };
 
-  const toUserScreen = () =>
-    navigation.push('User', {
+  toUserScreen = () => {
+    const post = this.props.route.params.data;
+    this.props.navigation.push('User', {
       title: post.user.username,
       avatar: post.user.avatar,
     });
+  };
 
-  const post = route.params.data;
-  let iconPrivacy = '';
-  switch (post.privacy) {
-    case 'public':
-      iconPrivacy = 'globe';
-      break;
-    case 'friends':
-      iconPrivacy = 'users';
-      break;
-    default:
-      iconPrivacy = 'lock';
-      break;
+  render() {
+    console.log(this.props.comments);
+    const post = this.props.route.params.data;
+    let iconPrivacy = '';
+    switch (post.privacy) {
+      case 'public':
+        iconPrivacy = 'globe';
+        break;
+      case 'friends':
+        iconPrivacy = 'users';
+        break;
+      default:
+        iconPrivacy = 'lock';
+        break;
+    }
+    return (
+      <View style={styles.container}>
+        <SafeAreaView>
+          <FlatList
+            ListHeaderComponent={
+              <PostSection
+                avatar={post.user.avatar}
+                username={post.user.username}
+                datePosted={post.datePosted}
+                iconPrivacy={iconPrivacy}
+                caption={post.caption}
+                media={post.media}
+                likes={post.likes}
+                comments={post.comments}
+                navigateWhenClickOnUsernameOrAvatar={this.toUserScreen}
+                selectCommentFilter={this.selectCommentFilter}
+              />
+            }
+            data={comments}
+            renderItem={({ item }) => (
+              <CommentCard
+                avatar={item.avatar}
+                username={item.username}
+                content={item.content}
+                datePosted={item.datePosted}
+                likes={item.likes}
+                firstReply={item.firstReply}
+                totalReplies={item.totalReplies}
+              />
+            )}
+            keyExtractor={(item) => item.id}
+            initialNumToRender={1}
+            maxToRenderPerBatch={1}
+            windowSize={3}
+          />
+        </SafeAreaView>
+      </View>
+    );
   }
-
-  return (
-    <View style={styles.container}>
-      <SafeAreaView>
-        <FlatList
-          ListHeaderComponent={
-            <PostSection
-              avatar={post.user.avatar}
-              username={post.user.username}
-              datePosted={post.datePosted}
-              iconPrivacy={iconPrivacy}
-              caption={post.caption}
-              media={post.media}
-              likes={post.likes}
-              comments={post.comments}
-              navigateWhenClickOnUsernameOrAvatar={toUserScreen}
-              selectCommentFilter={selectCommentFilter}
-            />
-          }
-          data={comments}
-          renderItem={({ item }) => (
-            <CommentCard
-              avatar={item.avatar}
-              username={item.username}
-              content={item.content}
-              datePosted={item.datePosted}
-              likes={item.likes}
-              firstReply={item.firstReply}
-              totalReplies={item.totalReplies}
-            />
-          )}
-          keyExtractor={(item) => item.id}
-          initialNumToRender={1}
-          maxToRenderPerBatch={1}
-          windowSize={3}
-        />
-      </SafeAreaView>
-    </View>
-  );
 }
 
 const styles = StyleSheet.create({
@@ -184,3 +196,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.darkColor,
   },
 });
+
+const mapStateToProps = (state: AppState) => ({
+  comments: state.postComments.stack.top()?.commentList ?? [],
+  loading: state.postComments.stack.top()?.loading ?? false,
+  error: state.postComments.stack.top()?.error ?? null,
+});
+
+const mapDispatchToProps = {
+  onFetchNewComments: fetchNewComments,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(PostScreen);
