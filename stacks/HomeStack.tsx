@@ -3,6 +3,7 @@ import {
   createStackNavigator,
   HeaderBackButton,
 } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native';
 import { connect } from 'react-redux';
 import { HomeScreen, PostScreen, ReplyScreen, UserScreen } from '../screens';
 import { Colors } from '../constants';
@@ -18,6 +19,19 @@ export default connect(
   null,
   mapDispatchToProps,
 )(function HomeStack(props: any) {
+  // const navigation = useNavigation();
+  // React.useEffect(() => {
+  //   const unsubscribe = navigation.addListener('focus', (e) => {
+  //     // Prevent default behavior
+  //     e.preventDefault();
+  //     console.log('home');
+  //     // Do something manually
+  //     // ...
+  //   });
+
+  //   return unsubscribe;
+  // }, [navigation]);
+
   const goBackAndPopPostStack = (goBack: () => void, pop: () => void) => () => {
     goBack();
     pop();

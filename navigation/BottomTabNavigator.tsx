@@ -9,10 +9,12 @@ import {
   Foundation,
   Feather,
   Ionicons,
+  bottomTabHeight,
 } from '../constants';
 import { alertDialog } from '../utils/functions';
 import { AppState } from '../redux/store';
 import { checkAuth } from '../redux/auth/actions';
+import { clearStack } from '../redux/postComments/actions';
 import TabBarIcon from '../components/TabBarIcon';
 import HomeStack from '../stacks/HomeStack';
 import AuthScreen from '../screens/AuthScreen';
@@ -69,6 +71,7 @@ class BottomTabNavigator extends Component<any> {
           showLabel: false,
           style: {
             backgroundColor: Colors.darkColor,
+            height: bottomTabHeight,
           },
         }}>
         <BottomTab.Screen
@@ -78,6 +81,11 @@ class BottomTabNavigator extends Component<any> {
             tabBarIcon: ({ focused }) => (
               <TabBarIcon icon={Foundation} focused={focused} name="home" />
             ),
+          }}
+          listeners={{
+            tabPress: (_) => {
+              this.props.onClearStack();
+            },
           }}
         />
         <BottomTab.Screen
@@ -161,6 +169,7 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = {
   onCheckAuth: checkAuth,
+  onClearStack: clearStack,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(BottomTabNavigator);

@@ -1,3 +1,4 @@
 import PostSection from './PostSection';
+import CommentInput from './CommentInput';
 
-export { PostSection };
+export { PostSection, CommentInput };

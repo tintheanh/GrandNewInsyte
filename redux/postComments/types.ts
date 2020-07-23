@@ -13,6 +13,7 @@ export const FETCH_TOP_COMMENTS_END = 'FETCH_TOP_COMMENTS_END';
 export const PUSH_POSTLAYER = 'PUSH_POSTLAYER';
 export const POP_POSTLAYER = 'POP_POSTLAYER';
 export const SET_SORT_COMMENTS = 'SET_SORT_COMMENTS';
+export const CLEAR_STACK = 'CLEAR_STACK';
 
 export interface PostCommentsAction {
   type: string;

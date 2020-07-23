@@ -1,3 +1,5 @@
+import { getSystemName, hasNotch } from 'react-native-device-info';
+
 import Colors from './Colors';
 import Layout from './Layout';
 
@@ -11,6 +13,10 @@ export const separatorForTag = '\u01B1';
 
 export const pendingPostID = 'pending-post-69';
 export const pendingDeletePostFlag = '--pending-delete-post';
+
+const deviceOS = getSystemName();
+export const bottomTabHeight =
+  deviceOS === 'iOS' || deviceOS === 'iPhone OS' ? (hasNotch() ? 79 : 50) : 50;
 
 export { Colors, Layout };
 export * from './Icons';

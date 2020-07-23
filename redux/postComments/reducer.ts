@@ -12,6 +12,7 @@ import {
   POP_POSTLAYER,
   FETCH_NEW_COMMENTS_END,
   SET_SORT_COMMENTS,
+  CLEAR_STACK,
 } from './types';
 import { PostStack, PostComment } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
@@ -124,6 +125,11 @@ export default function postCommentsReducer(
         newStack.updateTop(topLayer);
         newState.stack = newStack;
       }
+      return newState;
+    }
+    case CLEAR_STACK: {
+      const newState = { ...state };
+      newState.stack = new PostStack();
       return newState;
     }
     default:

@@ -10,6 +10,7 @@ import {
   PUSH_POSTLAYER,
   SET_SORT_COMMENTS,
   POP_POSTLAYER,
+  CLEAR_STACK,
   PostCommentsAction,
 } from './types';
 import { fsDB, FirebaseFirestoreTypes, commentsPerBatch } from '../../config';
@@ -169,6 +170,15 @@ export const setSortComments = (by: 'new' | 'top') => (
   dispatch({
     type: SET_SORT_COMMENTS,
     payload: by,
+  });
+};
+
+export const clearStack = () => (
+  dispatch: (action: PostCommentsAction) => void,
+) => {
+  dispatch({
+    type: CLEAR_STACK,
+    payload: null,
   });
 };
 
