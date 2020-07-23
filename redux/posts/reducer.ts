@@ -756,6 +756,7 @@ export default function postsReducer(
       const userPosts = [...state.userPosts.posts];
       const taggedPosts = [...state.taggedPosts.posts];
       const postID = action.payload as string;
+      newState.likePost.error = null;
 
       const publicPostIndex = publicPosts.findIndex(
         (post) => post.id === postID,
@@ -866,6 +867,7 @@ export default function postsReducer(
       const userPosts = [...state.userPosts.posts];
       const taggedPosts = [...state.taggedPosts.posts];
       const postID = action.payload as string;
+      newState.unlikePost.error = null;
 
       const publicPostIndex = publicPosts.findIndex(
         (post) => post.id === postID,

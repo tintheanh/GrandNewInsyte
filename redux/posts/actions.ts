@@ -1302,6 +1302,7 @@ export const likePost = (postID: string) => async (
   }
   dispatch(likePostStarted(postID));
   try {
+    // throw new Error('dummy error');
     const postRef = fsDB.collection('posts').doc(postID);
     await fsDB.runTransaction(async (trans) => {
       const doc = await trans.get(postRef);
@@ -1338,6 +1339,7 @@ export const unlikePost = (postID: string) => async (
   }
   dispatch(unlikePostStarted(postID));
   try {
+    // throw new Error('dummy error');
     const postRef = fsDB.collection('posts').doc(postID);
     await fsDB.runTransaction(async (trans) => {
       const doc = await trans.get(postRef);

@@ -1,13 +1,7 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { View, StyleSheet } from 'react-native';
-import {
-  List,
-  Loading,
-  ErrorView,
-  NothingView,
-  PostCard,
-} from '../../../../components';
+import { List, Loading, ErrorView, NothingView } from '../../../../components';
 import { setCurrentHomeListPostIndex } from '../../../../redux/curentViewableItem/actions';
 import HomePostCard from '../HomePostCard';
 import HomePublicPostListLoading from './HomePublicPostListLoading';
@@ -52,28 +46,27 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
     };
   }
 
-  // shouldComponentUpdate(nextProps: HomePublicPostListProps) {
-  //   console.log('public', nextProps.currentTabIndex);
-  //   if (this.props.currentTabIndex !== nextProps.currentTabIndex) {
-  //     return true;
-  //   }
-  //   if (
-  //     (this.props.posts.length === 0 || nextProps.posts.length === 0) &&
-  //     this.props.loading !== nextProps.loading
-  //   ) {
-  //     return true;
-  //   }
-  //   if (this.props.pullLoading !== nextProps.pullLoading) {
-  //     return true;
-  //   }
-  //   if (checkPostListChanged(this.props.posts, nextProps.posts)) {
-  //     return true;
-  //   }
-  //   if (this.props.error !== nextProps.error) {
-  //     return true;
-  //   }
-  //   return false;
-  // }
+  shouldComponentUpdate(nextProps: HomePublicPostListProps) {
+    if (this.props.currentTabIndex !== nextProps.currentTabIndex) {
+      return true;
+    }
+    if (
+      (this.props.posts.length === 0 || nextProps.posts.length === 0) &&
+      this.props.loading !== nextProps.loading
+    ) {
+      return true;
+    }
+    if (this.props.pullLoading !== nextProps.pullLoading) {
+      return true;
+    }
+    if (checkPostListChanged(this.props.posts, nextProps.posts)) {
+      return true;
+    }
+    if (this.props.error !== nextProps.error) {
+      return true;
+    }
+    return false;
+  }
 
   onViewableItemsChanged = ({ viewableItems, _ }: any) => {
     if (viewableItems && viewableItems.length > 0 && viewableItems[0]) {

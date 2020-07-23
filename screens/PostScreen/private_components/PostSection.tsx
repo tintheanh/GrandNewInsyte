@@ -9,7 +9,7 @@ import {
 import {
   Colors,
   AntDesign,
-  FontAwesome,
+  MaterialIcons,
   Feather,
   FontAwesome5,
 } from '../../../constants';
@@ -17,42 +17,47 @@ import { Carousel } from '../../../components';
 import SortComments from './SortComments';
 import {
   convertNumber,
-  convertTime,
   generateCaptionWithTagsAndUrls,
   openURL,
 } from '../../../utils/functions';
+import { Post } from '../../../models';
 
 interface PostSectionProps {
-  id: string;
-  avatar: string;
-  username: string;
-  datePosted: number;
-  iconPrivacy: string;
-  caption: string;
-  media: Array<{
-    id: string;
-    url: string;
-    type: string;
-    width: number;
-    height: number;
-  }>;
-  likes: number;
-  comments: number;
+  post: Post;
   navigateWhenClickOnUsernameOrAvatar?: () => void;
+  likePost: () => void;
+  unLikePost: () => void;
 }
 
 export default function PostSection({
-  id,
-  avatar,
-  username,
-  datePosted,
-  iconPrivacy,
-  caption,
-  media,
-  likes,
-  comments,
+  post,
   navigateWhenClickOnUsernameOrAvatar = undefined,
+  likePost,
+  unLikePost,
 }: PostSectionProps) {
+  const {
+    id,
+    user,
+    timeLabel,
+    privacy,
+    caption,
+    isLiked,
+    media,
+    likes,
+    comments,
+  } = post;
+  let iconPrivacy = '';
+  switch (privacy) {
+    case 'public':
+      iconPrivacy = 'globe';
+      break;
+    case 'followers':
+      iconPrivacy = 'users';
+      break;
+    default:
+      iconPrivacy = 'lock';
+      break;
+  }
   return (
     <View style={{ backgroundColor: Colors.darkColor }}>
       <View style={styles.userWrapper}>
@@ -60,8 +65,8 @@ export default function PostSection({
           <Image
             style={styles.avatar}
             source={
-              avatar.length
-                ? { uri: avatar }
+              user.avatar.length
+                ? { uri: user.avatar }
                 : require('../../../assets/user.png')
             }
             defaultSource={require('../../../assets/user.png')}
@@ -70,10 +75,10 @@ export default function PostSection({
         <View style={styles.usernameAndTimeWrapper}>
           <TouchableWithoutFeedback
             onPress={navigateWhenClickOnUsernameOrAvatar}>
-            <Text style={styles.username}>{username}</Text>
+            <Text style={styles.username}>{user.username}</Text>
           </TouchableWithoutFeedback>
           <View style={styles.timeAndPrivacyWrapper}>
-            <Text style={styles.time}>{convertTime(datePosted)}</Text>
+            <Text style={styles.time}>{timeLabel}</Text>
             <FontAwesome5
               name={iconPrivacy}
               size={9}
@@ -83,7 +88,6 @@ export default function PostSection({
           </View>
         </View>
       </View>
-      {/* <Text style={styles.caption}>{caption}</Text> */}
       <Text style={styles.caption}>
         {generateCaptionWithTagsAndUrls(caption).map((element, i) => {
           if (element.type === 'tag') {
@@ -118,12 +122,24 @@ export default function PostSection({
       {media.length ? <Carousel items={media} shouldPlayMedia /> : null}
       <View style={styles.interactionSection}>
         <View style={styles.likeAndComment}>
+          <TouchableWithoutFeedback onPress={isLiked ? unLikePost : likePost}>
+            <View style={styles.iconWrapper}>
+              <AntDesign
+                name="like1"
+                size={18}
+                color={isLiked ? Colors.tintColor : 'white'}
+              />
+              <Text
+                style={[
+                  styles.interactionText,
+                  { color: isLiked ? Colors.tintColor : 'white' },
+                ]}>
+                {convertNumber(likes)}
+              </Text>
+            </View>
+          </TouchableWithoutFeedback>
           <View style={styles.iconWrapper}>
-            <AntDesign name="like2" size={18} color="white" />
-            <Text style={styles.interactionText}>{convertNumber(likes)}</Text>
-          </View>
-          <View style={styles.iconWrapper}>
-            <FontAwesome name="comment-o" size={18} color="white" />
+            <MaterialIcons name="mode-comment" size={18} color="white" />
             <Text style={styles.interactionText}>
               {convertNumber(comments)}
             </Text>

@@ -29,6 +29,7 @@ interface ListProps {
   onRefresh?: () => void;
   refreshing?: boolean;
   isFocused?: boolean;
+  extraData?: any;
 }
 
 export default class List extends Component<ListProps> {
@@ -42,6 +43,9 @@ export default class List extends Component<ListProps> {
       return true;
     }
     if (this.props.isFocused !== nextProps.isFocused) {
+      return true;
+    }
+    if (this.props.extraData !== nextProps.extraData) {
       return true;
     }
     return false;
@@ -75,6 +79,7 @@ export default class List extends Component<ListProps> {
       refreshing = false,
       renderItem,
       onRefresh,
+      extraData,
     } = this.props;
     // console.log(data);
     return (
@@ -103,6 +108,7 @@ export default class List extends Component<ListProps> {
               />
             ) : undefined
           }
+          extraData={extraData}
         />
       </SafeAreaView>
     );

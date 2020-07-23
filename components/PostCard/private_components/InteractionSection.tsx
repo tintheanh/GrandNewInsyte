@@ -32,10 +32,10 @@ export default function InteractionSection({
               color={isLiked ? Colors.tintColor : 'white'}
             />
             <Text
-              style={{
-                ...styles.interactionText,
-                color: isLiked ? Colors.tintColor : 'white',
-              }}>
+              style={[
+                styles.interactionText,
+                { color: isLiked ? Colors.tintColor : 'white' },
+              ]}>
               {convertNumber(likes)}
             </Text>
           </View>
