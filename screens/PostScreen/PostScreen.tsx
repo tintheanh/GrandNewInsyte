@@ -13,12 +13,17 @@ import {
   delay,
   checkPostCommentListChanged,
   checkPostChanged,
+  alertDialog,
 } from '../../utils/functions';
 import { PostSection, CommentInput } from './private_components';
 import {
   fetchNewComments,
   fetchTopComments,
   popPostLayer,
+  likeComment,
+  unlikeComment,
+  clearCreateCommentError,
+  clearInteractCommentError,
 } from '../../redux/postComments/actions';
 import { likePost, unlikePost, deletePost } from '../../redux/posts/actions';
 import { AppState } from '../../redux/store';
@@ -44,14 +49,20 @@ interface PostScreenProps {
   sortCommentsBy: 'new' | 'top';
   loading: boolean;
   error: Error | null;
+  createCommentError: Error | null;
+  interactCommentError: Error | null;
   likePostError: Error | null;
   unlikePostError: Error | null;
   onFetchNewComments: (postID: string) => void;
   onFetchTopComments: (postID: string) => void;
+  onLikeComment: (commentID: string) => void;
   onLikePost: (postID: string) => void;
+  onUnlikeComment: (commentID: string) => void;
   onUnlikePost: (postID: string) => void;
   onDeletePost: (postID: string) => void;
   onPopPostLayer: () => void;
+  onClearCreateCommentError: () => void;
+  onClearInteractCommentError: () => void;
 }
 
 class PostScreen extends Component<PostScreenProps> {
@@ -63,6 +74,8 @@ class PostScreen extends Component<PostScreenProps> {
       sortCommentsBy,
       loading,
       error,
+      createCommentError,
+      interactCommentError,
       likePostError,
       unlikePostError,
     } = this.props;
@@ -75,16 +88,16 @@ class PostScreen extends Component<PostScreenProps> {
     if (checkPostCommentListChanged(comments, nextProps.comments)) {
       return true;
     }
-    if (
-      !checkPostCommentListChanged(comments, nextProps.comments) &&
-      (comments.length !== 0 || nextProps.comments.length !== 0)
-    ) {
-      return false;
-    }
     if (sortCommentsBy !== nextProps.sortCommentsBy) {
       return true;
     }
     if (error !== nextProps.error) {
+      return true;
+    }
+    if (createCommentError !== nextProps.createCommentError) {
+      return true;
+    }
+    if (interactCommentError !== nextProps.interactCommentError) {
       return true;
     }
     if (likePostError !== nextProps.likePostError) {
@@ -134,10 +147,13 @@ class PostScreen extends Component<PostScreenProps> {
         content={item.content}
         datePosted={item.datePosted}
         likes={item.likes}
+        isLiked={item.isLiked}
         replies={item.replies}
         userControl={
           currentUID === item.user.id ? this.performDeleteComment : undefined
         }
+        likeComment={this.performLikeComment(item.id)}
+        unlikeComment={this.performUnlikeComment(item.id)}
       />
     );
   };
@@ -237,6 +253,14 @@ class PostScreen extends Component<PostScreenProps> {
     onDeletePost(postID);
   };
 
+  performLikeComment = (commentID: string) => () => {
+    this.props.onLikeComment(commentID);
+  };
+
+  performUnlikeComment = (commentID: string) => () => {
+    this.props.onUnlikeComment(commentID);
+  };
+
   userControl = () => {
     Alert.alert(
       '',
@@ -258,7 +282,16 @@ class PostScreen extends Component<PostScreenProps> {
 
   render() {
     const post = this.props.route.params.data;
-    const { comments, error, loading, currentUID } = this.props;
+    const {
+      comments,
+      error,
+      createCommentError,
+      interactCommentError,
+      loading,
+      currentUID,
+      onClearCreateCommentError,
+      onClearInteractCommentError,
+    } = this.props;
     // console.log('post screen', comments);
 
     const postSection = (
@@ -270,6 +303,13 @@ class PostScreen extends Component<PostScreenProps> {
         userControl={post.user.id === currentUID ? this.userControl : undefined}
       />
     );
+
+    if (createCommentError) {
+      alertDialog(createCommentError.message, onClearCreateCommentError);
+    }
+    if (interactCommentError) {
+      alertDialog(interactCommentError.message, onClearInteractCommentError);
+    }
 
     if (error) {
       return (
@@ -362,6 +402,10 @@ const mapStateToProps = (state: AppState) => ({
   comments: state.postComments.stack.top()?.commentList ?? [],
   loading: state.postComments.stack.top()?.loading ?? false,
   error: state.postComments.stack.top()?.error ?? null,
+  createCommentError:
+    state.postComments.stack.top()?.createCommentError ?? null,
+  interactCommentError:
+    state.postComments.stack.top()?.interactCommentError ?? null,
   sortCommentsBy: state.postComments.stack.top()?.type ?? 'new',
   likePostError: state.allPosts.likePost.error,
   unlikePostError: state.allPosts.unlikePost.error,
@@ -374,6 +418,10 @@ const mapDispatchToProps = {
   onUnlikePost: unlikePost,
   onDeletePost: deletePost,
   onPopPostLayer: popPostLayer,
+  onLikeComment: likeComment,
+  onUnlikeComment: unlikeComment,
+  onClearCreateCommentError: clearCreateCommentError,
+  onClearInteractCommentError: clearInteractCommentError,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(PostScreen);

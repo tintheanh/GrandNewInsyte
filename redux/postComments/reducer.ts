@@ -11,6 +11,14 @@ import {
   CREATE_COMMENT_FAILURE,
   CREATE_COMMENT_STARTED,
   CREATE_COMMENT_SUCCESS,
+  LIKE_COMMENT_FAILURE,
+  LIKE_COMMENT_STARTED,
+  LIKE_COMMENT_SUCCESS,
+  UNLIKE_COMMENT_FAILURE,
+  UNLIKE_COMMENT_STARTED,
+  UNLIKE_COMMENT_SUCCESS,
+  CLEAR_CREATE_COMMENT_ERROR,
+  CLEAR_INTERACT_COMMENT_ERROR,
   PUSH_POSTLAYER,
   POP_POSTLAYER,
   FETCH_NEW_COMMENTS_END,
@@ -21,7 +29,6 @@ import { PostStack, PostComment } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
 import { pendingCommentID } from '../../constants';
 import { removeDuplicatesFromCommentsArray } from '../../utils/functions';
-import { act } from 'react-test-renderer';
 
 const initialState: PostCommentsState = {
   stack: new PostStack(),
@@ -106,8 +113,8 @@ export default function postCommentsReducer(
       const newStack = PostStack.clone(state.stack);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.loading = true;
-        topLayer.error = null;
+        topLayer.createCommentLoading = true;
+        topLayer.createCommentError = null;
         const filteredPending = topLayer.commentList.filter(
           (comment) => comment.id !== pendingCommentID,
         );
@@ -127,7 +134,7 @@ export default function postCommentsReducer(
       const newStack = PostStack.clone(state.stack);
       const topLayer = newStack.top();
       if (topLayer && topLayer.postID === payload.postID) {
-        topLayer.loading = false;
+        topLayer.createCommentLoading = false;
         topLayer.error = null;
         const index = topLayer.commentList.findIndex(
           (comment) => comment.id === pendingCommentID,
@@ -152,10 +159,122 @@ export default function postCommentsReducer(
       const newStack = PostStack.clone(state.stack);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.loading = false;
-        topLayer.error = action.payload as Error;
-        topLayer.commentList = [];
-        topLayer.lastVisible = null;
+        topLayer.createCommentLoading = false;
+        topLayer.createCommentError = action.payload as Error;
+        const filteredPending = topLayer.commentList.filter(
+          (comment) => comment.id !== pendingCommentID,
+        );
+        topLayer.commentList = filteredPending;
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case LIKE_COMMENT_STARTED: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === (action.payload as string),
+        );
+        if (index !== -1) {
+          topLayer.commentList[index].likes += 1;
+          topLayer.commentList[index].isLiked = true;
+        }
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case LIKE_COMMENT_SUCCESS: {
+      return state;
+    }
+    case LIKE_COMMENT_FAILURE: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        commentID: string;
+        error: Error | null;
+      };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        if (payload.commentID.length) {
+          const index = topLayer.commentList.findIndex(
+            (comment) => comment.id === payload.commentID,
+          );
+          if (index !== -1) {
+            topLayer.commentList[index].likes -= 1;
+            topLayer.commentList[index].isLiked = false;
+          }
+        }
+        topLayer.interactCommentError = payload.error;
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case UNLIKE_COMMENT_STARTED: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === (action.payload as string),
+        );
+        if (index !== -1) {
+          topLayer.commentList[index].likes -= 1;
+          topLayer.commentList[index].isLiked = false;
+        }
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case UNLIKE_COMMENT_SUCCESS: {
+      return state;
+    }
+    case UNLIKE_COMMENT_FAILURE: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        commentID: string;
+        error: Error | null;
+      };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        if (payload.commentID.length) {
+          const index = topLayer.commentList.findIndex(
+            (comment) => comment.id === payload.commentID,
+          );
+          if (index !== -1) {
+            topLayer.commentList[index].likes += 1;
+            topLayer.commentList[index].isLiked = true;
+          }
+        }
+        topLayer.interactCommentError = payload.error;
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case CLEAR_CREATE_COMMENT_ERROR: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.createCommentError = null;
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case CLEAR_INTERACT_COMMENT_ERROR: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.interactCommentError = null;
         newStack.updateTop(topLayer);
         newState.stack = newStack;
       }
@@ -166,7 +285,10 @@ export default function postCommentsReducer(
       const postLayer = {
         postID: action.payload as string,
         loading: false,
+        createCommentLoading: false,
         error: null,
+        createCommentError: null,
+        interactCommentError: null,
         lastVisible: null,
         type: 'new' as 'new',
         commentList: [],

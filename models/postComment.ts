@@ -4,6 +4,7 @@ export default interface PostComment {
   datePosted: number;
   likes: number;
   replies: number;
+  isLiked: boolean;
   user: {
     id: string;
     avatar: string;

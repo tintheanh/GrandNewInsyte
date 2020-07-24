@@ -14,7 +14,7 @@ import {
 import { Post, UserResult, PostComment } from '../models';
 import { Colors, tokenForTag, separatorForTag } from '../constants';
 
-const alertDialog = (alertText: string) => {
+const alertDialog = (alertText: string, callback?: (args?: any) => void) => {
   Alert.alert(
     '',
     alertText,
@@ -22,6 +22,7 @@ const alertDialog = (alertText: string) => {
       {
         text: 'OK',
         style: 'cancel',
+        onPress: callback,
       },
     ],
     { cancelable: true },
@@ -611,6 +612,7 @@ const docFBtoPostArray = async (
 };
 
 const docFStoCommentArray = async (
+  postID: string,
   docs: Array<FirebaseFirestoreTypes.QueryDocumentSnapshot>,
   currentUser?: {
     id: string;
@@ -640,11 +642,27 @@ const docFStoCommentArray = async (
           avatar: userData!.avatar as string,
         };
       }
+      let isLiked = false;
+      if (currentUser) {
+        const likeRef = await fsDB
+          .collection('posts')
+          .doc(postID)
+          .collection('comment_list')
+          .doc(snapshot.id)
+          .collection('like_list')
+          .doc(currentUser.id)
+          .get();
+        if (likeRef.exists) {
+          isLiked = true;
+        }
+      }
+
       const comment = {
         id: snapshot.id,
         content: commentData!.content as string,
         datePosted: commentData!.date_posted as number,
         likes: commentData!.likes as number,
+        isLiked,
         replies: commentData!.replies as number,
         user: postedBy,
       };

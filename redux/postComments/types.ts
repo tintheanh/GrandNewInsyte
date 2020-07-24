@@ -15,6 +15,17 @@ export const CREATE_COMMENT_STARTED = 'CREATE_COMMENT_STARTED';
 export const CREATE_COMMENT_SUCCESS = 'CREATE_COMMENT_SUCCESS';
 export const CREATE_COMMENT_FAILURE = 'CREATE_COMMENT_FAILURE';
 
+export const LIKE_COMMENT_STARTED = 'LIKE_COMMENT_STARTED';
+export const LIKE_COMMENT_SUCCESS = 'LIKE_COMMENT_SUCCESS';
+export const LIKE_COMMENT_FAILURE = 'LIKE_COMMENT_FAILURE';
+
+export const UNLIKE_COMMENT_STARTED = 'UNLIKE_COMMENT_STARTED';
+export const UNLIKE_COMMENT_SUCCESS = 'UNLIKE_COMMENT_SUCCESS';
+export const UNLIKE_COMMENT_FAILURE = 'UNLIKE_COMMENT_FAILURE';
+
+export const CLEAR_CREATE_COMMENT_ERROR = 'CLEAR_CREATE_COMMENT_ERROR';
+export const CLEAR_INTERACT_COMMENT_ERROR = 'CLEAR_INTERACT_COMMENT_ERROR';
+
 export const PUSH_POSTLAYER = 'PUSH_POSTLAYER';
 export const POP_POSTLAYER = 'POP_POSTLAYER';
 export const SET_SORT_COMMENTS = 'SET_SORT_COMMENTS';
@@ -33,6 +44,10 @@ export interface PostCommentsAction {
     | {
         newComment: PostComment;
         postID: string;
+      }
+    | {
+        commentID: string;
+        error: Error | null;
       }
     | Error
     | null;

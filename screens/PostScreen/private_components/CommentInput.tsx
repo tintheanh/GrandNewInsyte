@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: AppState) => ({
-  loading: state.postComments.stack.top()?.loading ?? false,
+  loading: state.postComments.stack.top()?.createCommentLoading ?? false,
 });
 
 const mapDispatchToProps = {

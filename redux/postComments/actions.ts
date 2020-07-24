@@ -10,9 +10,17 @@ import {
   CREATE_COMMENT_FAILURE,
   CREATE_COMMENT_STARTED,
   CREATE_COMMENT_SUCCESS,
+  LIKE_COMMENT_FAILURE,
+  LIKE_COMMENT_STARTED,
+  LIKE_COMMENT_SUCCESS,
+  UNLIKE_COMMENT_FAILURE,
+  UNLIKE_COMMENT_STARTED,
+  UNLIKE_COMMENT_SUCCESS,
   PUSH_POSTLAYER,
   SET_SORT_COMMENTS,
   POP_POSTLAYER,
+  CLEAR_CREATE_COMMENT_ERROR,
+  CLEAR_INTERACT_COMMENT_ERROR,
   CLEAR_STACK,
   PostCommentsAction,
 } from './types';
@@ -36,7 +44,7 @@ export const fetchNewComments = (postID: string) => async (
     // if (percent > 50) {
     //   throw new Error('dummy error');
     // }
-    console.log('fetch new cmt');
+    // console.log('fetch new cmt');
     const { user } = getState().auth;
     const lastVisible = getState().postComments.stack.top()?.lastVisible;
     let currentUser;
@@ -73,6 +81,7 @@ export const fetchNewComments = (postID: string) => async (
     }
 
     const comments = await docFStoCommentArray(
+      postID,
       documentSnapshots.docs,
       currentUser,
     );
@@ -138,6 +147,7 @@ export const fetchTopComments = (postID: string) => async (
     }
 
     const comments = await docFStoCommentArray(
+      postID,
       documentSnapshots.docs,
       currentUser,
     );
@@ -176,6 +186,7 @@ export const createComment = (content: string) => async (
     datePosted: currentTime,
     likes: 0,
     replies: 0,
+    isLiked: false,
     user: {
       id: user.id,
       avatar: user.avatar,
@@ -206,6 +217,116 @@ export const createComment = (content: string) => async (
     console.log(err.message);
     dispatch(createCommentFailure(new Error('Internal server error.')));
   }
+};
+
+export const likeComment = (commentID: string) => async (
+  dispatch: (action: PostCommentsAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  const postID = getState().postComments.stack.top()?.postID;
+  if (!user) {
+    return dispatch(
+      likeCommentFailure('', new Error('Unauthorized. Please sign in.')),
+    );
+  }
+  if (!postID) {
+    return dispatch(likeCommentFailure('', new Error('Error occurred')));
+  }
+  dispatch(likeCommentStarted(commentID));
+  try {
+    const commentRef = fsDB
+      .collection('posts')
+      .doc(postID)
+      .collection('comment_list')
+      .doc(commentID);
+    await fsDB.runTransaction(async (trans) => {
+      const doc = await trans.get(commentRef);
+      const newLikes = doc.data()!.likes + 1;
+      trans.update(commentRef, { likes: newLikes });
+      // throw new Error('dummy');
+      const likeRef = fsDB
+        .collection('posts')
+        .doc(postID)
+        .collection('comment_list')
+        .doc(commentID)
+        .collection('like_list')
+        .doc(user.id);
+      const like = await likeRef.get();
+      if (like.exists) {
+        throw new Error('Invalid operation.');
+      }
+      trans.set(likeRef, { c: 1 });
+    });
+    dispatch(likeCommentSuccess());
+  } catch (err) {
+    console.log(err.message);
+    dispatch(
+      likeCommentFailure(commentID, new Error('Internal server error.')),
+    );
+  }
+};
+
+export const unlikeComment = (commentID: string) => async (
+  dispatch: (action: PostCommentsAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  const postID = getState().postComments.stack.top()?.postID;
+  if (!user) {
+    return dispatch(
+      unlikeCommentFailure('', new Error('Unauthorized. Please sign in.')),
+    );
+  }
+  if (!postID) {
+    return dispatch(unlikeCommentFailure('', new Error('Error occurred')));
+  }
+  dispatch(unlikeCommentStarted(commentID));
+  try {
+    const commentRef = fsDB
+      .collection('posts')
+      .doc(postID)
+      .collection('comment_list')
+      .doc(commentID);
+    await fsDB.runTransaction(async (trans) => {
+      const doc = await trans.get(commentRef);
+      const newLikes = doc.data()!.likes - 1;
+      trans.update(commentRef, { likes: newLikes });
+      // throw new Error('dummy');
+      const likeRef = fsDB
+        .collection('posts')
+        .doc(postID)
+        .collection('comment_list')
+        .doc(commentID)
+        .collection('like_list')
+        .doc(user.id);
+      trans.delete(likeRef);
+    });
+    dispatch(unlikeCommentSuccess());
+  } catch (err) {
+    console.log(err.message);
+    dispatch(
+      unlikeCommentFailure(commentID, new Error('Internal server error.')),
+    );
+  }
+};
+
+export const clearCreateCommentError = () => (
+  dispatch: (action: PostCommentsAction) => void,
+) => {
+  dispatch({
+    type: CLEAR_CREATE_COMMENT_ERROR,
+    payload: null,
+  });
+};
+
+export const clearInteractCommentError = () => (
+  dispatch: (action: PostCommentsAction) => void,
+) => {
+  dispatch({
+    type: CLEAR_INTERACT_COMMENT_ERROR,
+    payload: null,
+  });
 };
 
 export const pushPostLayer = (postID: string) => (
@@ -308,4 +429,40 @@ const createCommentSuccess = (
 const createCommentFailure = (error: Error): PostCommentsAction => ({
   type: CREATE_COMMENT_FAILURE,
   payload: error,
+});
+
+const likeCommentStarted = (commentID: string): PostCommentsAction => ({
+  type: LIKE_COMMENT_STARTED,
+  payload: commentID,
+});
+
+const likeCommentSuccess = (): PostCommentsAction => ({
+  type: LIKE_COMMENT_SUCCESS,
+  payload: null,
+});
+
+const likeCommentFailure = (
+  commentID: string,
+  error: Error,
+): PostCommentsAction => ({
+  type: LIKE_COMMENT_FAILURE,
+  payload: { commentID, error },
+});
+
+const unlikeCommentStarted = (commentID: string): PostCommentsAction => ({
+  type: UNLIKE_COMMENT_STARTED,
+  payload: commentID,
+});
+
+const unlikeCommentSuccess = (): PostCommentsAction => ({
+  type: UNLIKE_COMMENT_SUCCESS,
+  payload: null,
+});
+
+const unlikeCommentFailure = (
+  commentID: string,
+  error: Error,
+): PostCommentsAction => ({
+  type: UNLIKE_COMMENT_FAILURE,
+  payload: { commentID, error },
 });

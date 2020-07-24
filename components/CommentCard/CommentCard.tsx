@@ -16,10 +16,13 @@ interface CommentCardProps {
     avatar: string;
     username: string;
   };
+  isLiked: boolean;
   content: string;
   datePosted: number;
   likes: number;
   replies: number;
+  likeComment: () => void;
+  unlikeComment: () => void;
   userControl?: () => void;
   // firstReply: {
   //   avatar: string;
@@ -47,8 +50,11 @@ export default class CommentCard extends Component<CommentCardProps> {
       user,
       content,
       userControl = undefined,
+      likeComment,
+      unlikeComment,
       datePosted,
       likes,
+      isLiked,
     } = this.props;
     return (
       <View
@@ -64,7 +70,12 @@ export default class CommentCard extends Component<CommentCardProps> {
             content={content}
             userControl={userControl}
           />
-          <InteractionSection likes={likes} />
+          <InteractionSection
+            likes={likes}
+            isLiked={isLiked}
+            likeComment={likeComment}
+            unlikeComment={unlikeComment}
+          />
           {/* {firstReply ? (
             <ReplySection
               avatar={firstReply.avatar}
