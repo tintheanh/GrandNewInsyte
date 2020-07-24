@@ -1,5 +1,6 @@
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
+const firebaseTools = require('firebase-tools');
 
 admin.initializeApp();
 
@@ -136,3 +137,15 @@ exports.handleDeletePostForFollowers = functions.https.onCall(
       });
   },
 );
+
+exports.handleDeletePost = functions.firestore
+  .document('posts/{postId}')
+  .onDelete((snapshot, context) => {
+    // delete every subcollection (like_list, comment_list, etc) of post
+    const postID = context.params.postId;
+    return firebaseTools.firestore.delete(`posts/${postID}`, {
+      project: 'grandnewinsyte',
+      recursive: true,
+      yes: true,
+    });
+  });

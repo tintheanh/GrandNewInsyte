@@ -11,6 +11,7 @@ import {
   AntDesign,
   MaterialIcons,
   Feather,
+  MaterialCommunityIcons,
   FontAwesome5,
 } from '../../../constants';
 import { Carousel } from '../../../components';
@@ -27,11 +28,13 @@ interface PostSectionProps {
   navigateWhenClickOnUsernameOrAvatar?: () => void;
   likePost: () => void;
   unLikePost: () => void;
+  userControl?: () => void;
 }
 
 export default function PostSection({
   post,
   navigateWhenClickOnUsernameOrAvatar = undefined,
+  userControl = undefined,
   likePost,
   unLikePost,
 }: PostSectionProps) {
@@ -87,6 +90,24 @@ export default function PostSection({
             />
           </View>
         </View>
+        {userControl ? (
+          <View
+            style={{
+              marginTop: -5,
+              alignSelf: 'stretch',
+              flexGrow: 1,
+              marginRight: 10,
+            }}>
+            <TouchableWithoutFeedback onPress={userControl}>
+              <MaterialCommunityIcons
+                name="dots-horizontal"
+                size={20}
+                color="rgba(255,255,255, 0.6)"
+                style={{ alignSelf: 'flex-end' }}
+              />
+            </TouchableWithoutFeedback>
+          </View>
+        ) : null}
       </View>
       <Text style={styles.caption}>
         {generateCaptionWithTagsAndUrls(caption).map((element, i) => {

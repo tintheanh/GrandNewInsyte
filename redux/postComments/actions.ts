@@ -7,15 +7,23 @@ import {
   FETCH_TOP_COMMENTS_FAILURE,
   FETCH_TOP_COMMENTS_STARTED,
   FETCH_TOP_COMMENTS_SUCCESS,
+  CREATE_COMMENT_FAILURE,
+  CREATE_COMMENT_STARTED,
+  CREATE_COMMENT_SUCCESS,
   PUSH_POSTLAYER,
   SET_SORT_COMMENTS,
   POP_POSTLAYER,
   CLEAR_STACK,
   PostCommentsAction,
 } from './types';
+import { pendingCommentID } from '../../constants';
 import { fsDB, FirebaseFirestoreTypes, commentsPerBatch } from '../../config';
-import { PostComment, PostStackLayer } from '../../models';
-import { docFStoCommentArray } from '../../utils/functions';
+import { PostComment } from '../../models';
+import {
+  delay,
+  docFStoCommentArray,
+  getCurrentUnixTime,
+} from '../../utils/functions';
 import { AppState } from '../store';
 
 export const fetchNewComments = (postID: string) => async (
@@ -28,6 +36,7 @@ export const fetchNewComments = (postID: string) => async (
     // if (percent > 50) {
     //   throw new Error('dummy error');
     // }
+    console.log('fetch new cmt');
     const { user } = getState().auth;
     const lastVisible = getState().postComments.stack.top()?.lastVisible;
     let currentUser;
@@ -146,6 +155,59 @@ export const fetchTopComments = (postID: string) => async (
   }
 };
 
+export const createComment = (content: string) => async (
+  dispatch: (action: PostCommentsAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  const currentTime = getCurrentUnixTime();
+  const postID = getState().postComments.stack.top()?.postID;
+  if (!user) {
+    return dispatch(
+      createCommentFailure(new Error('Unauthorized. Please sign in.')),
+    );
+  }
+  if (!postID) {
+    return dispatch(createCommentFailure(new Error('Error occurred')));
+  }
+  const tempComment = {
+    id: pendingCommentID,
+    content,
+    datePosted: currentTime,
+    likes: 0,
+    replies: 0,
+    user: {
+      id: user.id,
+      avatar: user.avatar,
+      username: user.username,
+    },
+  };
+  dispatch(createCommentStarted(tempComment));
+  try {
+    await delay(3000);
+    // throw new Error('dummy error');
+    const commentRef = await fsDB
+      .collection('posts')
+      .doc(postID)
+      .collection('comment_list')
+      .add({
+        content,
+        date_posted: currentTime,
+        likes: 0,
+        replies: 0,
+        posted_by: user.id,
+      });
+    const newComment = {
+      ...tempComment,
+      id: commentRef.id,
+    };
+    dispatch(createCommentSuccess(newComment, postID));
+  } catch (err) {
+    console.log(err.message);
+    dispatch(createCommentFailure(new Error('Internal server error.')));
+  }
+};
+
 export const pushPostLayer = (postID: string) => (
   dispatch: (action: PostCommentsAction) => void,
 ) => {
@@ -225,5 +287,25 @@ const fetchTopCommentsSuccess = (
 
 const fetchTopCommentsFailure = (error: Error): PostCommentsAction => ({
   type: FETCH_TOP_COMMENTS_FAILURE,
+  payload: error,
+});
+
+const createCommentStarted = (
+  tempComment: PostComment,
+): PostCommentsAction => ({
+  type: CREATE_COMMENT_STARTED,
+  payload: tempComment,
+});
+
+const createCommentSuccess = (
+  newComment: PostComment,
+  postID: string,
+): PostCommentsAction => ({
+  type: CREATE_COMMENT_SUCCESS,
+  payload: { newComment, postID },
+});
+
+const createCommentFailure = (error: Error): PostCommentsAction => ({
+  type: CREATE_COMMENT_FAILURE,
   payload: error,
 });

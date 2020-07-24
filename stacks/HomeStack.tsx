@@ -43,6 +43,7 @@ export default connect(
       screenOptions={{
         headerTintColor: 'white',
         headerStyle: { backgroundColor: Colors.darkColor },
+        // gestureEnabled: false,
       }}>
       <Stack.Screen
         name="Home"
@@ -52,19 +53,19 @@ export default connect(
       <Stack.Screen
         name="Post"
         component={PostScreen}
-        options={({ navigation, route }: any) => ({
-          title: route.params.title,
-          avatar: route.params.avatar,
-          headerLeft: (headerProps) => (
-            <HeaderBackButton
-              {...headerProps}
-              onPress={goBackAndPopPostStack(
-                navigation.goBack,
-                props.onPopPostLayer,
-              )}
-            />
-          ),
-        })}
+        // options={({ navigation, route }: any) => ({
+        //   title: route.params.title,
+        //   avatar: route.params.avatar,
+        //   headerLeft: (headerProps) => (
+        //     <HeaderBackButton
+        //       {...headerProps}
+        //       onPress={goBackAndPopPostStack(
+        //         navigation.goBack,
+        //         props.onPopPostLayer,
+        //       )}
+        //     />
+        //   ),
+        // })}
       />
       <Stack.Screen
         name="Reply"

@@ -8,6 +8,9 @@ import {
   FETCH_TOP_COMMENTS_FAILURE,
   FETCH_TOP_COMMENTS_STARTED,
   FETCH_TOP_COMMENTS_SUCCESS,
+  CREATE_COMMENT_FAILURE,
+  CREATE_COMMENT_STARTED,
+  CREATE_COMMENT_SUCCESS,
   PUSH_POSTLAYER,
   POP_POSTLAYER,
   FETCH_NEW_COMMENTS_END,
@@ -16,7 +19,9 @@ import {
 } from './types';
 import { PostStack, PostComment } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
+import { pendingCommentID } from '../../constants';
 import { removeDuplicatesFromCommentsArray } from '../../utils/functions';
+import { act } from 'react-test-renderer';
 
 const initialState: PostCommentsState = {
   stack: new PostStack(),
@@ -30,9 +35,9 @@ export default function postCommentsReducer(
     case FETCH_NEW_COMMENTS_STARTED:
     case FETCH_TOP_COMMENTS_STARTED: {
       const newState = { ...state };
-      const topLayer = state.stack.top();
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
       if (topLayer) {
-        const newStack = PostStack.clone(state.stack);
         topLayer.loading = true;
         topLayer.error = null;
         newStack.updateTop(topLayer);
@@ -47,14 +52,19 @@ export default function postCommentsReducer(
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot;
         commentList: Array<PostComment>;
       };
-      const topLayer = state.stack.top();
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
       if (topLayer) {
-        const newStack = PostStack.clone(state.stack);
         topLayer.loading = false;
         const newCommentList = topLayer.commentList.concat(payload.commentList);
         const removedDuplicates = removeDuplicatesFromCommentsArray(
           newCommentList,
         );
+        if (topLayer.type === 'new') {
+          removedDuplicates.sort((a, b) => a.datePosted - b.datePosted);
+        } else {
+          removedDuplicates.sort((b, a) => a.likes - b.likes);
+        }
         topLayer.commentList = removedDuplicates;
         topLayer.lastVisible = payload.lastVisible;
         topLayer.error = null;
@@ -66,9 +76,9 @@ export default function postCommentsReducer(
     case FETCH_NEW_COMMENTS_FAILURE:
     case FETCH_TOP_COMMENTS_FAILURE: {
       const newState = { ...state };
-      const topLayer = state.stack.top();
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
       if (topLayer) {
-        const newStack = PostStack.clone(state.stack);
         topLayer.loading = false;
         topLayer.commentList = [];
         topLayer.lastVisible = null;
@@ -81,11 +91,71 @@ export default function postCommentsReducer(
     case FETCH_NEW_COMMENTS_END:
     case FETCH_TOP_COMMENTS_END: {
       const newState = { ...state };
-      const topLayer = state.stack.top();
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
       if (topLayer) {
-        const newStack = PostStack.clone(state.stack);
         topLayer.loading = false;
         topLayer.error = null;
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case CREATE_COMMENT_STARTED: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.loading = true;
+        topLayer.error = null;
+        const filteredPending = topLayer.commentList.filter(
+          (comment) => comment.id !== pendingCommentID,
+        );
+        filteredPending.push(action.payload as PostComment);
+        topLayer.commentList = filteredPending;
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case CREATE_COMMENT_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        newComment: PostComment;
+        postID: string;
+      };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer && topLayer.postID === payload.postID) {
+        topLayer.loading = false;
+        topLayer.error = null;
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === pendingCommentID,
+        );
+        if (index !== -1) {
+          topLayer.commentList[index] = payload.newComment;
+        }
+        const filteredPending = topLayer.commentList.filter(
+          (comment) => comment.id !== pendingCommentID,
+        );
+        const removedDuplicates = removeDuplicatesFromCommentsArray(
+          filteredPending,
+        );
+        topLayer.commentList = removedDuplicates;
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case CREATE_COMMENT_FAILURE: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.loading = false;
+        topLayer.error = action.payload as Error;
+        topLayer.commentList = [];
+        topLayer.lastVisible = null;
         newStack.updateTop(topLayer);
         newState.stack = newStack;
       }

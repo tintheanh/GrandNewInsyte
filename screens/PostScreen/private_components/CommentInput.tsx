@@ -6,25 +6,40 @@ import {
   View,
   StyleSheet,
   TouchableWithoutFeedback,
+  EmitterSubscription,
 } from 'react-native';
+import { connect } from 'react-redux';
 import {
   Colors,
   bottomTabHeight,
   MaterialCommunityIcons,
 } from '../../../constants';
+import { createComment } from '../../../redux/postComments/actions';
+import { AppState } from '../../../redux/store';
+import { alertDialog } from '../../../utils/functions';
 
-export default class CommentInput extends Component<any, any> {
-  private keyboardWillShowListener: any;
-  private keyboardWillHideListener: any;
+interface CommentInputState {
+  text: string;
+  textInputHeight: number;
+}
+
+interface CommentInputProps {
+  loading: boolean;
+  onCreateComment: (content: string) => void;
+}
+
+class CommentInput extends Component<CommentInputProps, CommentInputState> {
+  private keyboardWillShowListener: EmitterSubscription | null = null;
+  private keyboardWillHideListener: EmitterSubscription | null = null;
   private moveAnimation: Animated.Value;
 
   constructor(props: any) {
     super(props);
-    this.moveAnimation = new Animated.Value(0);
     this.state = {
       text: '',
       textInputHeight: 0,
     };
+    this.moveAnimation = new Animated.Value(0);
   }
 
   componentDidMount() {
@@ -39,8 +54,8 @@ export default class CommentInput extends Component<any, any> {
   }
 
   componentWillUnmount() {
-    this.keyboardWillShowListener.remove();
-    this.keyboardWillHideListener.remove();
+    this.keyboardWillShowListener!.remove();
+    this.keyboardWillHideListener!.remove();
   }
 
   _keyboardWillShow = (event: any) => {
@@ -57,6 +72,16 @@ export default class CommentInput extends Component<any, any> {
       duration,
       useNativeDriver: true,
     }).start();
+  };
+
+  performSubmitComment = () => {
+    const { text } = this.state;
+    if (!text.length) {
+      return alertDialog('Comment cannot be empty');
+    }
+    this.props.onCreateComment(text);
+    Keyboard.dismiss();
+    this.setState({ text: '' });
   };
 
   render() {
@@ -76,6 +101,7 @@ export default class CommentInput extends Component<any, any> {
               textInputHeight: event.nativeEvent.contentSize.height,
             });
           }}
+          value={this.state.text}
           autoCorrect={false}
           multiline
           placeholder="Write a comment"
@@ -88,9 +114,16 @@ export default class CommentInput extends Component<any, any> {
             },
           ]}
         />
-        <TouchableWithoutFeedback onPress={() => console.log('submit comment')}>
+        <TouchableWithoutFeedback
+          onPress={this.performSubmitComment}
+          disabled={this.props.loading}>
           <View style={styles.submitBtn}>
-            <MaterialCommunityIcons name="send" size={24} color="white" />
+            <MaterialCommunityIcons
+              name="send"
+              size={24}
+              color="white"
+              style={{ opacity: this.props.loading ? 0.4 : 1 }}
+            />
           </View>
         </TouchableWithoutFeedback>
       </Animated.View>
@@ -139,3 +172,13 @@ const styles = StyleSheet.create({
     paddingRight: 10,
   },
 });
+
+const mapStateToProps = (state: AppState) => ({
+  loading: state.postComments.stack.top()?.loading ?? false,
+});
+
+const mapDispatchToProps = {
+  onCreateComment: createComment,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(CommentInput);

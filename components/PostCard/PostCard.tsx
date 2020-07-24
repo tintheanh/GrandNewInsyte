@@ -9,7 +9,7 @@ import { connect } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import {
   Colors,
-  Entypo,
+  MaterialCommunityIcons,
   pendingDeletePostFlag,
   pendingPostID,
 } from '../../constants';
@@ -170,8 +170,8 @@ class PostCard extends Component<PostCardProps> {
             </View>
           ) : userPostControl ? (
             <TouchableWithoutFeedback onPress={userPostControl}>
-              <Entypo
-                name="chevron-down"
+              <MaterialCommunityIcons
+                name="dots-horizontal"
                 size={20}
                 color="rgba(255,255,255, 0.6)"
                 style={{ marginTop: -5 }}

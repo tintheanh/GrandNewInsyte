@@ -294,10 +294,14 @@ const checkPostCommentListChanged = (
 
   const len = list1.length;
   for (let i = 0; i < len; i++) {
-    const user1 = list1[i];
-    const user2 = list2[i];
+    const comment1 = list1[i];
+    const comment2 = list2[i];
 
-    if (user1.likes !== user2.likes || user1.replies !== user2.replies) {
+    if (
+      comment1.id !== comment2.id ||
+      comment1.likes !== comment2.likes ||
+      comment1.replies !== comment2.replies
+    ) {
       return true;
     }
   }
@@ -619,7 +623,7 @@ const docFStoCommentArray = async (
     try {
       const commentData = snapshot.data();
       let postedBy;
-      if (currentUser) {
+      if (currentUser && currentUser.id === commentData!.posted_by) {
         postedBy = currentUser;
       } else {
         const userRef = await fsDB

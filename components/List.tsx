@@ -81,7 +81,6 @@ export default class List extends Component<ListProps> {
       onRefresh,
       extraData,
     } = this.props;
-    // console.log(data);
     return (
       <SafeAreaView style={{ height: '100%' }}>
         <FlatList

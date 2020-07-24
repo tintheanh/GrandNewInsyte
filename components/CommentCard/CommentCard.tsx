@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Colors from '../../constants/Colors';
 import {
@@ -7,6 +7,7 @@ import {
   InteractionSection,
   ReplySection,
 } from './private_components';
+import { pendingCommentID } from '../../constants';
 
 interface CommentCardProps {
   id: string;
@@ -19,6 +20,7 @@ interface CommentCardProps {
   datePosted: number;
   likes: number;
   replies: number;
+  userControl?: () => void;
   // firstReply: {
   //   avatar: string;
   //   username: string;
@@ -28,18 +30,39 @@ interface CommentCardProps {
   // } | null;
 }
 
-export default class CommentCard extends PureComponent<CommentCardProps> {
-  render() {
-    const { user, content, datePosted, likes } = this.props;
+export default class CommentCard extends Component<CommentCardProps> {
+  shouldComponentUpdate(nextProps: CommentCardProps) {
+    if (this.props.likes !== nextProps.likes) {
+      return true;
+    }
+    if (this.props.replies !== nextProps.replies) {
+      return true;
+    }
+    return false;
+  }
 
+  render() {
+    const {
+      id,
+      user,
+      content,
+      userControl = undefined,
+      datePosted,
+      likes,
+    } = this.props;
     return (
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          { opacity: id === pendingCommentID ? 0.4 : 1 },
+        ]}>
         <Avatar avatar={user.avatar} />
         <View style={{ marginLeft: 12 }}>
           <CommentSection
             username={user.username}
             datePosted={datePosted}
             content={content}
+            userControl={userControl}
           />
           <InteractionSection likes={likes} />
           {/* {firstReply ? (

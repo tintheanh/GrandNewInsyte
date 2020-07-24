@@ -5,6 +5,7 @@ import { Loading } from '../../components';
 import { AppState } from '../../redux/store';
 import HomeAuth from './private_components/HomeAuth';
 import HomeNotAuth from './private_components/HomeNotAuth';
+import { clearStack } from '../../redux/postComments/actions';
 import { fsDB } from '../../config';
 import { generateSubstrForUsername } from '../../utils/functions';
 
@@ -16,6 +17,7 @@ import { generateSubstrForUsername } from '../../utils/functions';
 // }
 
 class HomeScreen extends Component<any> {
+  private screenFocus: any;
   constructor(props: any) {
     super(props);
     // for (let i = 0; i < 10; i++) {
@@ -41,7 +43,15 @@ class HomeScreen extends Component<any> {
     // }
   }
 
+  componentWillUnmount() {
+    this.screenFocus();
+  }
+
   async componentDidMount() {
+    this.screenFocus = this.props.navigation.addListener('focus', (e) => {
+      this.props.onClearStack();
+    });
+
     // try {
     //   const snapshot = await fireStorage
     //     .ref('users/BQ9bdkbxiicCYG8ZNnL5wW6EZ823/img.jpg')
@@ -66,7 +76,6 @@ class HomeScreen extends Component<any> {
       //   .doc('bvPdeR0lhaVTCYsm8tNw')
       //   .collection('comment_list')
       //   .add(comment);
-
       // const user = {
       //   avatar: '',
       //   bio: 'test',
@@ -76,7 +85,6 @@ class HomeScreen extends Component<any> {
       //   username: faker.internet.userName(),
       //   total_posts: 0,
       // };
-
       // await fsDB
       //   .collection('users')
       //   .doc('fake' + i)
@@ -89,7 +97,6 @@ class HomeScreen extends Component<any> {
       //   .set({
       //     prefix: generateSubstrForUsername(user.username),
       //   });
-
       // const post = {
       //   posted_by: 'BQ9bdkbxiicCYG8ZNnL5wW6EZ823',
       //   caption: faker.lorem.sentence(),
@@ -181,8 +188,8 @@ const mapStateToProps = (state: AppState) => ({
   // loading: state.auth.loading,
 });
 
-// const mapDispatchToProps = {
-//   onFetchPublicNewPosts: fetchPublicNewPosts,
-// };
+const mapDispatchToProps = {
+  onClearStack: clearStack,
+};
 
-export default connect(mapStateToProps, null)(HomeScreen);
+export default connect(mapStateToProps, mapDispatchToProps)(HomeScreen);

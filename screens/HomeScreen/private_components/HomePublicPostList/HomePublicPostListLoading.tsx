@@ -4,6 +4,8 @@ import { MaterialIcons } from '../../../../constants';
 import { connect } from 'react-redux';
 import { AppState } from '../../../../redux/store';
 
+// TODO so unneccessary
+
 function HomePublicPostListLoading({ loading }: { loading?: boolean }) {
   return loading ? (
     <View style={styles.container}>

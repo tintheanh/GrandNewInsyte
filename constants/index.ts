@@ -13,6 +13,7 @@ export const separatorForTag = '\u01B1';
 
 export const pendingPostID = 'pending-post-69';
 export const pendingDeletePostFlag = '--pending-delete-post';
+export const pendingCommentID = 'pending-comment-69';
 
 const deviceOS = getSystemName();
 export const bottomTabHeight =

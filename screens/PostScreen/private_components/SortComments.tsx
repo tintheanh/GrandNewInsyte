@@ -15,7 +15,21 @@ import {
 } from '../../../redux/postComments/actions';
 import { AntDesign } from '../../../constants';
 
-function SortComments(props: any) {
+interface SortCommentsProps {
+  postID: string;
+  onSetSortComments: (type: 'new' | 'top') => void;
+  onFetchNewComments: (postID: string) => void;
+  onFetchTopComments: (postID: string) => void;
+  label: 'new' | 'top';
+}
+
+function SortComments({
+  postID,
+  onFetchNewComments,
+  onFetchTopComments,
+  onSetSortComments,
+  label,
+}: SortCommentsProps) {
   const selectCommentFilter = () => {
     Alert.alert(
       '',
@@ -24,20 +38,19 @@ function SortComments(props: any) {
         {
           text: 'New comments',
           onPress: () => {
-            props.onSetSortComments('new');
-            props.onFetchNewComments(props.postID);
+            onSetSortComments('new');
+            onFetchNewComments(postID);
           },
         },
         {
           text: 'Top comments',
           onPress: () => {
-            props.onSetSortComments('top');
-            props.onFetchTopComments(props.postID);
+            onSetSortComments('top');
+            onFetchTopComments(postID);
           },
         },
         {
           text: 'Cancel',
-          onPress: () => console.log('Cancel Pressed'),
           style: 'cancel',
         },
       ],
@@ -49,7 +62,7 @@ function SortComments(props: any) {
     <TouchableWithoutFeedback onPress={selectCommentFilter}>
       <View style={styles.filterComment}>
         <Text style={styles.filterCommentText}>
-          {props.label === 'new' ? 'New comments' : 'Top comment'}{' '}
+          {label === 'new' ? 'New comments' : 'Top comment'}{' '}
         </Text>
         <AntDesign name="caretdown" size={11} color="white" />
       </View>
