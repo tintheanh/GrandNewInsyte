@@ -88,7 +88,7 @@ class PostCard extends Component<PostCardProps> {
   navigateWhenClickOnPostOrComment = () => {
     const { navigation, data, onPushPostLayer } = this.props;
     onPushPostLayer(data.id);
-    navigation.push('Post', {
+    navigation.push('PostScreen', {
       data,
       title: `${data.user.username}'s post`,
     });

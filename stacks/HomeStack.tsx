@@ -51,24 +51,24 @@ export default connect(
         options={{ headerTitle: 'Home' }}
       />
       <Stack.Screen
-        name="Post"
+        name="PostScreen"
         component={PostScreen}
-        // options={({ navigation, route }: any) => ({
-        //   title: route.params.title,
-        //   avatar: route.params.avatar,
-        //   headerLeft: (headerProps) => (
-        //     <HeaderBackButton
-        //       {...headerProps}
-        //       onPress={goBackAndPopPostStack(
-        //         navigation.goBack,
-        //         props.onPopPostLayer,
-        //       )}
-        //     />
-        //   ),
-        // })}
+        options={({ route }: any) => ({
+          title: route.params.title,
+          avatar: route.params.avatar,
+          // headerLeft: (headerProps) => (
+          //   <HeaderBackButton
+          //     {...headerProps}
+          //     onPress={goBackAndPopPostStack(
+          //       navigation.goBack,
+          //       props.onPopPostLayer,
+          //     )}
+          //   />
+          // ),
+        })}
       />
       <Stack.Screen
-        name="Reply"
+        name="ReplyScreen"
         component={ReplyScreen}
         options={{ headerTitle: '' }}
       />

@@ -750,6 +750,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = P87G25DWCE;
+				ENABLE_BITCODE = YES;
 				INFOPLIST_FILE = GrandNewInsyte/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				OTHER_LDFLAGS = (

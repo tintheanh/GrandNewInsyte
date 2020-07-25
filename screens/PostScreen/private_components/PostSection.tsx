@@ -166,12 +166,6 @@ export default function PostSection({
             </Text>
           </View>
         </View>
-        <View style={styles.share}>
-          <View style={styles.iconWrapper}>
-            <Feather name="share" size={18} color="white" />
-            <Text style={styles.interactionText}>Share</Text>
-          </View>
-        </View>
       </View>
       <SortComments postID={id} />
     </View>
@@ -217,8 +211,8 @@ const styles = StyleSheet.create({
   },
   interactionSection: {
     flexDirection: 'row',
-    width: '100%',
-    justifyContent: 'space-evenly',
+    width: '40%',
+    justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 8,
     paddingLeft: 16,
@@ -231,10 +225,6 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  share: {
-    flex: 2,
-    alignItems: 'flex-end',
   },
   interactionText: {
     color: 'white',

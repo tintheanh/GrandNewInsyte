@@ -34,7 +34,7 @@ class UserPostCard extends Component<UserPostCardProps> {
 
   navigateToPost = () => {
     const { navigation, data } = this.props;
-    navigation.push('Post', {
+    navigation.push('PostScreen', {
       data,
       title: `${data.user.username}'s post`,
     });

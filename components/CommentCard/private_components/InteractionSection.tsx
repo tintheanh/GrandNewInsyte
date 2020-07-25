@@ -5,16 +5,20 @@ import { convertNumber } from '../../../utils/functions';
 
 interface InteractionSectionProps {
   likes: number;
+  replies: number;
   isLiked: boolean;
   likeComment: () => void;
   unlikeComment: () => void;
+  toReplyScreen: () => void;
 }
 
 export default function InteractionSection({
   likes,
+  replies,
   isLiked,
   likeComment,
   unlikeComment,
+  toReplyScreen,
 }: InteractionSectionProps) {
   return (
     <View style={styles.interactionSection}>
@@ -35,20 +39,16 @@ export default function InteractionSection({
           </Text>
         </View>
       </TouchableWithoutFeedback>
-      <TouchableWithoutFeedback onPress={() => console.log('reply')}>
+      <TouchableWithoutFeedback onPress={toReplyScreen}>
         <View style={styles.iconWrapper}>
           <Entypo
             name="reply"
             size={16}
-            color={isLiked ? Colors.tintColor : 'white'}
+            color="white"
             style={{ marginTop: -3, marginRight: 3 }}
           />
-          <Text
-            style={[
-              styles.interactionText,
-              { color: isLiked ? Colors.tintColor : 'white' },
-            ]}>
-            {/* {likes > 0 ? convertNumber(likes) : ' '} */}0
+          <Text style={[styles.interactionText, { color: 'white' }]}>
+            {replies > 0 ? convertNumber(replies) : ' '}
           </Text>
         </View>
       </TouchableWithoutFeedback>

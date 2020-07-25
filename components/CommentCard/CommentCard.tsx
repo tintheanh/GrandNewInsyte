@@ -1,5 +1,6 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Colors from '../../constants/Colors';
 import {
   Avatar,
@@ -33,18 +34,12 @@ interface CommentCardProps {
   // } | null;
 }
 
-export default class CommentCard extends Component<CommentCardProps> {
-  shouldComponentUpdate(nextProps: CommentCardProps) {
-    if (this.props.likes !== nextProps.likes) {
-      return true;
-    }
-    if (this.props.replies !== nextProps.replies) {
-      return true;
-    }
-    return false;
-  }
+export default React.memo(
+  function CommentCard(props: CommentCardProps) {
+    const navigation = useNavigation<any>();
 
-  render() {
+    const toReplyScreen = () => navigation.push('ReplyScreen');
+
     const {
       id,
       user,
@@ -53,10 +48,10 @@ export default class CommentCard extends Component<CommentCardProps> {
       likeComment,
       unlikeComment,
       datePosted,
-      repliable,
+      replies,
       likes,
       isLiked,
-    } = this.props;
+    } = props;
     return (
       <View
         style={[
@@ -78,25 +73,63 @@ export default class CommentCard extends Component<CommentCardProps> {
           />
           <InteractionSection
             likes={likes}
+            replies={replies}
             isLiked={isLiked}
             likeComment={likeComment}
             unlikeComment={unlikeComment}
+            toReplyScreen={toReplyScreen}
           />
           {/* {firstReply ? (
-            <ReplySection
-              avatar={firstReply.avatar}
-              username={firstReply.username}
-              datePosted={firstReply.datePosted}
-              content={firstReply.content}
-              likes={firstReply.likes}
-              totalReplies={totalReplies}
-            />
-          ) : null} */}
+          <ReplySection
+            avatar={firstReply.avatar}
+            username={firstReply.username}
+            datePosted={firstReply.datePosted}
+            content={firstReply.content}
+            likes={firstReply.likes}
+            totalReplies={totalReplies}
+          />
+        ) : null} */}
         </View>
       </View>
     );
-  }
-}
+  },
+  (prevProps, nextProps) => {
+    if (prevProps.likes !== nextProps.likes) {
+      return false;
+    }
+    if (prevProps.replies !== nextProps.replies) {
+      return false;
+    }
+    return true;
+  },
+);
+
+// export default class CommentCard extends Component<CommentCardProps> {
+//   shouldComponentUpdate(nextProps: CommentCardProps) {
+//     if (this.props.likes !== nextProps.likes) {
+//       return true;
+//     }
+//     if (this.props.replies !== nextProps.replies) {
+//       return true;
+//     }
+//     return false;
+//   }
+
+//   render() {
+//     const {
+//       id,
+//       user,
+//       content,
+//       userControl = undefined,
+//       likeComment,
+//       unlikeComment,
+//       datePosted,
+//       replies,
+//       likes,
+//       isLiked,
+//     } = this.props;
+//   }
+// }
 
 const styles = StyleSheet.create({
   container: {
