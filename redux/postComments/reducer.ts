@@ -17,8 +17,12 @@ import {
   UNLIKE_COMMENT_FAILURE,
   UNLIKE_COMMENT_STARTED,
   UNLIKE_COMMENT_SUCCESS,
+  DELETE_COMMENT_FAILURE,
+  DELETE_COMMENT_STARTED,
+  DELETE_COMMENT_SUCCESS,
   CLEAR_CREATE_COMMENT_ERROR,
   CLEAR_INTERACT_COMMENT_ERROR,
+  CLEAR_DELETE_COMMENT_ERROR,
   PUSH_POSTLAYER,
   POP_POSTLAYER,
   FETCH_NEW_COMMENTS_END,
@@ -27,7 +31,7 @@ import {
 } from './types';
 import { PostStack, PostComment } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
-import { pendingCommentID } from '../../constants';
+import { pendingCommentID, pendingDeleteCommentFlag } from '../../constants';
 import { removeDuplicatesFromCommentsArray } from '../../utils/functions';
 
 const initialState: PostCommentsState = {
@@ -258,12 +262,81 @@ export default function postCommentsReducer(
       }
       return newState;
     }
+    case DELETE_COMMENT_STARTED: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.deleteCommentError = null;
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === (action.payload as string),
+        );
+        if (index !== -1) {
+          topLayer.commentList[index].id += pendingDeleteCommentFlag;
+        }
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case DELETE_COMMENT_SUCCESS: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.deleteCommentError = null;
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === (action.payload as string),
+        );
+        if (index !== -1) {
+          topLayer.commentList.splice(index, 1);
+        }
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case DELETE_COMMENT_FAILURE: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        commentIDwithFlag: string;
+        error: Error;
+      };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.deleteCommentError = payload.error;
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === payload.commentIDwithFlag,
+        );
+        if (index !== -1) {
+          const splitted = topLayer.commentList[index].id.split(
+            pendingDeleteCommentFlag,
+          );
+          topLayer.commentList[index].id = splitted[0];
+        }
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
     case CLEAR_CREATE_COMMENT_ERROR: {
       const newState = { ...state };
       const newStack = PostStack.clone(state.stack);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.createCommentError = null;
+        newStack.updateTop(topLayer);
+        newState.stack = newStack;
+      }
+      return newState;
+    }
+    case CLEAR_DELETE_COMMENT_ERROR: {
+      const newState = { ...state };
+      const newStack = PostStack.clone(state.stack);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.deleteCommentError = null;
         newStack.updateTop(topLayer);
         newState.stack = newStack;
       }
@@ -288,6 +361,7 @@ export default function postCommentsReducer(
         createCommentLoading: false,
         error: null,
         createCommentError: null,
+        deleteCommentError: null,
         interactCommentError: null,
         lastVisible: null,
         type: 'new' as 'new',

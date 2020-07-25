@@ -25,7 +25,13 @@ interface CommentInputState {
 
 interface CommentInputProps {
   loading: boolean;
+  postID: string;
+  error: Error | null;
   onCreateComment: (content: string) => void;
+  increaseCommentNumberForPostScreen: () => void;
+  decreaseCommentNumberForPostScreen: () => void;
+  decreaseCommentNumberForHomeScreen: (postID: string) => void;
+  increaseCommentNumberForHomeScreen: (postID: string) => void;
 }
 
 class CommentInput extends Component<CommentInputProps, CommentInputState> {
@@ -74,14 +80,28 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
     }).start();
   };
 
-  performSubmitComment = () => {
+  performSubmitComment = async () => {
     const { text } = this.state;
     if (!text.length) {
       return alertDialog('Comment cannot be empty');
     }
-    this.props.onCreateComment(text);
+    const {
+      postID,
+      decreaseCommentNumberForHomeScreen,
+      increaseCommentNumberForHomeScreen,
+      onCreateComment,
+      increaseCommentNumberForPostScreen,
+      decreaseCommentNumberForPostScreen,
+    } = this.props;
+    increaseCommentNumberForPostScreen();
+    increaseCommentNumberForHomeScreen(postID);
     Keyboard.dismiss();
     this.setState({ text: '' });
+    await onCreateComment(text);
+    if (this.props.error !== null) {
+      decreaseCommentNumberForPostScreen();
+      decreaseCommentNumberForHomeScreen(postID);
+    }
   };
 
   render() {
@@ -175,6 +195,8 @@ const styles = StyleSheet.create({
 
 const mapStateToProps = (state: AppState) => ({
   loading: state.postComments.stack.top()?.createCommentLoading ?? false,
+  error: state.postComments.stack.top()?.createCommentError ?? null,
+  postID: state.postComments.stack.top()?.postID ?? '',
 });
 
 const mapDispatchToProps = {

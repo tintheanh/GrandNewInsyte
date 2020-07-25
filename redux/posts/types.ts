@@ -100,6 +100,9 @@ export const UNLIKE_POST_STARTED = 'UNLIKE_POST_STARTED';
 export const UNLIKE_POST_SUCCESS = 'UNLIKE_POST_SUCCESS';
 export const UNLIKE_POST_FAILURE = 'UNLIKE_POST_FAILURE';
 
+export const INCREASE_COMMENT_NUM_ONE = 'INCREASE_COMMENT_NUM_ONE';
+export const DECREASE_COMMENT_NUM_ONE = 'DECREASE_COMMENT_NUM_ONE';
+
 export interface PostAction {
   type: string;
   payload:

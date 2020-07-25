@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { connect } from 'react-redux';
-import { Colors, MaterialIcons } from '../../constants';
+import { Layout, Colors, MaterialIcons } from '../../constants';
 import { CommentCard, List, Loading, ErrorView } from '../../components';
 import {
   delay,
@@ -23,9 +23,17 @@ import {
   likeComment,
   unlikeComment,
   clearCreateCommentError,
+  clearDeleteCommentError,
   clearInteractCommentError,
+  deleteComment,
 } from '../../redux/postComments/actions';
-import { likePost, unlikePost, deletePost } from '../../redux/posts/actions';
+import {
+  likePost,
+  unlikePost,
+  deletePost,
+  decreaseCommentNumOne,
+  increaseCommentNumOne,
+} from '../../redux/posts/actions';
 import { AppState } from '../../redux/store';
 import { Post, PostComment } from '../../models';
 
@@ -50,6 +58,7 @@ interface PostScreenProps {
   loading: boolean;
   error: Error | null;
   createCommentError: Error | null;
+  deleteCommentError: Error | null;
   interactCommentError: Error | null;
   likePostError: Error | null;
   unlikePostError: Error | null;
@@ -62,19 +71,37 @@ interface PostScreenProps {
   onDeletePost: (postID: string) => void;
   onPopPostLayer: () => void;
   onClearCreateCommentError: () => void;
+  onClearDeleteCommentError: () => void;
   onClearInteractCommentError: () => void;
+  onDeleteComment: (commentID: string) => void;
+  onDecreaseCommentNumberForHomeScreen: (postID: string) => void;
+  onIncreaseCommentNumberForHomeScreen: (postID: string) => void;
 }
 
-class PostScreen extends Component<PostScreenProps> {
+interface PostScreenState {
+  post: Post;
+}
+
+class PostScreen extends Component<PostScreenProps, PostScreenState> {
   private detectGoBack: any;
-  shouldComponentUpdate(nextProps: PostScreenProps) {
+  constructor(props: PostScreenProps) {
+    super(props);
+    this.state = {
+      post: this.props.route.params.data,
+    };
+  }
+
+  shouldComponentUpdate(
+    nextProps: PostScreenProps,
+    nextState: PostScreenState,
+  ) {
     const {
-      route,
       comments,
       sortCommentsBy,
       loading,
       error,
       createCommentError,
+      deleteCommentError,
       interactCommentError,
       likePostError,
       unlikePostError,
@@ -82,7 +109,7 @@ class PostScreen extends Component<PostScreenProps> {
     if (loading !== nextProps.loading) {
       return true;
     }
-    if (checkPostChanged(route.params.data, nextProps.route.params.data)) {
+    if (checkPostChanged(this.state.post, nextState.post)) {
       return true;
     }
     if (checkPostCommentListChanged(comments, nextProps.comments)) {
@@ -95,6 +122,9 @@ class PostScreen extends Component<PostScreenProps> {
       return true;
     }
     if (createCommentError !== nextProps.createCommentError) {
+      return true;
+    }
+    if (deleteCommentError !== nextProps.deleteCommentError) {
       return true;
     }
     if (interactCommentError !== nextProps.interactCommentError) {
@@ -111,16 +141,11 @@ class PostScreen extends Component<PostScreenProps> {
   }
 
   async componentDidMount() {
-    const {
-      navigation,
-      route,
-      onFetchNewComments,
-      onPopPostLayer,
-    } = this.props;
+    const { navigation, onFetchNewComments, onPopPostLayer } = this.props;
     this.detectGoBack = navigation.addListener('beforeRemove', () => {
       onPopPostLayer();
     });
-    const postID = route.params.data.id;
+    const postID = this.state.post.id;
     await delay(500);
     onFetchNewComments(postID);
   }
@@ -130,9 +155,10 @@ class PostScreen extends Component<PostScreenProps> {
   }
 
   toUserScreen = () => {
-    const { navigation, route } = this.props;
-    const post = route.params.data;
-    navigation.push('User', {
+    // const { navigation, route } = this.props;
+    // const post = route.params.data;
+    const { post } = this.state;
+    this.props.navigation.push('User', {
       title: post.user.username,
       avatar: post.user.avatar,
     });
@@ -150,7 +176,9 @@ class PostScreen extends Component<PostScreenProps> {
         isLiked={item.isLiked}
         replies={item.replies}
         userControl={
-          currentUID === item.user.id ? this.performDeleteComment : undefined
+          currentUID === item.user.id
+            ? this.userControlForComment(item.id)
+            : undefined
         }
         likeComment={this.performLikeComment(item.id)}
         unlikeComment={this.performUnlikeComment(item.id)}
@@ -158,14 +186,25 @@ class PostScreen extends Component<PostScreenProps> {
     );
   };
 
-  performDeleteComment = () => {
+  performDeleteComment = (commentID: string) => async () => {
+    const postID = this.state.post.id;
+    this.decreaseCommentNumberForPostScreen();
+    this.props.onDecreaseCommentNumberForHomeScreen(postID);
+    await this.props.onDeleteComment(commentID);
+    if (this.props.deleteCommentError) {
+      this.increaseCommentNumberForPostScreen();
+      this.props.onIncreaseCommentNumberForHomeScreen(postID);
+    }
+  };
+
+  userControlForComment = (commentID: string) => () => {
     Alert.alert(
       '',
       'Do you want to delete your comment?',
       [
         {
           text: 'Delete',
-          onPress: () => console.log('delete'),
+          onPress: this.performDeleteComment(commentID),
         },
 
         {
@@ -179,12 +218,11 @@ class PostScreen extends Component<PostScreenProps> {
 
   fetchMoreComments = () => {
     const {
-      route,
       sortCommentsBy,
       onFetchNewComments,
       onFetchTopComments,
     } = this.props;
-    const postID = route.params.data.id;
+    const postID = this.state.post.id;
     if (sortCommentsBy === 'new') {
       onFetchNewComments(postID);
     } else {
@@ -193,60 +231,73 @@ class PostScreen extends Component<PostScreenProps> {
   };
 
   emptyHandler = () => {
-    const { route, onFetchNewComments } = this.props;
-    const postID = route.params.data.id;
-    onFetchNewComments(postID);
+    const postID = this.state.post.id;
+    this.props.onFetchNewComments(postID);
   };
 
   performLikePost = async () => {
-    const { onLikePost, navigation, route } = this.props;
-    const { data } = route.params;
-    navigation.setParams({
-      data: {
-        ...data,
-        likes: data.likes + 1,
+    const postID = this.state.post.id;
+    this.setState((prevState) => ({
+      post: {
+        ...prevState.post,
+        likes: prevState.post.likes + 1,
         isLiked: true,
       },
-    });
-    const postID = data.id;
-    await onLikePost(postID);
+    }));
+    await this.props.onLikePost(postID);
     if (this.props.likePostError !== null) {
-      this.props.navigation.setParams({
-        data: {
-          ...this.props.route.params.data,
-          likes: this.props.route.params.data.likes - 1,
+      this.setState((prevState) => ({
+        post: {
+          ...prevState.post,
+          likes: prevState.post.likes - 1,
           isLiked: false,
         },
-      });
+      }));
     }
   };
 
   performUnlikePost = async () => {
-    const { onUnlikePost, navigation, route } = this.props;
-    const { data } = route.params;
-    navigation.setParams({
-      data: {
-        ...data,
-        likes: data.likes - 1,
+    const postID = this.state.post.id;
+    this.setState((prevState) => ({
+      post: {
+        ...prevState.post,
+        likes: prevState.post.likes - 1,
         isLiked: false,
       },
-    });
-    const postID = data.id as string;
-    await onUnlikePost(postID);
+    }));
+    await this.props.onUnlikePost(postID);
     if (this.props.unlikePostError !== null) {
-      this.props.navigation.setParams({
-        data: {
-          ...this.props.route.params.data,
-          likes: this.props.route.params.data.likes + 1,
+      this.setState((prevState) => ({
+        post: {
+          ...prevState.post,
+          likes: prevState.post.likes + 1,
           isLiked: true,
         },
-      });
+      }));
     }
   };
 
+  increaseCommentNumberForPostScreen = () => {
+    this.setState((prevState) => ({
+      post: {
+        ...prevState.post,
+        comments: prevState.post.comments + 1,
+      },
+    }));
+  };
+
+  decreaseCommentNumberForPostScreen = () => {
+    this.setState((prevState) => ({
+      post: {
+        ...prevState.post,
+        comments: prevState.post.comments - 1,
+      },
+    }));
+  };
+
   performDeletePost = async () => {
-    const { navigation, onPopPostLayer, onDeletePost, route } = this.props;
-    const postID = route.params.data.id;
+    const { navigation, onPopPostLayer, onDeletePost } = this.props;
+    const postID = this.state.post.id;
     navigation.goBack();
     onPopPostLayer();
     await delay(500);
@@ -281,18 +332,20 @@ class PostScreen extends Component<PostScreenProps> {
   };
 
   render() {
-    const post = this.props.route.params.data;
+    const { post } = this.state;
     const {
       comments,
       error,
       createCommentError,
+      deleteCommentError,
       interactCommentError,
       loading,
       currentUID,
       onClearCreateCommentError,
       onClearInteractCommentError,
+      onClearDeleteCommentError,
     } = this.props;
-    // console.log('post screen', comments);
+    // console.log('post screen', this.state.post);
 
     const postSection = (
       <PostSection
@@ -304,8 +357,28 @@ class PostScreen extends Component<PostScreenProps> {
       />
     );
 
+    const commentInput = (
+      <CommentInput
+        increaseCommentNumberForPostScreen={
+          this.increaseCommentNumberForPostScreen
+        }
+        decreaseCommentNumberForPostScreen={
+          this.decreaseCommentNumberForPostScreen
+        }
+        decreaseCommentNumberForHomeScreen={
+          this.props.onDecreaseCommentNumberForHomeScreen
+        }
+        increaseCommentNumberForHomeScreen={
+          this.props.onIncreaseCommentNumberForHomeScreen
+        }
+      />
+    );
+
     if (createCommentError) {
       alertDialog(createCommentError.message, onClearCreateCommentError);
+    }
+    if (deleteCommentError) {
+      alertDialog(deleteCommentError.message, onClearDeleteCommentError);
     }
     if (interactCommentError) {
       alertDialog(interactCommentError.message, onClearInteractCommentError);
@@ -325,18 +398,27 @@ class PostScreen extends Component<PostScreenProps> {
         <View style={styles.container}>
           {postSection}
           <Loading />
-          {currentUID !== undefined ? <CommentInput /> : null}
+          {currentUID !== undefined ? commentInput : null}
         </View>
       );
     }
-    if (comments.length === 0) {
-      return (
-        <View style={styles.container}>
-          {postSection}
-          {currentUID !== undefined ? <CommentInput /> : null}
-        </View>
-      );
-    }
+    // if (comments.length === 0) {
+    //   return (
+    //     <View style={styles.container}>
+    //       {postSection}
+    //       {currentUID !== undefined ? (
+    //         <CommentInput
+    //           increaseCommentNumberForPostScreen={
+    //             this.increaseCommentNumberForPostScreen
+    //           }
+    //           decreaseCommentNumberForPostScreen={
+    //             this.decreaseCommentNumberForPostScreen
+    //           }
+    //         />
+    //       ) : null}
+    //     </View>
+    //   );
+    // }
 
     return (
       <KeyboardAvoidingView behavior="padding" style={styles.container}>
@@ -344,16 +426,16 @@ class PostScreen extends Component<PostScreenProps> {
           listHeaderComponent={postSection}
           data={comments}
           renderItem={this.renderItem}
-          onEndReached={this.fetchMoreComments}
+          _onEndReachedDuringMomentum={this.fetchMoreComments}
           checkChangesToUpdate={checkPostCommentListChanged}
           initialNumToRender={5}
-          onEndReachedThreshold={0.15}
+          onEndReachedThreshold={0.1}
           maxToRenderPerBatch={5}
           windowSize={undefined}
           listFooterComponent={<View style={{ height: 136 }} />}
-          extraData={this.props.route.params.data.likes}
+          extraData={post}
         />
-        {currentUID !== undefined ? <CommentInput /> : null}
+        {currentUID !== undefined ? commentInput : null}
         <View
           style={{
             width: '100%',
@@ -387,6 +469,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.brightColor,
+    height: Layout.window.height,
   },
   loadingContainer: {
     flex: 1,
@@ -404,6 +487,8 @@ const mapStateToProps = (state: AppState) => ({
   error: state.postComments.stack.top()?.error ?? null,
   createCommentError:
     state.postComments.stack.top()?.createCommentError ?? null,
+  deleteCommentError:
+    state.postComments.stack.top()?.deleteCommentError ?? null,
   interactCommentError:
     state.postComments.stack.top()?.interactCommentError ?? null,
   sortCommentsBy: state.postComments.stack.top()?.type ?? 'new',
@@ -422,6 +507,10 @@ const mapDispatchToProps = {
   onUnlikeComment: unlikeComment,
   onClearCreateCommentError: clearCreateCommentError,
   onClearInteractCommentError: clearInteractCommentError,
+  onClearDeleteCommentError: clearDeleteCommentError,
+  onDeleteComment: deleteComment,
+  onDecreaseCommentNumberForHomeScreen: decreaseCommentNumOne,
+  onIncreaseCommentNumberForHomeScreen: increaseCommentNumOne,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(PostScreen);

@@ -58,6 +58,8 @@ import {
   UNLIKE_POST_FAILURE,
   UNLIKE_POST_STARTED,
   UNLIKE_POST_SUCCESS,
+  INCREASE_COMMENT_NUM_ONE,
+  DECREASE_COMMENT_NUM_ONE,
   CLEAR,
 } from './types';
 import { Post } from '../../models';
@@ -1363,6 +1365,24 @@ export const clear = () => (dispatch: (action: PostAction) => void) => {
   dispatch({
     type: CLEAR,
     payload: null,
+  });
+};
+
+export const increaseCommentNumOne = (postID: string) => (
+  dispatch: (action: PostAction) => void,
+) => {
+  dispatch({
+    type: INCREASE_COMMENT_NUM_ONE,
+    payload: postID,
+  });
+};
+
+export const decreaseCommentNumOne = (postID: string) => (
+  dispatch: (action: PostAction) => void,
+) => {
+  dispatch({
+    type: DECREASE_COMMENT_NUM_ONE,
+    payload: postID,
   });
 };
 

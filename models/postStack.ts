@@ -29,11 +29,15 @@ export default class PostStack {
       const interactCommentErrorClone = topLayer.interactCommentError
         ? new Error(topLayer.interactCommentError.message)
         : null;
+      const deleteCommentErrorClone = topLayer.deleteCommentError
+        ? new Error(topLayer.deleteCommentError.message)
+        : null;
       return {
         ...topLayer,
         error: errorClone,
         createCommentError: createCommentErrorClone,
         interactCommentError: interactCommentErrorClone,
+        deleteCommentError: deleteCommentErrorClone,
         commentList: topLayer.commentList.map((comment) => ({ ...comment })),
       };
     }
@@ -57,23 +61,27 @@ export default class PostStack {
     const array = stackForClone.toArray();
 
     for (const postLayer of array) {
-      const newError = postLayer.error
+      const errorClone = postLayer.error
         ? new Error(postLayer.error.message)
         : null;
-      const newCreateCommentError = postLayer.createCommentError
+      const createCommentErrorClone = postLayer.createCommentError
         ? new Error(postLayer.createCommentError.message)
         : null;
-      const newInteractCommentError = postLayer.interactCommentError
+      const interactCommentErrorClone = postLayer.interactCommentError
         ? new Error(postLayer.interactCommentError.message)
+        : null;
+      const deleteCommentErrorClone = postLayer.deleteCommentError
+        ? new Error(postLayer.deleteCommentError.message)
         : null;
       const clonedPostLayer = {
         postID: postLayer.postID,
         loading: postLayer.loading,
         createCommentLoading: postLayer.createCommentLoading,
         lastVisible: postLayer.lastVisible,
-        error: newError,
-        createCommentError: newCreateCommentError,
-        interactCommentError: newInteractCommentError,
+        error: errorClone,
+        createCommentError: createCommentErrorClone,
+        deleteCommentError: deleteCommentErrorClone,
+        interactCommentError: interactCommentErrorClone,
         type: postLayer.type,
         commentList: postLayer.commentList.map((comment) => ({ ...comment })),
       };

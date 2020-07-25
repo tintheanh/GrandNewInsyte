@@ -7,6 +7,7 @@ export default interface PostStackLayer {
   error: Error | null;
   createCommentLoading: boolean;
   createCommentError: Error | null;
+  deleteCommentError: Error | null;
   interactCommentError: Error | null;
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
   type: 'new' | 'top';

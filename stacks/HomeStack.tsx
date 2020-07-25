@@ -32,21 +32,21 @@ export default connect(
   //   return unsubscribe;
   // }, [navigation]);
 
-  const goBackAndPopPostStack = (goBack: () => void, pop: () => void) => () => {
-    goBack();
-    pop();
-  };
+  // const goBackAndPopPostStack = (goBack: () => void, pop: () => void) => () => {
+  //   goBack();
+  //   pop();
+  // };
 
   return (
     <Stack.Navigator
-      initialRouteName="Home"
+      initialRouteName="HomeScreen"
       screenOptions={{
         headerTintColor: 'white',
         headerStyle: { backgroundColor: Colors.darkColor },
         // gestureEnabled: false,
       }}>
       <Stack.Screen
-        name="Home"
+        name="HomeScreen"
         component={HomeScreen}
         options={{ headerTitle: 'Home' }}
       />

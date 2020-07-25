@@ -149,3 +149,19 @@ exports.handleDeletePost = functions.firestore
       yes: true,
     });
   });
+
+exports.handleDeleteComment = functions.firestore
+  .document('posts/{postId}/comment_list/{commentId}')
+  .onDelete((snapshot, context) => {
+    // delete every subcollection (like_list, comment_list, etc) of post
+    const postID = context.params.postId;
+    const commentID = context.params.commentId;
+    return firebaseTools.firestore.delete(
+      `posts/${postID}/comment_list/${commentID}`,
+      {
+        project: 'grandnewinsyte',
+        recursive: true,
+        yes: true,
+      },
+    );
+  });

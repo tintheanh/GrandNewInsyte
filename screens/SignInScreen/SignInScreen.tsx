@@ -71,7 +71,10 @@ class SignInScreen extends Component<SignInScreenProps> {
             onWatchBlur={this._moveDown}
           />
           <SignInErrorText />
-          <SignInBtn callback={this._move(0)} />
+          <SignInBtn
+            callback={this._move(0)}
+            navigation={this.props.navigation}
+          />
           <View style={styles.signupView}>
             <Text style={{ color: 'white' }}>First time here? </Text>
             <TouchableOpacity onPress={this.navigateToSignUp}>

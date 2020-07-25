@@ -7,7 +7,7 @@ import {
   InteractionSection,
   ReplySection,
 } from './private_components';
-import { pendingCommentID } from '../../constants';
+import { pendingCommentID, pendingDeleteCommentFlag } from '../../constants';
 
 interface CommentCardProps {
   id: string;
@@ -53,6 +53,7 @@ export default class CommentCard extends Component<CommentCardProps> {
       likeComment,
       unlikeComment,
       datePosted,
+      repliable,
       likes,
       isLiked,
     } = this.props;
@@ -60,7 +61,12 @@ export default class CommentCard extends Component<CommentCardProps> {
       <View
         style={[
           styles.container,
-          { opacity: id === pendingCommentID ? 0.4 : 1 },
+          {
+            opacity:
+              id === pendingCommentID || id.includes(pendingDeleteCommentFlag)
+                ? 0.4
+                : 1,
+          },
         ]}>
         <Avatar avatar={user.avatar} />
         <View style={{ marginLeft: 12 }}>

@@ -6,6 +6,7 @@ import {
 } from '@react-navigation/drawer';
 import { connect } from 'react-redux';
 import { Text } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import { Ionicons, Colors, Layout } from '../constants';
 import { UserSettingScreen } from '../screens';
 import ProfileStack from './ProfileStack';
@@ -23,7 +24,13 @@ interface AuthedStackProps {
 const CustomDrawerContent = (props: AuthedStackProps, navigation: any) => {
   const performSignOut = async () => {
     navigation.closeDrawer();
+    // console.log(navigation.dangerouslyGetParent());
     await delay(500);
+    navigation.dangerouslyGetParent().dispatch(
+      CommonActions.navigate({
+        name: 'HomeScreen',
+      }),
+    );
     props.onSignOut();
     props.onClearPosts();
   };

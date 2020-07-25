@@ -17,7 +17,7 @@ interface ListProps {
   initialNumToRender?: number;
   maxToRenderPerBatch?: number;
   windowSize?: number;
-  onEndReached: () => void;
+  onEndReached?: () => void;
   listHeaderComponent?: JSX.Element;
   listFooterComponent?: JSX.Element;
   onEndReachedThreshold?: number;
@@ -30,9 +30,16 @@ interface ListProps {
   refreshing?: boolean;
   isFocused?: boolean;
   extraData?: any;
+  _onEndReachedDuringMomentum?: () => void;
 }
 
 export default class List extends Component<ListProps> {
+  private onEndReachedCalledDuringMomentum: boolean;
+  constructor(props: ListProps) {
+    super(props);
+    this.onEndReachedCalledDuringMomentum = true;
+  }
+
   shouldComponentUpdate(nextProps: ListProps) {
     // console.log(checkPostListChanged(this.props.data, nextProps.data));
     if (this.props.refreshing !== nextProps.refreshing) {
@@ -55,7 +62,22 @@ export default class List extends Component<ListProps> {
     if (distanceFromEnd < 0) {
       return;
     }
-    this.props.onEndReached();
+    this.props.onEndReached!();
+  };
+
+  _onEndReachedDuringMomentum = ({
+    distanceFromEnd,
+  }: {
+    distanceFromEnd: number;
+  }) => {
+    if (!this.onEndReachedCalledDuringMomentum) {
+      this.props._onEndReachedDuringMomentum!();
+      this.onEndReachedCalledDuringMomentum = true;
+    }
+  };
+
+  _onMomentumScrollBegin = () => {
+    this.onEndReachedCalledDuringMomentum = false;
   };
 
   refresh = () => {
@@ -80,6 +102,7 @@ export default class List extends Component<ListProps> {
       renderItem,
       onRefresh,
       extraData,
+      onEndReached = undefined,
     } = this.props;
     return (
       <SafeAreaView style={{ height: '100%' }}>
@@ -93,7 +116,10 @@ export default class List extends Component<ListProps> {
           windowSize={windowSize}
           viewabilityConfig={viewabilityConfig}
           removeClippedSubviews={false}
-          onEndReached={this._onEndReached}
+          onEndReached={
+            onEndReached ? this._onEndReached : this._onEndReachedDuringMomentum
+          }
+          onMomentumScrollBegin={this._onMomentumScrollBegin}
           onEndReachedThreshold={onEndReachedThreshold}
           ListHeaderComponent={listHeaderComponent}
           ListFooterComponent={listFooterComponent}

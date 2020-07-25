@@ -55,6 +55,8 @@ import {
   UNLIKE_POST_FAILURE,
   UNLIKE_POST_STARTED,
   UNLIKE_POST_SUCCESS,
+  INCREASE_COMMENT_NUM_ONE,
+  DECREASE_COMMENT_NUM_ONE,
   CLEAR,
   PostState,
   PostAction,
@@ -1002,6 +1004,102 @@ export default function postsReducer(
       newState.following.hotTime = oneWeek;
       newState.following.lastHotVisible = 0;
       newState.following.posts = [];
+      return newState;
+    }
+
+    case INCREASE_COMMENT_NUM_ONE: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const userPosts = [...state.userPosts.posts];
+      const taggedPosts = [...state.taggedPosts.posts];
+      const postID = action.payload as string;
+      newState.likePost.error = null;
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.comments += 1;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.comments += 1;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...userPosts[userPostIndex] };
+        post.comments += 1;
+        userPosts[userPostIndex] = post;
+      }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.comments += 1;
+        taggedPosts[taggedPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.userPosts.posts = userPosts;
+      newState.taggedPosts.posts = taggedPosts;
+      return newState;
+    }
+
+    case DECREASE_COMMENT_NUM_ONE: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const userPosts = [...state.userPosts.posts];
+      const taggedPosts = [...state.taggedPosts.posts];
+      const postID = action.payload as string;
+      newState.likePost.error = null;
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.comments -= 1;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.comments -= 1;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...userPosts[userPostIndex] };
+        post.comments -= 1;
+        userPosts[userPostIndex] = post;
+      }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.comments -= 1;
+        taggedPosts[taggedPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.userPosts.posts = userPosts;
+      newState.taggedPosts.posts = taggedPosts;
       return newState;
     }
 

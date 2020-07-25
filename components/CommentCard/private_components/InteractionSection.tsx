@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableWithoutFeedback } from 'react-native';
-import { AntDesign, Colors } from '../../../constants';
+import { AntDesign, Entypo, Colors } from '../../../constants';
 import { convertNumber } from '../../../utils/functions';
 
 interface InteractionSectionProps {
@@ -35,8 +35,22 @@ export default function InteractionSection({
           </Text>
         </View>
       </TouchableWithoutFeedback>
-      <TouchableWithoutFeedback onPress={() => console.log('to reply')}>
-        <Text style={[styles.interactionText, { color: 'white' }]}>reply</Text>
+      <TouchableWithoutFeedback onPress={() => console.log('reply')}>
+        <View style={styles.iconWrapper}>
+          <Entypo
+            name="reply"
+            size={16}
+            color={isLiked ? Colors.tintColor : 'white'}
+            style={{ marginTop: -3, marginRight: 3 }}
+          />
+          <Text
+            style={[
+              styles.interactionText,
+              { color: isLiked ? Colors.tintColor : 'white' },
+            ]}>
+            {/* {likes > 0 ? convertNumber(likes) : ' '} */}0
+          </Text>
+        </View>
       </TouchableWithoutFeedback>
     </View>
   );

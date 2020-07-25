@@ -1,10 +1,12 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import { CommonActions } from '@react-navigation/native';
 import { Keyboard } from 'react-native';
 import { SubmitBtn } from '../../../components';
 import { AppState } from '../../../redux/store';
 import { signin } from '../../../redux/auth/actions';
 import { clear } from '../../../redux/posts/actions';
+import { delay } from '../../../utils/functions';
 
 interface SignInBtnProps {
   loading: boolean;
@@ -13,6 +15,7 @@ interface SignInBtnProps {
   email: string;
   password: string;
   callback: () => void;
+  navigation: any;
 }
 
 class SignInBtn extends Component<SignInBtnProps> {
@@ -23,12 +26,18 @@ class SignInBtn extends Component<SignInBtnProps> {
     return false;
   }
 
-  performSignIn = () => {
+  performSignIn = async () => {
     const { onSignIn, onClearPosts, email, password, callback } = this.props;
     onSignIn(email, password);
-    onClearPosts();
     callback();
     Keyboard.dismiss();
+    onClearPosts();
+    await delay(700);
+    this.props.navigation.dangerouslyGetParent().dispatch(
+      CommonActions.navigate({
+        name: 'HomeScreen',
+      }),
+    );
   };
   render() {
     return (

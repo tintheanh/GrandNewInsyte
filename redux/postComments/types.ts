@@ -23,7 +23,12 @@ export const UNLIKE_COMMENT_STARTED = 'UNLIKE_COMMENT_STARTED';
 export const UNLIKE_COMMENT_SUCCESS = 'UNLIKE_COMMENT_SUCCESS';
 export const UNLIKE_COMMENT_FAILURE = 'UNLIKE_COMMENT_FAILURE';
 
+export const DELETE_COMMENT_STARTED = 'DELETE_COMMENT_STARTED';
+export const DELETE_COMMENT_SUCCESS = 'DELETE_COMMENT_SUCCESS';
+export const DELETE_COMMENT_FAILURE = 'DELETE_COMMENT_FAILURE';
+
 export const CLEAR_CREATE_COMMENT_ERROR = 'CLEAR_CREATE_COMMENT_ERROR';
+export const CLEAR_DELETE_COMMENT_ERROR = 'CLEAR_DELETE_COMMENT_ERROR';
 export const CLEAR_INTERACT_COMMENT_ERROR = 'CLEAR_INTERACT_COMMENT_ERROR';
 
 export const PUSH_POSTLAYER = 'PUSH_POSTLAYER';
@@ -48,6 +53,10 @@ export interface PostCommentsAction {
     | {
         commentID: string;
         error: Error | null;
+      }
+    | {
+        commentIDwithFlag: string;
+        error: Error;
       }
     | Error
     | null;

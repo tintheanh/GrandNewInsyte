@@ -16,15 +16,19 @@ import {
   UNLIKE_COMMENT_FAILURE,
   UNLIKE_COMMENT_STARTED,
   UNLIKE_COMMENT_SUCCESS,
+  DELETE_COMMENT_FAILURE,
+  DELETE_COMMENT_STARTED,
+  DELETE_COMMENT_SUCCESS,
   PUSH_POSTLAYER,
   SET_SORT_COMMENTS,
   POP_POSTLAYER,
   CLEAR_CREATE_COMMENT_ERROR,
+  CLEAR_DELETE_COMMENT_ERROR,
   CLEAR_INTERACT_COMMENT_ERROR,
   CLEAR_STACK,
   PostCommentsAction,
 } from './types';
-import { pendingCommentID } from '../../constants';
+import { pendingCommentID, pendingDeleteCommentFlag } from '../../constants';
 import { fsDB, FirebaseFirestoreTypes, commentsPerBatch } from '../../config';
 import { PostComment } from '../../models';
 import {
@@ -44,7 +48,7 @@ export const fetchNewComments = (postID: string) => async (
     // if (percent > 50) {
     //   throw new Error('dummy error');
     // }
-    // console.log('fetch new cmt');
+    console.log('fetch new cmt');
     const { user } = getState().auth;
     const lastVisible = getState().postComments.stack.top()?.lastVisible;
     let currentUser;
@@ -195,24 +199,33 @@ export const createComment = (content: string) => async (
   };
   dispatch(createCommentStarted(tempComment));
   try {
-    await delay(3000);
+    // await delay(3000);
     // throw new Error('dummy error');
-    const commentRef = await fsDB
-      .collection('posts')
-      .doc(postID)
-      .collection('comment_list')
-      .add({
+
+    const postRef = fsDB.collection('posts').doc(postID);
+    await fsDB.runTransaction(async (trans) => {
+      const doc = await trans.get(postRef);
+      const newComments = doc.data()!.comments + 1;
+      trans.update(postRef, { comments: newComments });
+      const commentRef = fsDB
+        .collection('posts')
+        .doc(postID)
+        .collection('comment_list')
+        .doc();
+      trans.set(commentRef, {
         content,
         date_posted: currentTime,
         likes: 0,
         replies: 0,
         posted_by: user.id,
       });
-    const newComment = {
-      ...tempComment,
-      id: commentRef.id,
-    };
-    dispatch(createCommentSuccess(newComment, postID));
+      const newComment = {
+        ...tempComment,
+        id: commentRef.id,
+      };
+      // throw new Error('lala');
+      dispatch(createCommentSuccess(newComment, postID));
+    });
   } catch (err) {
     console.log(err.message);
     dispatch(createCommentFailure(new Error('Internal server error.')));
@@ -311,11 +324,64 @@ export const unlikeComment = (commentID: string) => async (
   }
 };
 
+export const deleteComment = (commentID: string) => async (
+  dispatch: (action: PostCommentsAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  const postID = getState().postComments.stack.top()?.postID;
+  if (!user) {
+    return dispatch(
+      deleteCommentFailure('', new Error('Unauthorized. Please sign in.')),
+    );
+  }
+  if (!postID) {
+    return dispatch(deleteCommentFailure('', new Error('Error occurred')));
+  }
+  dispatch(deleteCommentStarted(commentID));
+  const commentIDwithFlag = commentID + pendingDeleteCommentFlag;
+  try {
+    // await delay(5000);
+
+    const postRef = fsDB.collection('posts').doc(postID);
+    await fsDB.runTransaction(async (trans) => {
+      const doc = await trans.get(postRef);
+      const newComments = doc.data()!.comments - 1;
+      trans.update(postRef, { comments: newComments });
+      const commentRef = fsDB
+        .collection('posts')
+        .doc(postID)
+        .collection('comment_list')
+        .doc(commentID);
+      // throw new Error('dummy');
+      trans.delete(commentRef);
+    });
+    dispatch(deleteCommentSuccess(commentIDwithFlag));
+  } catch (err) {
+    console.log(err.message);
+    dispatch(
+      deleteCommentFailure(
+        commentIDwithFlag,
+        new Error('Internal server error.'),
+      ),
+    );
+  }
+};
+
 export const clearCreateCommentError = () => (
   dispatch: (action: PostCommentsAction) => void,
 ) => {
   dispatch({
     type: CLEAR_CREATE_COMMENT_ERROR,
+    payload: null,
+  });
+};
+
+export const clearDeleteCommentError = () => (
+  dispatch: (action: PostCommentsAction) => void,
+) => {
+  dispatch({
+    type: CLEAR_DELETE_COMMENT_ERROR,
     payload: null,
   });
 };
@@ -465,4 +531,24 @@ const unlikeCommentFailure = (
 ): PostCommentsAction => ({
   type: UNLIKE_COMMENT_FAILURE,
   payload: { commentID, error },
+});
+
+const deleteCommentStarted = (commentID: string): PostCommentsAction => ({
+  type: DELETE_COMMENT_STARTED,
+  payload: commentID,
+});
+
+const deleteCommentSuccess = (
+  commentIDwithFlag: string,
+): PostCommentsAction => ({
+  type: DELETE_COMMENT_SUCCESS,
+  payload: commentIDwithFlag,
+});
+
+const deleteCommentFailure = (
+  commentIDwithFlag: string,
+  error: Error,
+): PostCommentsAction => ({
+  type: DELETE_COMMENT_FAILURE,
+  payload: { commentIDwithFlag, error },
 });
