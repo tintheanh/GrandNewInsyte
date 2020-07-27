@@ -39,7 +39,7 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
   private keyboardWillHideListener: EmitterSubscription | null = null;
   private moveAnimation: Animated.Value;
 
-  constructor(props: any) {
+  constructor(props: CommentInputProps) {
     super(props);
     this.state = {
       text: '',
@@ -80,6 +80,8 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
     }).start();
   };
 
+  setCommentContent = (text: string) => this.setState({ text });
+
   performSubmitComment = async () => {
     const { text } = this.state;
     if (!text.length) {
@@ -115,7 +117,7 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
     return (
       <Animated.View style={[styles.wrapper, animStyle]}>
         <TextInput
-          onChangeText={(text) => this.setState({ text })}
+          onChangeText={this.setCommentContent}
           onContentSizeChange={(event) => {
             this.setState({
               textInputHeight: event.nativeEvent.contentSize.height,

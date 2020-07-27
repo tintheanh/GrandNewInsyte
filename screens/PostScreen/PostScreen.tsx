@@ -83,7 +83,7 @@ interface PostScreenState {
 }
 
 class PostScreen extends Component<PostScreenProps, PostScreenState> {
-  private detectGoBack: any;
+  private unsubscribeDetectScreenGoBack: any;
   constructor(props: PostScreenProps) {
     super(props);
     this.state = {
@@ -109,12 +109,6 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     if (loading !== nextProps.loading) {
       return true;
     }
-    if (checkPostChanged(this.state.post, nextState.post)) {
-      return true;
-    }
-    if (checkPostCommentListChanged(comments, nextProps.comments)) {
-      return true;
-    }
     if (sortCommentsBy !== nextProps.sortCommentsBy) {
       return true;
     }
@@ -136,22 +130,31 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     if (unlikePostError !== nextProps.unlikePostError) {
       return true;
     }
+    if (checkPostChanged(this.state.post, nextState.post)) {
+      return true;
+    }
+    if (checkPostCommentListChanged(comments, nextProps.comments)) {
+      return true;
+    }
 
     return false;
   }
 
   async componentDidMount() {
     const { navigation, onFetchNewComments, onPopPostLayer } = this.props;
-    this.detectGoBack = navigation.addListener('beforeRemove', () => {
-      onPopPostLayer();
-    });
+    this.unsubscribeDetectScreenGoBack = navigation.addListener(
+      'beforeRemove',
+      () => {
+        onPopPostLayer();
+      },
+    );
     const postID = this.state.post.id;
     await delay(500);
     onFetchNewComments(postID);
   }
 
   componentWillUnmount() {
-    this.detectGoBack();
+    this.unsubscribeDetectScreenGoBack();
   }
 
   toUserScreen = () => {
@@ -164,27 +167,99 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     });
   };
 
-  renderItem = ({ item, index }: { item: PostComment; index: number }) => {
-    const { currentUID } = this.props;
-    return (
-      <CommentCard
-        id={item.id}
-        user={item.user}
-        content={item.content}
-        datePosted={item.datePosted}
-        likes={item.likes}
-        isLiked={item.isLiked}
-        replies={item.replies}
-        userControl={
-          currentUID === item.user.id
-            ? this.userControlForComment(item.id)
-            : undefined
-        }
-        likeComment={this.performLikeComment(item.id)}
-        unlikeComment={this.performUnlikeComment(item.id)}
-      />
+  /* -------------------- post methods -------------------- */
+
+  performLikePost = async () => {
+    const postID = this.state.post.id;
+    this.setState((prevState) => ({
+      post: {
+        ...prevState.post,
+        likes: prevState.post.likes + 1,
+        isLiked: true,
+      },
+    }));
+    await this.props.onLikePost(postID);
+    if (this.props.likePostError !== null) {
+      this.setState((prevState) => ({
+        post: {
+          ...prevState.post,
+          likes: prevState.post.likes - 1,
+          isLiked: false,
+        },
+      }));
+    }
+  };
+
+  performUnlikePost = async () => {
+    const postID = this.state.post.id;
+    this.setState((prevState) => ({
+      post: {
+        ...prevState.post,
+        likes: prevState.post.likes - 1,
+        isLiked: false,
+      },
+    }));
+    await this.props.onUnlikePost(postID);
+    if (this.props.unlikePostError !== null) {
+      this.setState((prevState) => ({
+        post: {
+          ...prevState.post,
+          likes: prevState.post.likes + 1,
+          isLiked: true,
+        },
+      }));
+    }
+  };
+
+  performDeletePost = async () => {
+    const { navigation, onPopPostLayer, onDeletePost } = this.props;
+    const postID = this.state.post.id;
+    navigation.goBack();
+    onPopPostLayer();
+    await delay(500);
+    onDeletePost(postID);
+  };
+
+  increaseCommentNumberForPostScreen = () => {
+    this.setState((prevState) => ({
+      post: {
+        ...prevState.post,
+        comments: prevState.post.comments + 1,
+      },
+    }));
+  };
+
+  decreaseCommentNumberForPostScreen = () => {
+    this.setState((prevState) => ({
+      post: {
+        ...prevState.post,
+        comments: prevState.post.comments - 1,
+      },
+    }));
+  };
+
+  userControlForPost = () => {
+    Alert.alert(
+      '',
+      'Do you want to delete your post?',
+      [
+        {
+          text: 'Delete',
+          onPress: this.performDeletePost,
+        },
+
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true },
     );
   };
+
+  /* ------------------ end post methods ------------------ */
+
+  /* ------------------- comment methods ------------------ */
 
   performDeleteComment = (commentID: string) => async () => {
     const postID = this.state.post.id;
@@ -235,75 +310,6 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     this.props.onFetchNewComments(postID);
   };
 
-  performLikePost = async () => {
-    const postID = this.state.post.id;
-    this.setState((prevState) => ({
-      post: {
-        ...prevState.post,
-        likes: prevState.post.likes + 1,
-        isLiked: true,
-      },
-    }));
-    await this.props.onLikePost(postID);
-    if (this.props.likePostError !== null) {
-      this.setState((prevState) => ({
-        post: {
-          ...prevState.post,
-          likes: prevState.post.likes - 1,
-          isLiked: false,
-        },
-      }));
-    }
-  };
-
-  performUnlikePost = async () => {
-    const postID = this.state.post.id;
-    this.setState((prevState) => ({
-      post: {
-        ...prevState.post,
-        likes: prevState.post.likes - 1,
-        isLiked: false,
-      },
-    }));
-    await this.props.onUnlikePost(postID);
-    if (this.props.unlikePostError !== null) {
-      this.setState((prevState) => ({
-        post: {
-          ...prevState.post,
-          likes: prevState.post.likes + 1,
-          isLiked: true,
-        },
-      }));
-    }
-  };
-
-  increaseCommentNumberForPostScreen = () => {
-    this.setState((prevState) => ({
-      post: {
-        ...prevState.post,
-        comments: prevState.post.comments + 1,
-      },
-    }));
-  };
-
-  decreaseCommentNumberForPostScreen = () => {
-    this.setState((prevState) => ({
-      post: {
-        ...prevState.post,
-        comments: prevState.post.comments - 1,
-      },
-    }));
-  };
-
-  performDeletePost = async () => {
-    const { navigation, onPopPostLayer, onDeletePost } = this.props;
-    const postID = this.state.post.id;
-    navigation.goBack();
-    onPopPostLayer();
-    await delay(500);
-    onDeletePost(postID);
-  };
-
   performLikeComment = (commentID: string) => () => {
     this.props.onLikeComment(commentID);
   };
@@ -312,22 +318,27 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     this.props.onUnlikeComment(commentID);
   };
 
-  userControl = () => {
-    Alert.alert(
-      '',
-      'Do you want to delete your post?',
-      [
-        {
-          text: 'Delete',
-          onPress: this.performDeletePost,
-        },
+  /* ----------------- end comment methods ---------------- */
 
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-      ],
-      { cancelable: true },
+  renderItem = ({ item, index }: { item: PostComment; index: number }) => {
+    const { currentUID } = this.props;
+    return (
+      <CommentCard
+        id={item.id}
+        user={item.user}
+        content={item.content}
+        datePosted={item.datePosted}
+        likes={item.likes}
+        isLiked={item.isLiked}
+        replies={item.replies}
+        userControl={
+          currentUID === item.user.id
+            ? this.userControlForComment(item.id)
+            : undefined
+        }
+        likeComment={this.performLikeComment(item.id)}
+        unlikeComment={this.performUnlikeComment(item.id)}
+      />
     );
   };
 
@@ -353,7 +364,9 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         likePost={this.performLikePost}
         unLikePost={this.performUnlikePost}
         navigateWhenClickOnUsernameOrAvatar={this.toUserScreen}
-        userControl={post.user.id === currentUID ? this.userControl : undefined}
+        userControl={
+          post.user.id === currentUID ? this.userControlForPost : undefined
+        }
       />
     );
 
@@ -436,16 +449,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
           extraData={post}
         />
         {currentUID !== undefined ? commentInput : null}
-        <View
-          style={{
-            width: '100%',
-            position: 'absolute',
-            bottom: 44,
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: -1,
-          }}>
+        <View style={styles.loadingWrapper}>
           {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="small" color="white" />
@@ -470,6 +474,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.brightColor,
     height: Layout.window.height,
+  },
+  loadingWrapper: {
+    width: '100%',
+    position: 'absolute',
+    bottom: 44,
+    zIndex: -1,
   },
   loadingContainer: {
     flex: 1,

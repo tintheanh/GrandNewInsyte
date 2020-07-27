@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableWithoutFeedback, StyleSheet } from 'react-native';
-import { convertTime } from '../../../utils/functions';
-import { Layout, MaterialCommunityIcons } from '../../../constants';
+import { convertTime } from '../utils/functions';
+import { Layout, MaterialCommunityIcons } from '../constants';
 
 interface CommentSectionProps {
   username: string;

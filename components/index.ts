@@ -11,6 +11,7 @@ import ErrorView from './ErrorView';
 import NothingView from './NothingView';
 import ProfilePostList from './ProfilePostList/ProfilePostList';
 import UserResultCard from './UserResultCard';
+import Avatar from './Avatar';
 
 export {
   TextBox,
@@ -23,6 +24,7 @@ export {
   CommentCard,
   PlaceCard,
   ErrorView,
+  Avatar,
   NothingView,
   ProfilePostList,
   UserResultCard,

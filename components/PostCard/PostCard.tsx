@@ -100,6 +100,7 @@ class PostCard extends Component<PostCardProps> {
     //     title: data.user.username,
     //     avatar: data.user.avatar,
     //   });
+    console.log('to user profile');
   };
 
   // processMedia = () => this.props.data.media.map((md) => ({ url: md.url }));

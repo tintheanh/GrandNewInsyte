@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableWithoutFeedback } from 'react-native';
-import { AntDesign, Entypo, Colors } from '../../../constants';
-import { convertNumber } from '../../../utils/functions';
+import { AntDesign, Entypo, Colors } from '../constants';
+import { convertNumber } from '../utils/functions';
 
 interface InteractionSectionProps {
   likes: number;
@@ -9,7 +9,7 @@ interface InteractionSectionProps {
   isLiked: boolean;
   likeComment: () => void;
   unlikeComment: () => void;
-  toReplyScreen: () => void;
+  toReplyScreen?: () => void;
 }
 
 export default function InteractionSection({
@@ -18,7 +18,7 @@ export default function InteractionSection({
   isLiked,
   likeComment,
   unlikeComment,
-  toReplyScreen,
+  toReplyScreen = undefined,
 }: InteractionSectionProps) {
   return (
     <View style={styles.interactionSection}>

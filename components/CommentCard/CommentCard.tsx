@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Colors from '../../constants/Colors';
+import CommentSection from '../CommentSection';
+import Avatar from '../Avatar';
+import InteractionSection from '../InteractionSection';
 import {
-  Avatar,
-  CommentSection,
-  InteractionSection,
-  ReplySection,
-} from './private_components';
-import { pendingCommentID, pendingDeleteCommentFlag } from '../../constants';
+  Colors,
+  pendingCommentID,
+  pendingDeleteCommentFlag,
+} from '../../constants';
 
 interface CommentCardProps {
   id: string;
@@ -25,20 +25,11 @@ interface CommentCardProps {
   likeComment: () => void;
   unlikeComment: () => void;
   userControl?: () => void;
-  // firstReply: {
-  //   avatar: string;
-  //   username: string;
-  //   content: string;
-  //   datePosted: number;
-  //   likes: number;
-  // } | null;
 }
 
 export default React.memo(
   function CommentCard(props: CommentCardProps) {
     const navigation = useNavigation<any>();
-
-    const toReplyScreen = () => navigation.push('ReplyScreen');
 
     const {
       id,
@@ -52,6 +43,20 @@ export default React.memo(
       likes,
       isLiked,
     } = props;
+
+    const toReplyScreen = () =>
+      navigation.push('ReplyScreen', {
+        comment: {
+          id,
+          user,
+          content,
+          datePosted,
+          replies,
+          likes,
+          isLiked,
+        },
+      });
+
     return (
       <View
         style={[
@@ -63,7 +68,10 @@ export default React.memo(
                 : 1,
           },
         ]}>
-        <Avatar avatar={user.avatar} />
+        <Avatar
+          avatar={user.avatar}
+          onPress={() => console.log('to user screeen')}
+        />
         <View style={{ marginLeft: 12 }}>
           <CommentSection
             username={user.username}
@@ -79,16 +87,6 @@ export default React.memo(
             unlikeComment={unlikeComment}
             toReplyScreen={toReplyScreen}
           />
-          {/* {firstReply ? (
-          <ReplySection
-            avatar={firstReply.avatar}
-            username={firstReply.username}
-            datePosted={firstReply.datePosted}
-            content={firstReply.content}
-            likes={firstReply.likes}
-            totalReplies={totalReplies}
-          />
-        ) : null} */}
         </View>
       </View>
     );
@@ -103,33 +101,6 @@ export default React.memo(
     return true;
   },
 );
-
-// export default class CommentCard extends Component<CommentCardProps> {
-//   shouldComponentUpdate(nextProps: CommentCardProps) {
-//     if (this.props.likes !== nextProps.likes) {
-//       return true;
-//     }
-//     if (this.props.replies !== nextProps.replies) {
-//       return true;
-//     }
-//     return false;
-//   }
-
-//   render() {
-//     const {
-//       id,
-//       user,
-//       content,
-//       userControl = undefined,
-//       likeComment,
-//       unlikeComment,
-//       datePosted,
-//       replies,
-//       likes,
-//       isLiked,
-//     } = this.props;
-//   }
-// }
 
 const styles = StyleSheet.create({
   container: {

@@ -14,7 +14,7 @@ import {
   MaterialCommunityIcons,
   FontAwesome5,
 } from '../../../constants';
-import { Carousel } from '../../../components';
+import { Carousel, Avatar } from '../../../components';
 import SortComments from './SortComments';
 import {
   convertNumber,
@@ -31,152 +31,153 @@ interface PostSectionProps {
   userControl?: () => void;
 }
 
-export default function PostSection({
-  post,
-  navigateWhenClickOnUsernameOrAvatar = undefined,
-  userControl = undefined,
-  likePost,
-  unLikePost,
-}: PostSectionProps) {
-  const {
-    id,
-    user,
-    timeLabel,
-    privacy,
-    caption,
-    isLiked,
-    media,
-    likes,
-    comments,
-  } = post;
-  let iconPrivacy = '';
-  switch (privacy) {
-    case 'public':
-      iconPrivacy = 'globe';
-      break;
-    case 'followers':
-      iconPrivacy = 'users';
-      break;
-    default:
-      iconPrivacy = 'lock';
-      break;
-  }
-  return (
-    <View style={{ backgroundColor: Colors.darkColor }}>
-      <View style={styles.userWrapper}>
-        <TouchableWithoutFeedback onPress={navigateWhenClickOnUsernameOrAvatar}>
-          <Image
-            style={styles.avatar}
-            source={
-              user.avatar.length
-                ? { uri: user.avatar }
-                : require('../../../assets/user.png')
-            }
-            defaultSource={require('../../../assets/user.png')}
+export default React.memo(
+  function PostSection({
+    post,
+    navigateWhenClickOnUsernameOrAvatar = undefined,
+    userControl = undefined,
+    likePost,
+    unLikePost,
+  }: PostSectionProps) {
+    const {
+      id,
+      user,
+      timeLabel,
+      privacy,
+      caption,
+      isLiked,
+      media,
+      likes,
+      comments,
+    } = post;
+    let iconPrivacy = '';
+    switch (privacy) {
+      case 'public':
+        iconPrivacy = 'globe';
+        break;
+      case 'followers':
+        iconPrivacy = 'users';
+        break;
+      default:
+        iconPrivacy = 'lock';
+        break;
+    }
+
+    return (
+      <View style={{ backgroundColor: Colors.darkColor }}>
+        <View style={styles.userWrapper}>
+          <Avatar
+            avatar={user.avatar}
+            onPress={navigateWhenClickOnUsernameOrAvatar!}
           />
-        </TouchableWithoutFeedback>
-        <View style={styles.usernameAndTimeWrapper}>
-          <TouchableWithoutFeedback
-            onPress={navigateWhenClickOnUsernameOrAvatar}>
-            <Text style={styles.username}>{user.username}</Text>
-          </TouchableWithoutFeedback>
-          <View style={styles.timeAndPrivacyWrapper}>
-            <Text style={styles.time}>{timeLabel}</Text>
-            <FontAwesome5
-              name={iconPrivacy}
-              size={9}
-              color="white"
-              style={{ marginTop: 1 }}
-            />
-          </View>
-        </View>
-        {userControl ? (
-          <View
-            style={{
-              marginTop: -5,
-              alignSelf: 'stretch',
-              flexGrow: 1,
-              marginRight: 10,
-            }}>
-            <TouchableWithoutFeedback onPress={userControl}>
-              <MaterialCommunityIcons
-                name="dots-horizontal"
-                size={20}
-                color="rgba(255,255,255, 0.6)"
-                style={{ alignSelf: 'flex-end' }}
-              />
+          <View style={styles.usernameAndTimeWrapper}>
+            <TouchableWithoutFeedback
+              onPress={navigateWhenClickOnUsernameOrAvatar}>
+              <Text style={styles.username}>{user.username}</Text>
             </TouchableWithoutFeedback>
-          </View>
-        ) : null}
-      </View>
-      <Text style={styles.caption}>
-        {generateCaptionWithTagsAndUrls(caption).map((element, i) => {
-          if (element.type === 'tag') {
-            const textChunk = element as {
-              value: { text: string; uid: string };
-            };
-            return (
-              <Text
-                key={i}
-                style={{ color: Colors.userTag }}
-                onPress={() => console.log(textChunk.value.uid)}>
-                {textChunk.value.text}{' '}
-              </Text>
-            );
-          }
-          if (element.type === 'url') {
-            const textChunk = element as {
-              value: string;
-            };
-            return (
-              <Text
-                key={i}
-                style={{ color: Colors.tintColor }}
-                onPress={openURL(textChunk.value)}>
-                {textChunk.value}
-              </Text>
-            );
-          }
-          return <Text key={i}>{element.value} </Text>;
-        })}
-      </Text>
-      {media.length ? <Carousel items={media} shouldPlayMedia /> : null}
-      <View style={styles.interactionSection}>
-        <View style={styles.likeAndComment}>
-          <TouchableWithoutFeedback onPress={isLiked ? unLikePost : likePost}>
-            <View style={styles.iconWrapper}>
-              <AntDesign
-                name="like1"
-                size={18}
-                color={isLiked ? Colors.tintColor : 'white'}
+            <View style={styles.timeAndPrivacyWrapper}>
+              <Text style={styles.time}>{timeLabel}</Text>
+              <FontAwesome5
+                name={iconPrivacy}
+                size={9}
+                color="white"
+                style={{ marginTop: 1 }}
               />
-              <Text
-                style={[
-                  styles.interactionText,
-                  { color: isLiked ? Colors.tintColor : 'white' },
-                ]}>
-                {convertNumber(likes)}
+            </View>
+          </View>
+          {userControl ? (
+            <View style={styles.userControlWrapper}>
+              <TouchableWithoutFeedback onPress={userControl}>
+                <MaterialCommunityIcons
+                  name="dots-horizontal"
+                  size={20}
+                  color="rgba(255,255,255, 0.6)"
+                  style={{ alignSelf: 'flex-end' }}
+                />
+              </TouchableWithoutFeedback>
+            </View>
+          ) : null}
+        </View>
+        <Text style={styles.caption}>
+          {generateCaptionWithTagsAndUrls(caption).map((element, i) => {
+            if (element.type === 'tag') {
+              const textChunk = element as {
+                value: { text: string; uid: string };
+              };
+              return (
+                <Text
+                  key={i}
+                  style={{ color: Colors.userTag }}
+                  onPress={() => console.log(textChunk.value.uid)}>
+                  {textChunk.value.text}{' '}
+                </Text>
+              );
+            }
+            if (element.type === 'url') {
+              const textChunk = element as {
+                value: string;
+              };
+              return (
+                <Text
+                  key={i}
+                  style={{ color: Colors.tintColor }}
+                  onPress={openURL(textChunk.value)}>
+                  {textChunk.value}
+                </Text>
+              );
+            }
+            return <Text key={i}>{element.value} </Text>;
+          })}
+        </Text>
+        {media.length ? <Carousel items={media} shouldPlayMedia /> : null}
+        <View style={styles.interactionSection}>
+          <View style={styles.likeAndComment}>
+            <TouchableWithoutFeedback onPress={isLiked ? unLikePost : likePost}>
+              <View style={styles.iconWrapper}>
+                <AntDesign
+                  name="like1"
+                  size={18}
+                  color={isLiked ? Colors.tintColor : 'white'}
+                />
+                <Text
+                  style={[
+                    styles.interactionText,
+                    { color: isLiked ? Colors.tintColor : 'white' },
+                  ]}>
+                  {convertNumber(likes)}
+                </Text>
+              </View>
+            </TouchableWithoutFeedback>
+            <View style={styles.iconWrapper}>
+              <MaterialIcons name="mode-comment" size={18} color="white" />
+              <Text style={styles.interactionText}>
+                {convertNumber(comments)}
               </Text>
             </View>
-          </TouchableWithoutFeedback>
-          <View style={styles.iconWrapper}>
-            <MaterialIcons name="mode-comment" size={18} color="white" />
-            <Text style={styles.interactionText}>
-              {convertNumber(comments)}
-            </Text>
           </View>
         </View>
+        <SortComments postID={id} />
       </View>
-      <SortComments postID={id} />
-    </View>
-  );
-}
+    );
+  },
+  (prevProps, nextProps) => {
+    if (prevProps.post.likes !== nextProps.post.likes) {
+      return false;
+    }
+    if (prevProps.post.comments !== nextProps.post.comments) {
+      return false;
+    }
+    return true;
+  },
+);
 
 const styles = StyleSheet.create({
   userWrapper: {
     flexDirection: 'row',
     width: '100%',
     marginTop: 12,
+    paddingLeft: 10,
+    paddingRight: 10,
   },
   avatar: {
     width: 40,
@@ -201,6 +202,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     marginRight: 4,
+  },
+  userControlWrapper: {
+    marginTop: -5,
+    alignSelf: 'stretch',
+    flexGrow: 1,
   },
   caption: {
     marginLeft: 12,

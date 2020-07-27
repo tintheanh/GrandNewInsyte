@@ -7,6 +7,7 @@ import {
   Text,
 } from 'react-native';
 import { FontAwesome5 } from '../../../constants';
+import Avatar from '../../../components/Avatar';
 
 interface UserSectionProps {
   avatar: string;
@@ -28,7 +29,7 @@ export default function UserSection({
 }: UserSectionProps) {
   return (
     <View style={styles.userWrapper}>
-      <TouchableWithoutFeedback onPress={navigateWhenClickOnUsernameOrAvatar}>
+      {/* <TouchableWithoutFeedback onPress={navigateWhenClickOnUsernameOrAvatar}>
         <Image
           style={styles.avatar}
           source={
@@ -36,7 +37,8 @@ export default function UserSection({
           }
           defaultSource={require('../../../assets/user.png')}
         />
-      </TouchableWithoutFeedback>
+      </TouchableWithoutFeedback> */}
+      <Avatar avatar={avatar} onPress={navigateWhenClickOnUsernameOrAvatar!} />
       <View style={styles.usernameAndTimeWrapper}>
         <TouchableWithoutFeedback onPress={navigateWhenClickOnUsernameOrAvatar}>
           <Text style={styles.username}>{username}</Text>

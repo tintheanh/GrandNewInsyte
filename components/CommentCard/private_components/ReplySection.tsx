@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, TouchableWithoutFeedback, Text, StyleSheet } from 'react-native';
 import { convertTime } from '../../../utils/functions';
-import Avatar from './Avatar';
-import InteractionSection from './InteractionSection';
+import Avatar from '../../Avatar';
+import InteractionSection from '../../InteractionSection';
 import Layout from '../../../constants/Layout';
 
 interface ReplySectionProps {
