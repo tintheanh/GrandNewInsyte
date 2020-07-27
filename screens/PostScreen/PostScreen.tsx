@@ -26,7 +26,7 @@ import {
   clearDeleteCommentError,
   clearInteractCommentError,
   deleteComment,
-} from '../../redux/postComments/actions';
+} from '../../redux/commentsStack/actions';
 import {
   likePost,
   unlikePost,
@@ -35,7 +35,7 @@ import {
   increaseCommentNumOne,
 } from '../../redux/posts/actions';
 import { AppState } from '../../redux/store';
-import { Post, PostComment } from '../../models';
+import { Post, Comment } from '../../models';
 
 interface PostScreenProps {
   currentUID: string | undefined;
@@ -53,7 +53,7 @@ interface PostScreenProps {
       data: Post;
     };
   };
-  comments: Array<PostComment>;
+  comments: Array<Comment>;
   sortCommentsBy: 'new' | 'top';
   loading: boolean;
   error: Error | null;
@@ -320,7 +320,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
 
   /* ----------------- end comment methods ---------------- */
 
-  renderItem = ({ item, index }: { item: PostComment; index: number }) => {
+  renderItem = ({ item, index }: { item: Comment; index: number }) => {
     const { currentUID } = this.props;
     return (
       <CommentCard
@@ -490,21 +490,24 @@ const styles = StyleSheet.create({
   },
 });
 
-const mapStateToProps = (state: AppState) => ({
-  currentUID: state.auth.user?.id,
-  comments: state.postComments.stack.top()?.commentList ?? [],
-  loading: state.postComments.stack.top()?.loading ?? false,
-  error: state.postComments.stack.top()?.error ?? null,
-  createCommentError:
-    state.postComments.stack.top()?.createCommentError ?? null,
-  deleteCommentError:
-    state.postComments.stack.top()?.deleteCommentError ?? null,
-  interactCommentError:
-    state.postComments.stack.top()?.interactCommentError ?? null,
-  sortCommentsBy: state.postComments.stack.top()?.type ?? 'new',
-  likePostError: state.allPosts.likePost.error,
-  unlikePostError: state.allPosts.unlikePost.error,
-});
+const mapStateToProps = (state: AppState) => {
+  const { currentTab } = state.commentsStack;
+  return {
+    currentUID: state.auth.user?.id,
+    comments: state.commentsStack[currentTab].top()?.commentList ?? [],
+    loading: state.commentsStack[currentTab].top()?.loading ?? false,
+    error: state.commentsStack[currentTab].top()?.error ?? null,
+    createCommentError:
+      state.commentsStack[currentTab].top()?.createCommentError ?? null,
+    deleteCommentError:
+      state.commentsStack[currentTab].top()?.deleteCommentError ?? null,
+    interactCommentError:
+      state.commentsStack[currentTab].top()?.interactCommentError ?? null,
+    sortCommentsBy: state.commentsStack[currentTab].top()?.type ?? 'new',
+    likePostError: state.allPosts.likePost.error,
+    unlikePostError: state.allPosts.unlikePost.error,
+  };
+};
 
 const mapDispatchToProps = {
   onFetchNewComments: fetchNewComments,

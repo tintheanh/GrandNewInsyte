@@ -12,7 +12,7 @@ import {
   setSortComments,
   fetchNewComments,
   fetchTopComments,
-} from '../../../redux/postComments/actions';
+} from '../../../redux/commentsStack/actions';
 import { AntDesign } from '../../../constants';
 
 interface SortCommentsProps {
@@ -86,9 +86,12 @@ const styles = StyleSheet.create({
   },
 });
 
-const mapStateToProps = (state: AppState) => ({
-  label: state.postComments.stack.top()?.type ?? 'new',
-});
+const mapStateToProps = (state: AppState) => {
+  const { currentTab } = state.commentsStack;
+  return {
+    label: state.commentsStack[currentTab].top()?.type ?? 'new',
+  };
+};
 
 const mapDispatchToProps = {
   onSetSortComments: setSortComments,

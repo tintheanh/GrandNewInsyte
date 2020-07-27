@@ -14,7 +14,7 @@ import {
   bottomTabHeight,
   MaterialCommunityIcons,
 } from '../../../constants';
-import { createComment } from '../../../redux/postComments/actions';
+import { createComment } from '../../../redux/commentsStack/actions';
 import { AppState } from '../../../redux/store';
 import { alertDialog } from '../../../utils/functions';
 
@@ -195,11 +195,15 @@ const styles = StyleSheet.create({
   },
 });
 
-const mapStateToProps = (state: AppState) => ({
-  loading: state.postComments.stack.top()?.createCommentLoading ?? false,
-  error: state.postComments.stack.top()?.createCommentError ?? null,
-  postID: state.postComments.stack.top()?.postID ?? '',
-});
+const mapStateToProps = (state: AppState) => {
+  const { currentTab } = state.commentsStack;
+  return {
+    loading:
+      state.commentsStack[currentTab].top()?.createCommentLoading ?? false,
+    error: state.commentsStack[currentTab].top()?.createCommentError ?? null,
+    postID: state.commentsStack[currentTab].top()?.postID ?? '',
+  };
+};
 
 const mapDispatchToProps = {
   onCreateComment: createComment,

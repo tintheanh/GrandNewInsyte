@@ -5,7 +5,7 @@ import { Loading } from '../../components';
 import { AppState } from '../../redux/store';
 import HomeAuth from './private_components/HomeAuth';
 import HomeNotAuth from './private_components/HomeNotAuth';
-import { clearStack } from '../../redux/postComments/actions';
+import { clearStack } from '../../redux/commentsStack/actions';
 import { fsDB } from '../../config';
 import { generateSubstrForUsername } from '../../utils/functions';
 

@@ -1,7 +1,7 @@
-import PostComment from './postComment';
+import Comment from './comment';
 import { FirebaseFirestoreTypes } from '../config';
 
-export default interface PostStackLayer {
+export default interface CommentsStackLayer {
   postID: string;
   loading: boolean;
   error: Error | null;
@@ -11,5 +11,5 @@ export default interface PostStackLayer {
   interactCommentError: Error | null;
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
   type: 'new' | 'top';
-  commentList: Array<PostComment>;
+  commentList: Array<Comment>;
 }

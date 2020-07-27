@@ -16,7 +16,7 @@ import {
 import Carousel from '../Carousel';
 import { UserSection, Caption, InteractionSection } from './private_components';
 import { checkPostChanged } from '../../utils/functions';
-import { pushPostLayer } from '../../redux/postComments/actions';
+import { pushPostLayer } from '../../redux/commentsStack/actions';
 import { Post } from '../../models';
 
 interface PostCardProps {

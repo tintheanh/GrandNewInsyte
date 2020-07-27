@@ -3,20 +3,22 @@ import thunk from 'redux-thunk';
 import postsReducer from './posts/reducer';
 import authReducer from './auth/reducer';
 import tagReducer from './tag/reducer';
-import postCommentsReducer from './postComments/reducer';
+import commentsStackReducer from './commentsStack/reducer';
+import repliesStackReducer from './repliesStack/reducer';
 import currentViewableItemReducer from './curentViewableItem/reducer';
 import { PostState } from './posts/types';
 import { AuthState } from './auth/types';
 import { IndexState } from './curentViewableItem/types';
 import { TagState } from './tag/types';
-import { PostCommentsState } from './postComments/types';
+import { commentsStackState } from './commentsStack/types';
 
 const rootReducer = combineReducers({
   allPosts: postsReducer,
   auth: authReducer,
   postListIndices: currentViewableItemReducer,
   tag: tagReducer,
-  postComments: postCommentsReducer,
+  commentsStack: commentsStackReducer,
+  repliesStack: repliesStackReducer,
 });
 
 export interface AppState {
@@ -24,7 +26,7 @@ export interface AppState {
   auth: AuthState;
   postListIndices: IndexState;
   tag: TagState;
-  postComments: PostCommentsState;
+  commentsStack: commentsStackState;
 }
 
 export default createStore(rootReducer, compose(applyMiddleware(thunk)));

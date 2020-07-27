@@ -18,7 +18,10 @@ class ReplyScreen extends Component<any, any> {
     const { comment } = this.state;
     const commentSection = (
       <View style={styles.commentContainer}>
-        <Avatar avatar={comment.user.avatar} />
+        <Avatar
+          avatar={comment.user.avatar}
+          onPress={() => console.log('to user screen')}
+        />
         <View style={{ marginLeft: 12 }}>
           <CommentSection
             username={comment.user.username}

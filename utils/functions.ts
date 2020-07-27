@@ -11,7 +11,7 @@ import {
   FirebaseAuthTypes,
   FirebaseFirestoreTypes,
 } from '../config';
-import { Post, UserResult, PostComment } from '../models';
+import { Post, UserResult, Comment } from '../models';
 import { Colors, tokenForTag, separatorForTag } from '../constants';
 
 const alertDialog = (alertText: string, callback?: (args?: any) => void) => {
@@ -286,8 +286,8 @@ const checkUserResultListChanged = (
 };
 
 const checkPostCommentListChanged = (
-  list1: Array<PostComment>,
-  list2: Array<PostComment>,
+  list1: Array<Comment>,
+  list2: Array<Comment>,
 ) => {
   if (list1.length !== list2.length) {
     return true;
@@ -693,35 +693,9 @@ const filterImageArray = (arr: any[]) => {
   return filteredArr;
 };
 
-const removeDuplicatesFromPostsArray = (arr: Array<Post>) => {
-  const filteredArr = arr.reduce((acc: Array<Post>, current) => {
-    const x = acc.find((post) => post.id === current.id);
-    if (!x) {
-      return acc.concat([current]);
-    } else {
-      return acc;
-    }
-  }, []);
-
-  return filteredArr;
-};
-
-const removeDuplicatesFromUserResultsArray = (arr: Array<UserResult>) => {
-  const filteredArr = arr.reduce((acc: Array<UserResult>, current) => {
-    const x = acc.find((ur) => ur.id === current.id);
-    if (!x) {
-      return acc.concat([current]);
-    } else {
-      return acc;
-    }
-  }, []);
-
-  return filteredArr;
-};
-
-const removeDuplicatesFromCommentsArray = (arr: Array<PostComment>) => {
-  const filteredArr = arr.reduce((acc: Array<PostComment>, current) => {
-    const x = acc.find((ur) => ur.id === current.id);
+const removeDuplicatesFromArray = (arr: Array<any>) => {
+  const filteredArr = arr.reduce((acc: Array<any>, current) => {
+    const x = acc.find((element) => element.id === current.id);
     if (!x) {
       return acc.concat([current]);
     } else {
@@ -805,9 +779,7 @@ export {
   filterImageArray,
   uploadMedia,
   deleteMedia,
-  removeDuplicatesFromPostsArray,
-  removeDuplicatesFromUserResultsArray,
-  removeDuplicatesFromCommentsArray,
+  removeDuplicatesFromArray,
   wrapPostCaption,
   checkURL,
   openURL,

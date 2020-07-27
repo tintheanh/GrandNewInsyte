@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { connect } from 'react-redux';
 import { HomeScreen, PostScreen, ReplyScreen, UserScreen } from '../screens';
 import { Colors } from '../constants';
-import { popPostLayer } from '../redux/postComments/actions';
+import { popPostLayer } from '../redux/commentsStack/actions';
 
 const Stack = createStackNavigator();
 

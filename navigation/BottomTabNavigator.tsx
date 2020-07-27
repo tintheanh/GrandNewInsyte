@@ -11,6 +11,7 @@ import {
   Ionicons,
   bottomTabHeight,
 } from '../constants';
+import { setCurrentTabForCommentsStack } from '../redux/commentsStack/actions';
 import { alertDialog } from '../utils/functions';
 import { AppState } from '../redux/store';
 import { checkAuth } from '../redux/auth/actions';
@@ -81,6 +82,11 @@ class BottomTabNavigator extends Component<any> {
               <TabBarIcon icon={Foundation} focused={focused} name="home" />
             ),
           }}
+          listeners={{
+            tabPress: (e) => {
+              this.props.onSetCurrentTabForCommentsStack('homeTabStack');
+            },
+          }}
         />
         <BottomTab.Screen
           name="Map"
@@ -146,6 +152,11 @@ class BottomTabNavigator extends Component<any> {
               <TabBarIcon icon={FontAwesome} focused={focused} name="user" />
             ),
           }}
+          listeners={{
+            tabPress: (e) => {
+              this.props.onSetCurrentTabForCommentsStack('userTabStack');
+            },
+          }}
         />
       </BottomTab.Navigator>
     );
@@ -163,6 +174,7 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = {
   onCheckAuth: checkAuth,
+  onSetCurrentTabForCommentsStack: setCurrentTabForCommentsStack,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(BottomTabNavigator);

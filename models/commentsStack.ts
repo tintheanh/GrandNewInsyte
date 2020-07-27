@@ -1,18 +1,18 @@
-import PostStackLayer from './postStackLayer';
+import CommentsStackLayer from './commentsStackLayer';
 
-export default class PostStack {
-  private stack: Array<PostStackLayer> = [];
+export default class CommentsStack {
+  private stack: Array<CommentsStackLayer>;
   constructor() {
     this.stack = [];
   }
 
-  push = (postLayer: PostStackLayer) => {
+  push = (postLayer: CommentsStackLayer) => {
     this.stack.push(postLayer);
   };
 
   pop = () => {
     if (this.stack.length > 0) {
-      return this.stack.pop() as PostStackLayer;
+      return this.stack.pop() as CommentsStackLayer;
     }
     return null;
   };
@@ -44,7 +44,7 @@ export default class PostStack {
     return null;
   };
 
-  updateTop = (postLayer: PostStackLayer) => {
+  updateTop = (postLayer: CommentsStackLayer) => {
     if (this.stack.length > 0) {
       this.stack[this.stack.length - 1] = postLayer;
     }
@@ -56,8 +56,8 @@ export default class PostStack {
 
   private toArray = () => this.stack;
 
-  static clone = (stackForClone: PostStack) => {
-    const newStack = new PostStack();
+  static clone = (stackForClone: CommentsStack) => {
+    const newStack = new CommentsStack();
     const array = stackForClone.toArray();
 
     for (const postLayer of array) {

@@ -1,6 +1,6 @@
 import {
-  PostCommentsState,
-  PostCommentsAction,
+  commentsStackState,
+  CommentsStackAction,
   FETCH_NEW_COMMENTS_FAILURE,
   FETCH_NEW_COMMENTS_STARTED,
   FETCH_NEW_COMMENTS_SUCCESS,
@@ -28,49 +28,58 @@ import {
   FETCH_NEW_COMMENTS_END,
   SET_SORT_COMMENTS,
   CLEAR_STACK,
+  SET_CURRENT_TAB,
+  CurrentTab,
 } from './types';
-import { PostStack, PostComment } from '../../models';
+import { CommentsStack, Comment } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
 import { pendingCommentID, pendingDeleteCommentFlag } from '../../constants';
-import { removeDuplicatesFromCommentsArray } from '../../utils/functions';
+import { removeDuplicatesFromArray } from '../../utils/functions';
 
-const initialState: PostCommentsState = {
-  stack: new PostStack(),
+const initialState: commentsStackState = {
+  homeTabStack: new CommentsStack(),
+  userTabStack: new CommentsStack(),
+  currentTab: 'homeTabStack',
 };
 
-export default function postCommentsReducer(
+export default function commentsStackReducer(
   state = initialState,
-  action: PostCommentsAction,
-): PostCommentsState {
+  action: CommentsStackAction,
+): commentsStackState {
   switch (action.type) {
+    case SET_CURRENT_TAB: {
+      const newState = { ...state };
+      newState.currentTab = action.payload as CurrentTab;
+      return newState;
+    }
     case FETCH_NEW_COMMENTS_STARTED:
     case FETCH_TOP_COMMENTS_STARTED: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = true;
         topLayer.error = null;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case FETCH_NEW_COMMENTS_SUCCESS:
     case FETCH_TOP_COMMENTS_SUCCESS: {
       const newState = { ...state };
+      const currentTab = state.currentTab;
       const payload = action.payload as {
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot;
-        commentList: Array<PostComment>;
+        commentList: Array<Comment>;
       };
-      const newStack = PostStack.clone(state.stack);
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = false;
         const newCommentList = topLayer.commentList.concat(payload.commentList);
-        const removedDuplicates = removeDuplicatesFromCommentsArray(
-          newCommentList,
-        );
+        const removedDuplicates = removeDuplicatesFromArray(newCommentList);
         if (topLayer.type === 'new') {
           removedDuplicates.sort((a, b) => a.datePosted - b.datePosted);
         } else {
@@ -80,14 +89,15 @@ export default function postCommentsReducer(
         topLayer.lastVisible = payload.lastVisible;
         topLayer.error = null;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case FETCH_NEW_COMMENTS_FAILURE:
     case FETCH_TOP_COMMENTS_FAILURE: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = false;
@@ -95,26 +105,28 @@ export default function postCommentsReducer(
         topLayer.lastVisible = null;
         topLayer.error = action.payload as Error;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case FETCH_NEW_COMMENTS_END:
     case FETCH_TOP_COMMENTS_END: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = false;
         topLayer.error = null;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case CREATE_COMMENT_STARTED: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.createCommentLoading = true;
@@ -122,20 +134,21 @@ export default function postCommentsReducer(
         const filteredPending = topLayer.commentList.filter(
           (comment) => comment.id !== pendingCommentID,
         );
-        filteredPending.push(action.payload as PostComment);
+        filteredPending.push(action.payload as Comment);
         topLayer.commentList = filteredPending;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case CREATE_COMMENT_SUCCESS: {
       const newState = { ...state };
+      const currentTab = state.currentTab;
       const payload = action.payload as {
-        newComment: PostComment;
+        newComment: Comment;
         postID: string;
       };
-      const newStack = PostStack.clone(state.stack);
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer && topLayer.postID === payload.postID) {
         topLayer.createCommentLoading = false;
@@ -149,18 +162,17 @@ export default function postCommentsReducer(
         const filteredPending = topLayer.commentList.filter(
           (comment) => comment.id !== pendingCommentID,
         );
-        const removedDuplicates = removeDuplicatesFromCommentsArray(
-          filteredPending,
-        );
+        const removedDuplicates = removeDuplicatesFromArray(filteredPending);
         topLayer.commentList = removedDuplicates;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case CREATE_COMMENT_FAILURE: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.createCommentLoading = false;
@@ -170,13 +182,14 @@ export default function postCommentsReducer(
         );
         topLayer.commentList = filteredPending;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case LIKE_COMMENT_STARTED: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         const index = topLayer.commentList.findIndex(
@@ -187,7 +200,7 @@ export default function postCommentsReducer(
           topLayer.commentList[index].isLiked = true;
         }
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
@@ -196,11 +209,12 @@ export default function postCommentsReducer(
     }
     case LIKE_COMMENT_FAILURE: {
       const newState = { ...state };
+      const currentTab = state.currentTab;
       const payload = action.payload as {
         commentID: string;
         error: Error | null;
       };
-      const newStack = PostStack.clone(state.stack);
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         if (payload.commentID.length) {
@@ -214,13 +228,14 @@ export default function postCommentsReducer(
         }
         topLayer.interactCommentError = payload.error;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case UNLIKE_COMMENT_STARTED: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         const index = topLayer.commentList.findIndex(
@@ -231,7 +246,7 @@ export default function postCommentsReducer(
           topLayer.commentList[index].isLiked = false;
         }
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
@@ -240,11 +255,12 @@ export default function postCommentsReducer(
     }
     case UNLIKE_COMMENT_FAILURE: {
       const newState = { ...state };
+      const currentTab = state.currentTab;
       const payload = action.payload as {
         commentID: string;
         error: Error | null;
       };
-      const newStack = PostStack.clone(state.stack);
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         if (payload.commentID.length) {
@@ -258,13 +274,14 @@ export default function postCommentsReducer(
         }
         topLayer.interactCommentError = payload.error;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case DELETE_COMMENT_STARTED: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.deleteCommentError = null;
@@ -275,13 +292,14 @@ export default function postCommentsReducer(
           topLayer.commentList[index].id += pendingDeleteCommentFlag;
         }
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case DELETE_COMMENT_SUCCESS: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.deleteCommentError = null;
@@ -292,17 +310,18 @@ export default function postCommentsReducer(
           topLayer.commentList.splice(index, 1);
         }
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case DELETE_COMMENT_FAILURE: {
       const newState = { ...state };
+      const currentTab = state.currentTab;
       const payload = action.payload as {
         commentIDwithFlag: string;
         error: Error;
       };
-      const newStack = PostStack.clone(state.stack);
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.deleteCommentError = payload.error;
@@ -316,45 +335,49 @@ export default function postCommentsReducer(
           topLayer.commentList[index].id = splitted[0];
         }
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case CLEAR_CREATE_COMMENT_ERROR: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.createCommentError = null;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case CLEAR_DELETE_COMMENT_ERROR: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.deleteCommentError = null;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case CLEAR_INTERACT_COMMENT_ERROR: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.interactCommentError = null;
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case PUSH_POSTLAYER: {
       const newState = { ...state };
+      const currentTab = state.currentTab;
       const postLayer = {
         postID: action.payload as string,
         loading: false,
@@ -367,35 +390,38 @@ export default function postCommentsReducer(
         type: 'new' as 'new',
         commentList: [],
       };
-      const newStack = PostStack.clone(state.stack);
+      const newStack = CommentsStack.clone(state[currentTab]);
       newStack.push(postLayer);
-      newState.stack = newStack;
+      newState[currentTab] = newStack;
       return newState;
     }
     case POP_POSTLAYER: {
       const newState = { ...state };
-      const newStack = PostStack.clone(state.stack);
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
       newStack.pop();
-      newState.stack = newStack;
+      newState[currentTab] = newStack;
       return newState;
     }
     case SET_SORT_COMMENTS: {
       const newState = { ...state };
-      const topLayer = state.stack.top();
+      const currentTab = state.currentTab;
+      const topLayer = state[currentTab].top();
       if (topLayer) {
-        const newStack = PostStack.clone(state.stack);
+        const newStack = CommentsStack.clone(state[currentTab]);
         topLayer.type = action.payload as 'new' | 'top';
         topLayer.error = null;
         topLayer.lastVisible = null;
         topLayer.commentList = [];
         newStack.updateTop(topLayer);
-        newState.stack = newStack;
+        newState[currentTab] = newStack;
       }
       return newState;
     }
     case CLEAR_STACK: {
       const newState = { ...state };
-      newState.stack = new PostStack();
+      const currentTab = state.currentTab;
+      newState[currentTab] = new CommentsStack();
       return newState;
     }
     default:

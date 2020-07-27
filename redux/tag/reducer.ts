@@ -14,7 +14,7 @@ import {
   TagAction,
 } from './types';
 import { FirebaseFirestoreTypes } from '../../config';
-import { removeDuplicatesFromUserResultsArray } from '../../utils/functions';
+import { removeDuplicatesFromArray } from '../../utils/functions';
 
 const initialState: TagState = {
   createPost: {
@@ -51,7 +51,7 @@ export default function tagReducer(
       };
       const users = [...state.createPost.users];
       const newUsers = users.concat(payload.users);
-      const removedDuplicates = removeDuplicatesFromUserResultsArray(newUsers);
+      const removedDuplicates = removeDuplicatesFromArray(newUsers);
       const filteredSelected = removedDuplicates.filter(
         (result) => !newState.createPost.selected.includes(result.id),
       );
@@ -73,9 +73,7 @@ export default function tagReducer(
         }>;
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
       };
-      const removedDuplicates = removeDuplicatesFromUserResultsArray(
-        payload.users,
-      );
+      const removedDuplicates = removeDuplicatesFromArray(payload.users);
       const filteredSelected = removedDuplicates.filter(
         (result) => !newState.createPost.selected.includes(result.id),
       );

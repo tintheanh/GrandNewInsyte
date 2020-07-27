@@ -64,7 +64,7 @@ import {
   SET_FOLLOWING_FEED_CHOICE,
 } from './types';
 import { oneWeek, pendingDeletePostFlag, pendingPostID } from '../../constants';
-import { removeDuplicatesFromPostsArray } from '../../utils/functions';
+import { removeDuplicatesFromArray } from '../../utils/functions';
 import { Post } from '../../models';
 
 const initialState: PostState = {
@@ -145,7 +145,7 @@ export default function postsReducer(
       const publicPosts = allPosts.concat(payload.posts);
 
       // ensure no duplicates
-      const removedDuplicates = removeDuplicatesFromPostsArray(publicPosts);
+      const removedDuplicates = removeDuplicatesFromArray(publicPosts);
 
       newState.public.posts = removedDuplicates;
       newState.public.lastNewVisible = payload.lastVisible;
@@ -213,7 +213,7 @@ export default function postsReducer(
       const publicPosts = newState.public.posts.concat(payload.posts);
 
       // ensure no duplicates
-      const removedDuplicates = removeDuplicatesFromPostsArray(publicPosts);
+      const removedDuplicates = removeDuplicatesFromArray(publicPosts);
 
       newState.public.posts = removedDuplicates;
       newState.public.lastHotVisible = payload.lastVisible;
@@ -255,7 +255,7 @@ export default function postsReducer(
       const followingPosts = newState.following.posts.concat(payload.posts);
 
       // ensure no duplicates
-      const removedDuplicates = removeDuplicatesFromPostsArray(followingPosts);
+      const removedDuplicates = removeDuplicatesFromArray(followingPosts);
       newState.following.posts = removedDuplicates;
       newState.following.lastNewVisible = payload.lastVisible;
       newState.following.loading = false;
@@ -319,7 +319,7 @@ export default function postsReducer(
       };
       const newState = { ...state };
       const followingPosts = newState.following.posts.concat(payload.posts);
-      const removedDuplicates = removeDuplicatesFromPostsArray(followingPosts);
+      const removedDuplicates = removeDuplicatesFromArray(followingPosts);
 
       newState.following.posts = removedDuplicates;
       newState.following.lastHotVisible = payload.lastVisible;
@@ -363,9 +363,7 @@ export default function postsReducer(
       );
 
       // ensure no duplicates
-      const removedDuplicates = removeDuplicatesFromPostsArray(
-        filteredNewUserPosts,
-      );
+      const removedDuplicates = removeDuplicatesFromArray(filteredNewUserPosts);
 
       newState.userPosts.posts = removedDuplicates;
       newState.userPosts.lastVisible = payload.lastVisible;
@@ -432,7 +430,7 @@ export default function postsReducer(
       );
 
       // ensure no duplicates
-      const removedDuplicates = removeDuplicatesFromPostsArray(
+      const removedDuplicates = removeDuplicatesFromArray(
         filteredNewTaggedPosts,
       );
 
@@ -571,13 +569,13 @@ export default function postsReducer(
       );
 
       // ensure no duplicates
-      const removedDuplicatesFromPublicPosts = removeDuplicatesFromPostsArray(
+      const removedDuplicatesFromPublicPosts = removeDuplicatesFromArray(
         filteredPendingPulicPosts,
       );
-      const removedDuplicatesFromFollowingPosts = removeDuplicatesFromPostsArray(
+      const removedDuplicatesFromFollowingPosts = removeDuplicatesFromArray(
         filteredPendingFollowingPosts,
       );
-      const removedDuplicatesFromUserPosts = removeDuplicatesFromPostsArray(
+      const removedDuplicatesFromUserPosts = removeDuplicatesFromArray(
         filteredPendingUserPosts,
       );
 

@@ -1,5 +1,7 @@
-import { PostStack, PostComment } from '../../models';
+import { CommentsStack, Comment } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
+
+export const SET_CURRENT_TAB = 'SET_CURRENT_TAB';
 
 export const FETCH_NEW_COMMENTS_STARTED = 'FETCH_NEW_COMMENTS_STARTED';
 export const FETCH_NEW_COMMENTS_SUCCESS = 'FETCH_NEW_COMMENTS_SUCCESS';
@@ -36,18 +38,18 @@ export const POP_POSTLAYER = 'POP_POSTLAYER';
 export const SET_SORT_COMMENTS = 'SET_SORT_COMMENTS';
 export const CLEAR_STACK = 'CLEAR_STACK';
 
-export interface PostCommentsAction {
+export interface CommentsStackAction {
   type: string;
   payload:
     | string
-    | Array<PostComment>
-    | PostComment
+    | Array<Comment>
+    | Comment
     | {
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot;
-        commentList: Array<PostComment>;
+        commentList: Array<Comment>;
       }
     | {
-        newComment: PostComment;
+        newComment: Comment;
         postID: string;
       }
     | {
@@ -58,13 +60,18 @@ export interface PostCommentsAction {
         commentIDwithFlag: string;
         error: Error;
       }
+    | CurrentTab
     | Error
     | null;
 }
 
-// PostCommentsState is a stack because it associates with push navigation
+export type CurrentTab = 'homeTabStack' | 'userTabStack';
+
+// commentsStackState is a stack because it associates with push navigation
 // every navigation layer is a object of post detail pushed onto
 // the current view postDetails stack
-export interface PostCommentsState {
-  stack: PostStack;
+export interface commentsStackState {
+  homeTabStack: CommentsStack;
+  userTabStack: CommentsStack;
+  currentTab: CurrentTab;
 }

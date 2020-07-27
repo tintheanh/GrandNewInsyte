@@ -293,7 +293,7 @@ export const fetchPublicHotPosts = () => async (
     }
 
     // Ensure no duplicates
-    // const removedDuplicates = removeDuplicatesFromPostsArray(newPosts);
+    // const removedDuplicates = removeDuplicatesFromArray(newPosts);
 
     const newLastHotVisible = newPosts[newPosts.length - 1].datePosted;
 
@@ -827,7 +827,7 @@ export const fetchUserPosts = () => async (
     }
 
     // // Ensure no duplicates
-    // const removedDuplicates = removeDuplicatesFromPostsArray(newPosts);
+    // const removedDuplicates = removeDuplicatesFromArray(newPosts);
 
     const newLastVisible = newPosts[newPosts.length - 1].datePosted;
     dispatch(fetchUserPostsSuccess(newPosts, newLastVisible));

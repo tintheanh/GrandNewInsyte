@@ -1,9 +1,8 @@
-export default interface PostComment {
+export default interface Reply {
   id: string;
   content: string;
   datePosted: number;
   likes: number;
-  replies: number;
   isLiked: boolean;
   user: {
     id: string;
