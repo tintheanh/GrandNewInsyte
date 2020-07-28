@@ -11,7 +11,7 @@ import {
   FirebaseAuthTypes,
   FirebaseFirestoreTypes,
 } from '../config';
-import { Post, UserResult, Comment } from '../models';
+import { Post, UserResult, Comment, Reply } from '../models';
 import { Colors, tokenForTag, separatorForTag } from '../constants';
 
 const alertDialog = (alertText: string, callback?: (args?: any) => void) => {
@@ -310,6 +310,27 @@ const checkPostCommentListChanged = (
   return false;
 };
 
+const checkPostReplyListChanged = (
+  list1: Array<Reply>,
+  list2: Array<Reply>,
+) => {
+  if (list1.length !== list2.length) {
+    return true;
+  }
+
+  const len = list1.length;
+  for (let i = 0; i < len; i++) {
+    const reply1 = list1[i];
+    const reply2 = list2[i];
+
+    if (reply1.id !== reply2.id || reply1.likes !== reply2.likes) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const checkPostListChanged = (list1: Array<Post>, list2: Array<Post>) => {
   if (list1.length !== list2.length) {
     return true;
@@ -347,6 +368,17 @@ const checkPostChanged = (post1: Post, post2: Post) => {
     post1.likes !== post2.likes ||
     post1.comments !== post2.comments ||
     post1.user.avatar !== post2.user.avatar
+  ) {
+    return true;
+  }
+  return false;
+};
+
+const checkCommentChanged = (comment1: Comment, comment2: Comment) => {
+  if (
+    comment1.isLiked !== comment2.isLiked ||
+    comment1.likes !== comment2.likes ||
+    comment1.replies !== comment2.replies
   ) {
     return true;
   }
@@ -674,6 +706,71 @@ const docFStoCommentArray = async (
   return comments;
 };
 
+const docFStoReplyArray = async (
+  postID: string,
+  commentID: string,
+  docs: Array<FirebaseFirestoreTypes.QueryDocumentSnapshot>,
+  currentUser?: {
+    id: string;
+    username: string;
+    avatar: string;
+  },
+) => {
+  const replies = [];
+  for (const snapshot of docs) {
+    try {
+      const replyData = snapshot.data();
+      let postedBy;
+      if (currentUser && currentUser.id === replyData!.posted_by) {
+        postedBy = currentUser;
+      } else {
+        const userRef = await fsDB
+          .collection('users')
+          .doc(replyData!.posted_by)
+          .get();
+        if (!userRef.exists) {
+          continue;
+        }
+        const userData = userRef.data();
+        postedBy = {
+          id: userRef.id,
+          username: userData!.username as string,
+          avatar: userData!.avatar as string,
+        };
+      }
+      let isLiked = false;
+      if (currentUser) {
+        const likeRef = await fsDB
+          .collection('posts')
+          .doc(postID)
+          .collection('comment_list')
+          .doc(commentID)
+          .collection('reply_list')
+          .doc(snapshot.id)
+          .collection('like_list')
+          .doc(currentUser.id)
+          .get();
+        if (likeRef.exists) {
+          isLiked = true;
+        }
+      }
+
+      const reply = {
+        id: snapshot.id,
+        content: replyData!.content as string,
+        datePosted: replyData!.date_posted as number,
+        likes: replyData!.likes as number,
+        isLiked,
+        user: postedBy,
+      };
+      replies.push(reply);
+    } catch (err) {
+      continue;
+    }
+  }
+  return replies;
+};
+
 const filterImageArray = (arr: any[]) => {
   const filteredArr = arr.reduce((acc, current) => {
     const x = acc.find(
@@ -786,4 +883,7 @@ export {
   generateSubstrForUsername,
   generateCaptionWithTagsAndUrls,
   docFStoCommentArray,
+  docFStoReplyArray,
+  checkPostReplyListChanged,
+  checkCommentChanged,
 };

@@ -55,8 +55,8 @@ import {
   UNLIKE_POST_FAILURE,
   UNLIKE_POST_STARTED,
   UNLIKE_POST_SUCCESS,
-  INCREASE_COMMENT_NUM_ONE,
-  DECREASE_COMMENT_NUM_ONE,
+  INCREASE_COMMENTS_BY_NUMBER,
+  DECREASE_COMMENTS_BY_NUMBER,
   CLEAR,
   PostState,
   PostAction,
@@ -1005,44 +1005,46 @@ export default function postsReducer(
       return newState;
     }
 
-    case INCREASE_COMMENT_NUM_ONE: {
+    case INCREASE_COMMENTS_BY_NUMBER: {
       const newState = { ...state };
       const publicPosts = [...state.public.posts];
       const followingPosts = [...state.following.posts];
       const userPosts = [...state.userPosts.posts];
       const taggedPosts = [...state.taggedPosts.posts];
-      const postID = action.payload as string;
+      const payload = action.payload as { postID: string; by: number };
       newState.likePost.error = null;
 
       const publicPostIndex = publicPosts.findIndex(
-        (post) => post.id === postID,
+        (post) => post.id === payload.postID,
       );
       const followingPostIndex = followingPosts.findIndex(
-        (post) => post.id === postID,
+        (post) => post.id === payload.postID,
       );
-      const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+      const userPostIndex = userPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
       const taggedPostIndex = taggedPosts.findIndex(
-        (post) => post.id === postID,
+        (post) => post.id === payload.postID,
       );
 
       if (publicPostIndex !== -1) {
         const post = { ...publicPosts[publicPostIndex] };
-        post.comments += 1;
+        post.comments += payload.by;
         publicPosts[publicPostIndex] = post;
       }
       if (followingPostIndex !== -1) {
         const post = { ...followingPosts[followingPostIndex] };
-        post.comments += 1;
+        post.comments += payload.by;
         followingPosts[followingPostIndex] = post;
       }
       if (userPostIndex !== -1) {
         const post = { ...userPosts[userPostIndex] };
-        post.comments += 1;
+        post.comments += payload.by;
         userPosts[userPostIndex] = post;
       }
       if (taggedPostIndex !== -1) {
         const post = { ...taggedPosts[taggedPostIndex] };
-        post.comments += 1;
+        post.comments += payload.by;
         taggedPosts[taggedPostIndex] = post;
       }
 
@@ -1053,44 +1055,46 @@ export default function postsReducer(
       return newState;
     }
 
-    case DECREASE_COMMENT_NUM_ONE: {
+    case DECREASE_COMMENTS_BY_NUMBER: {
       const newState = { ...state };
+      const payload = action.payload as { postID: string; by: number };
       const publicPosts = [...state.public.posts];
       const followingPosts = [...state.following.posts];
       const userPosts = [...state.userPosts.posts];
       const taggedPosts = [...state.taggedPosts.posts];
-      const postID = action.payload as string;
       newState.likePost.error = null;
 
       const publicPostIndex = publicPosts.findIndex(
-        (post) => post.id === postID,
+        (post) => post.id === payload.postID,
       );
       const followingPostIndex = followingPosts.findIndex(
-        (post) => post.id === postID,
+        (post) => post.id === payload.postID,
       );
-      const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+      const userPostIndex = userPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
       const taggedPostIndex = taggedPosts.findIndex(
-        (post) => post.id === postID,
+        (post) => post.id === payload.postID,
       );
 
       if (publicPostIndex !== -1) {
         const post = { ...publicPosts[publicPostIndex] };
-        post.comments -= 1;
+        post.comments -= payload.by;
         publicPosts[publicPostIndex] = post;
       }
       if (followingPostIndex !== -1) {
         const post = { ...followingPosts[followingPostIndex] };
-        post.comments -= 1;
+        post.comments -= payload.by;
         followingPosts[followingPostIndex] = post;
       }
       if (userPostIndex !== -1) {
         const post = { ...userPosts[userPostIndex] };
-        post.comments -= 1;
+        post.comments -= payload.by;
         userPosts[userPostIndex] = post;
       }
       if (taggedPostIndex !== -1) {
         const post = { ...taggedPosts[taggedPostIndex] };
-        post.comments -= 1;
+        post.comments -= payload.by;
         taggedPosts[taggedPostIndex] = post;
       }
 

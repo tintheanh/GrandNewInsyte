@@ -10,7 +10,8 @@ import { PostState } from './posts/types';
 import { AuthState } from './auth/types';
 import { IndexState } from './curentViewableItem/types';
 import { TagState } from './tag/types';
-import { commentsStackState } from './commentsStack/types';
+import { CommentsStackState } from './commentsStack/types';
+import { RepliesStackState } from './repliesStack/types';
 
 const rootReducer = combineReducers({
   allPosts: postsReducer,
@@ -26,7 +27,8 @@ export interface AppState {
   auth: AuthState;
   postListIndices: IndexState;
   tag: TagState;
-  commentsStack: commentsStackState;
+  commentsStack: CommentsStackState;
+  repliesStack: RepliesStackState;
 }
 
 export default createStore(rootReducer, compose(applyMiddleware(thunk)));

@@ -7,8 +7,8 @@ import {
   Layout,
   AntDesign,
   MaterialCommunityIcons,
-  pendingCommentID,
-  pendingDeleteCommentFlag,
+  pendingReplyID,
+  pendingDeleteReplyFlag,
 } from '../constants';
 import { convertTime, convertNumber } from '../utils/functions';
 
@@ -58,7 +58,16 @@ export default React.memo(
     //   });
 
     return (
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          {
+            opacity:
+              id === pendingReplyID || id.includes(pendingDeleteReplyFlag)
+                ? 0.4
+                : 1,
+          },
+        ]}>
         <View
           style={{
             flexDirection: 'row',
@@ -137,6 +146,7 @@ const styles = StyleSheet.create({
     width: '100%',
     // borderBottomWidth: 1,
     // borderBottomColor: Colors.brightColor,
+    backgroundColor: Colors.darkColor,
   },
   username: {
     color: 'white',
@@ -153,6 +163,7 @@ const styles = StyleSheet.create({
     width: Layout.window.width - 40 - 14 - 20,
     flexWrap: 'wrap',
     alignItems: 'flex-start',
+    paddingRight: 56,
   },
   iconWrapper: {
     flexDirection: 'row',

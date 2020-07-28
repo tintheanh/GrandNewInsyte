@@ -100,8 +100,8 @@ export const UNLIKE_POST_STARTED = 'UNLIKE_POST_STARTED';
 export const UNLIKE_POST_SUCCESS = 'UNLIKE_POST_SUCCESS';
 export const UNLIKE_POST_FAILURE = 'UNLIKE_POST_FAILURE';
 
-export const INCREASE_COMMENT_NUM_ONE = 'INCREASE_COMMENT_NUM_ONE';
-export const DECREASE_COMMENT_NUM_ONE = 'DECREASE_COMMENT_NUM_ONE';
+export const INCREASE_COMMENTS_BY_NUMBER = 'INCREASE_COMMENTS_BY_NUMBER';
+export const DECREASE_COMMENTS_BY_NUMBER = 'DECREASE_COMMENTS_BY_NUMBER';
 
 export interface PostAction {
   type: string;
@@ -112,6 +112,10 @@ export interface PostAction {
       }
     | {
         error: Error | null;
+        postID: string;
+      }
+    | {
+        by: number;
         postID: string;
       }
     | Array<any>

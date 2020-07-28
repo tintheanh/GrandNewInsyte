@@ -16,7 +16,7 @@ import {
 import Carousel from '../Carousel';
 import { UserSection, Caption, InteractionSection } from './private_components';
 import { checkPostChanged } from '../../utils/functions';
-import { pushPostLayer } from '../../redux/commentsStack/actions';
+import { pushCommentsLayer } from '../../redux/commentsStack/actions';
 import { Post } from '../../models';
 
 interface PostCardProps {
@@ -28,7 +28,7 @@ interface PostCardProps {
   userPostControl?: () => void;
   performLikePost: () => void;
   performUnlikePost: () => void;
-  onPushPostLayer: (postID: string) => void;
+  onPushCommentsLayer: (postID: string) => void;
 }
 
 class PostCard extends Component<PostCardProps> {
@@ -86,8 +86,8 @@ class PostCard extends Component<PostCardProps> {
   }
 
   navigateWhenClickOnPostOrComment = () => {
-    const { navigation, data, onPushPostLayer } = this.props;
-    onPushPostLayer(data.id);
+    const { navigation, data, onPushCommentsLayer } = this.props;
+    onPushCommentsLayer(data.id);
     navigation.push('PostScreen', {
       data,
       title: `${data.user.username}'s post`,
@@ -229,11 +229,11 @@ interface HOCPostCardProps {
   userPostControl?: () => void;
   performLikePost: () => void;
   performUnlikePost: () => void;
-  onPushPostLayer: (postID: string) => void;
+  onPushCommentsLayer: (postID: string) => void;
 }
 
 const mapDispatchToProps = {
-  onPushPostLayer: pushPostLayer,
+  onPushCommentsLayer: pushCommentsLayer,
 };
 
 export default connect(

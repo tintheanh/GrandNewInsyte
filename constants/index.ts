@@ -15,6 +15,8 @@ export const pendingPostID = 'pending-post-69';
 export const pendingDeletePostFlag = '--pending-delete-post';
 export const pendingCommentID = 'pending-comment-69';
 export const pendingDeleteCommentFlag = '--pending-delete-comment';
+export const pendingReplyID = 'pending-reply-69';
+export const pendingDeleteReplyFlag = '--pending-delete-reply';
 
 const deviceOS = getSystemName();
 export const bottomTabHeight =

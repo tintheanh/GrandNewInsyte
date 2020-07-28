@@ -14,33 +14,35 @@ import {
   bottomTabHeight,
   MaterialCommunityIcons,
 } from '../../../constants';
-import { createComment } from '../../../redux/commentsStack/actions';
+import { createReply } from '../../../redux/repliesStack/actions';
 import { AppState } from '../../../redux/store';
 import { alertDialog } from '../../../utils/functions';
 
-interface CommentInputState {
+interface ReplyInputState {
   text: string;
   textInputHeight: number;
 }
 
-interface CommentInputProps {
+interface ReplyInputProps {
   loading: boolean;
   postID: string;
   error: Error | null;
-  onCreateComment: (content: string) => void;
-  increaseCommentNumberForPostScreenBy: (by: number) => void;
-  increaseCommentNumberForHomeScreen: (
-    postID: string,
-    numberOfReplies: number,
-  ) => void;
+  onCreateReply: (content: string) => void;
+  // increaseCommentNumberForPostScreen: () => void;
+  // decreaseCommentNumberForPostScreen: () => void;
+  // decreaseCommentNumberForHomeScreen: (postID: string) => void;
+  // increaseCommentNumberForHomeScreen: (postID: string) => void;
+  increaseReplyNumberForReplyScreen: () => void;
+  decreaseReplyNumberForReplyScreen: () => void;
+  increaseReplyNumberForPostScreen: (commentID: string) => void;
 }
 
-class CommentInput extends Component<CommentInputProps, CommentInputState> {
+class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
   private keyboardWillShowListener: EmitterSubscription | null = null;
   private keyboardWillHideListener: EmitterSubscription | null = null;
   private moveAnimation: Animated.Value;
 
-  constructor(props: CommentInputProps) {
+  constructor(props: ReplyInputProps) {
     super(props);
     this.state = {
       text: '',
@@ -83,21 +85,26 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
 
   setCommentContent = (text: string) => this.setState({ text });
 
-  performSubmitComment = () => {
+  performSubmitReply = () => {
     const { text } = this.state;
     if (!text.length) {
-      return alertDialog('Comment cannot be empty');
+      return alertDialog('Reply cannot be empty');
     }
     const {
       postID,
-      increaseCommentNumberForHomeScreen,
-      onCreateComment,
-      increaseCommentNumberForPostScreenBy,
+      increaseReplyNumberForReplyScreen,
+      // increaseCommentNumberForHomeScreen,
+      onCreateReply,
+      // increaseCommentNumberForPostScreen,
+      increaseReplyNumberForPostScreen,
+      // decreaseCommentNumberForPostScreen,
     } = this.props;
-    increaseCommentNumberForPostScreenBy(1);
-    increaseCommentNumberForHomeScreen(postID, 1);
+    // increaseCommentNumberForPostScreen();
+    // increaseCommentNumberForHomeScreen(postID);
+    increaseReplyNumberForReplyScreen();
+    increaseReplyNumberForPostScreen();
     Keyboard.dismiss();
-    onCreateComment(text);
+    onCreateReply(text);
     this.setState({ text: '' });
   };
 
@@ -121,7 +128,7 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
           value={this.state.text}
           autoCorrect={false}
           multiline
-          placeholder="Write a comment"
+          placeholder="Write a reply"
           placeholderTextColor="rgba(255,255,255,0.4)"
           style={[
             styles.input,
@@ -132,7 +139,7 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
           ]}
         />
         <TouchableWithoutFeedback
-          onPress={this.performSubmitComment}
+          onPress={this.performSubmitReply}
           disabled={this.props.loading}>
           <View style={styles.submitBtn}>
             <MaterialCommunityIcons
@@ -191,17 +198,16 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: AppState) => {
-  const { currentTab } = state.commentsStack;
+  const { currentTab } = state.repliesStack;
   return {
-    loading:
-      state.commentsStack[currentTab].top()?.createCommentLoading ?? false,
-    error: state.commentsStack[currentTab].top()?.createCommentError ?? null,
-    postID: state.commentsStack[currentTab].top()?.postID ?? '',
+    loading: state.repliesStack[currentTab].top()?.createReplyLoading ?? false,
+    error: state.repliesStack[currentTab].top()?.createReplyError ?? null,
+    postID: state.repliesStack[currentTab].top()?.postID ?? '',
   };
 };
 
 const mapDispatchToProps = {
-  onCreateComment: createComment,
+  onCreateReply: createReply,
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(CommentInput);
+export default connect(mapStateToProps, mapDispatchToProps)(ReplyInput);

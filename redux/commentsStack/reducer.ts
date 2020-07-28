@@ -1,5 +1,5 @@
 import {
-  commentsStackState,
+  CommentsStackState,
   CommentsStackAction,
   FETCH_NEW_COMMENTS_FAILURE,
   FETCH_NEW_COMMENTS_STARTED,
@@ -23,12 +23,13 @@ import {
   CLEAR_CREATE_COMMENT_ERROR,
   CLEAR_INTERACT_COMMENT_ERROR,
   CLEAR_DELETE_COMMENT_ERROR,
-  PUSH_POSTLAYER,
-  POP_POSTLAYER,
+  PUSH_COMMENTS_LAYER,
+  POP_COMMENTS_LAYER,
   FETCH_NEW_COMMENTS_END,
   SET_SORT_COMMENTS,
   CLEAR_STACK,
   SET_CURRENT_TAB,
+  INCREASE_REPLIES_BY_ONE,
   CurrentTab,
 } from './types';
 import { CommentsStack, Comment } from '../../models';
@@ -36,7 +37,7 @@ import { FirebaseFirestoreTypes } from '../../config';
 import { pendingCommentID, pendingDeleteCommentFlag } from '../../constants';
 import { removeDuplicatesFromArray } from '../../utils/functions';
 
-const initialState: commentsStackState = {
+const initialState: CommentsStackState = {
   homeTabStack: new CommentsStack(),
   userTabStack: new CommentsStack(),
   currentTab: 'homeTabStack',
@@ -45,7 +46,7 @@ const initialState: commentsStackState = {
 export default function commentsStackReducer(
   state = initialState,
   action: CommentsStackAction,
-): commentsStackState {
+): CommentsStackState {
   switch (action.type) {
     case SET_CURRENT_TAB: {
       const newState = { ...state };
@@ -80,7 +81,7 @@ export default function commentsStackReducer(
         topLayer.loading = false;
         const newCommentList = topLayer.commentList.concat(payload.commentList);
         const removedDuplicates = removeDuplicatesFromArray(newCommentList);
-        if (topLayer.type === 'new') {
+        if (topLayer.type === 'all') {
           removedDuplicates.sort((a, b) => a.datePosted - b.datePosted);
         } else {
           removedDuplicates.sort((b, a) => a.likes - b.likes);
@@ -152,7 +153,7 @@ export default function commentsStackReducer(
       const topLayer = newStack.top();
       if (topLayer && topLayer.postID === payload.postID) {
         topLayer.createCommentLoading = false;
-        topLayer.error = null;
+        topLayer.createCommentError = null;
         const index = topLayer.commentList.findIndex(
           (comment) => comment.id === pendingCommentID,
         );
@@ -375,10 +376,10 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case PUSH_POSTLAYER: {
+    case PUSH_COMMENTS_LAYER: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const postLayer = {
+      const commentsLayer = {
         postID: action.payload as string,
         loading: false,
         createCommentLoading: false,
@@ -387,15 +388,15 @@ export default function commentsStackReducer(
         deleteCommentError: null,
         interactCommentError: null,
         lastVisible: null,
-        type: 'new' as 'new',
+        type: 'all' as 'all',
         commentList: [],
       };
       const newStack = CommentsStack.clone(state[currentTab]);
-      newStack.push(postLayer);
+      newStack.push(commentsLayer);
       newState[currentTab] = newStack;
       return newState;
     }
-    case POP_POSTLAYER: {
+    case POP_COMMENTS_LAYER: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = CommentsStack.clone(state[currentTab]);
@@ -409,10 +410,27 @@ export default function commentsStackReducer(
       const topLayer = state[currentTab].top();
       if (topLayer) {
         const newStack = CommentsStack.clone(state[currentTab]);
-        topLayer.type = action.payload as 'new' | 'top';
+        topLayer.type = action.payload as 'all' | 'top';
         topLayer.error = null;
         topLayer.lastVisible = null;
         topLayer.commentList = [];
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case INCREASE_REPLIES_BY_ONE: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === (action.payload as string),
+        );
+        if (index !== -1) {
+          topLayer.commentList[index].replies += 1;
+        }
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }

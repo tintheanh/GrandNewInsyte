@@ -12,6 +12,7 @@ import {
   bottomTabHeight,
 } from '../constants';
 import { setCurrentTabForCommentsStack } from '../redux/commentsStack/actions';
+import { setCurrentTabForRepliesStack } from '../redux/repliesStack/actions';
 import { alertDialog } from '../utils/functions';
 import { AppState } from '../redux/store';
 import { checkAuth } from '../redux/auth/actions';
@@ -85,6 +86,7 @@ class BottomTabNavigator extends Component<any> {
           listeners={{
             tabPress: (e) => {
               this.props.onSetCurrentTabForCommentsStack('homeTabStack');
+              this.props.onSetCurrentTabForRepliesStack('homeTabStack');
             },
           }}
         />
@@ -155,6 +157,7 @@ class BottomTabNavigator extends Component<any> {
           listeners={{
             tabPress: (e) => {
               this.props.onSetCurrentTabForCommentsStack('userTabStack');
+              this.props.onSetCurrentTabForRepliesStack('homeTabStack');
             },
           }}
         />
@@ -175,6 +178,7 @@ const mapStateToProps = (state: AppState) => ({
 const mapDispatchToProps = {
   onCheckAuth: checkAuth,
   onSetCurrentTabForCommentsStack: setCurrentTabForCommentsStack,
+  onSetCurrentTabForRepliesStack: setCurrentTabForRepliesStack,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(BottomTabNavigator);

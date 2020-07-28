@@ -74,6 +74,7 @@ export default class RepliesStack {
         ? new Error(replyLayer.deleteReplyError.message)
         : null;
       const clonedPostLayer = {
+        postID: replyLayer.postID,
         commentID: replyLayer.commentID,
         loading: replyLayer.loading,
         createReplyLoading: replyLayer.createReplyLoading,

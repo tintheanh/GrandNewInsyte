@@ -2,6 +2,7 @@ import Reply from './reply';
 import { FirebaseFirestoreTypes } from '../config';
 
 export default interface RepliesStackLayer {
+  postID: string;
   commentID: string;
   loading: boolean;
   error: Error | null;

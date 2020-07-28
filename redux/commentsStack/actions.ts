@@ -19,13 +19,14 @@ import {
   DELETE_COMMENT_FAILURE,
   DELETE_COMMENT_STARTED,
   DELETE_COMMENT_SUCCESS,
-  PUSH_POSTLAYER,
+  PUSH_COMMENTS_LAYER,
   SET_SORT_COMMENTS,
-  POP_POSTLAYER,
+  POP_COMMENTS_LAYER,
   SET_CURRENT_TAB,
   CLEAR_CREATE_COMMENT_ERROR,
   CLEAR_DELETE_COMMENT_ERROR,
   CLEAR_INTERACT_COMMENT_ERROR,
+  INCREASE_REPLIES_BY_ONE,
   CLEAR_STACK,
   CommentsStackAction,
 } from './types';
@@ -39,11 +40,13 @@ import {
 } from '../../utils/functions';
 import { AppState } from '../store';
 
+/* --------------- fetch comments methods --------------- */
+
 export const fetchNewComments = (postID: string) => async (
   dispatch: (action: CommentsStackAction) => void,
   getState: () => AppState,
 ) => {
-  dispatch(fetchNewCommentsStarted(postID));
+  dispatch(fetchNewCommentsStarted());
   try {
     // const percent = Math.floor(Math.random() * 100);
     // if (percent > 50) {
@@ -111,7 +114,7 @@ export const fetchTopComments = (postID: string) => async (
   dispatch: (action: CommentsStackAction) => void,
   getState: () => AppState,
 ) => {
-  dispatch(fetchTopCommentsStarted(postID));
+  dispatch(fetchTopCommentsStarted());
   try {
     // const percent = Math.floor(Math.random() * 100);
     // if (percent > 50) {
@@ -171,6 +174,8 @@ export const fetchTopComments = (postID: string) => async (
     dispatch(fetchTopCommentsFailure(new Error('Internal server error.')));
   }
 };
+
+/* ------------- end fetch comments methods ------------- */
 
 export const createComment = (content: string) => async (
   dispatch: (action: CommentsStackAction) => void,
@@ -330,7 +335,10 @@ export const unlikeComment = (commentID: string) => async (
   }
 };
 
-export const deleteComment = (commentID: string) => async (
+export const deleteComment = (
+  commentID: string,
+  numberOfReplies: number,
+) => async (
   dispatch: (action: CommentsStackAction) => void,
   getState: () => AppState,
 ) => {
@@ -353,7 +361,7 @@ export const deleteComment = (commentID: string) => async (
     const postRef = fsDB.collection('posts').doc(postID);
     await fsDB.runTransaction(async (trans) => {
       const doc = await trans.get(postRef);
-      const newComments = doc.data()!.comments - 1;
+      const newComments = doc.data()!.comments - numberOfReplies;
       trans.update(postRef, { comments: newComments });
       const commentRef = fsDB
         .collection('posts')
@@ -411,20 +419,20 @@ export const clearInteractCommentError = () => (
   });
 };
 
-export const pushPostLayer = (postID: string) => (
+export const pushCommentsLayer = (postID: string) => (
   dispatch: (action: CommentsStackAction) => void,
 ) => {
   dispatch({
-    type: PUSH_POSTLAYER,
+    type: PUSH_COMMENTS_LAYER,
     payload: postID,
   });
 };
 
-export const popPostLayer = () => (
+export const popCommentsLayer = () => (
   dispatch: (action: CommentsStackAction) => void,
 ) => {
   dispatch({
-    type: POP_POSTLAYER,
+    type: POP_COMMENTS_LAYER,
     payload: null,
   });
 };
@@ -438,7 +446,16 @@ export const setSortComments = (by: 'new' | 'top') => (
   });
 };
 
-export const clearStack = () => (
+export const increaseRepliesByOne = (commentID: string) => (
+  dispatch: (action: CommentsStackAction) => void,
+) => {
+  dispatch({
+    type: INCREASE_REPLIES_BY_ONE,
+    payload: commentID,
+  });
+};
+
+export const clearCommentsStack = () => (
   dispatch: (action: CommentsStackAction) => void,
 ) => {
   dispatch({
@@ -447,9 +464,13 @@ export const clearStack = () => (
   });
 };
 
-const fetchNewCommentsStarted = (postID: string): CommentsStackAction => ({
+/* ----------------- comment dispatches ----------------- */
+
+/* --------------- fetch comments actions --------------- */
+
+const fetchNewCommentsStarted = (): CommentsStackAction => ({
   type: FETCH_NEW_COMMENTS_STARTED,
-  payload: postID,
+  payload: null,
 });
 
 const fetchNewCommentsEnd = (): CommentsStackAction => ({
@@ -470,9 +491,9 @@ const fetchNewCommentsFailure = (error: Error): CommentsStackAction => ({
   payload: error,
 });
 
-const fetchTopCommentsStarted = (postID: string): CommentsStackAction => ({
+const fetchTopCommentsStarted = (): CommentsStackAction => ({
   type: FETCH_TOP_COMMENTS_STARTED,
-  payload: postID,
+  payload: null,
 });
 
 const fetchTopCommentsEnd = (): CommentsStackAction => ({
@@ -493,6 +514,10 @@ const fetchTopCommentsFailure = (error: Error): CommentsStackAction => ({
   payload: error,
 });
 
+/* ------------- end fetch comments actions ------------- */
+
+/* --------------- create comment actions --------------- */
+
 const createCommentStarted = (tempComment: Comment): CommentsStackAction => ({
   type: CREATE_COMMENT_STARTED,
   payload: tempComment,
@@ -510,6 +535,10 @@ const createCommentFailure = (error: Error): CommentsStackAction => ({
   type: CREATE_COMMENT_FAILURE,
   payload: error,
 });
+
+/* ------------- end create comment actions ------------- */
+
+/* -------------- interact comment actions -------------- */
 
 const likeCommentStarted = (commentID: string): CommentsStackAction => ({
   type: LIKE_COMMENT_STARTED,
@@ -547,6 +576,10 @@ const unlikeCommentFailure = (
   payload: { commentID, error },
 });
 
+/* ------------ end interact comment actions ------------ */
+
+/* --------------- delete comment actions --------------- */
+
 const deleteCommentStarted = (commentID: string): CommentsStackAction => ({
   type: DELETE_COMMENT_STARTED,
   payload: commentID,
@@ -566,3 +599,7 @@ const deleteCommentFailure = (
   type: DELETE_COMMENT_FAILURE,
   payload: { commentIDwithFlag, error },
 });
+
+/* ------------- end delete comment actions ------------- */
+
+/* --------------- end comment dispatches --------------- */

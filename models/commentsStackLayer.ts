@@ -10,6 +10,6 @@ export default interface CommentsStackLayer {
   deleteCommentError: Error | null;
   interactCommentError: Error | null;
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
-  type: 'new' | 'top';
+  type: 'all' | 'top';
   commentList: Array<Comment>;
 }

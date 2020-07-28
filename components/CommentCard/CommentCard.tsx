@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { connect } from 'react-redux';
 import CommentSection from '../CommentSection';
 import Avatar from '../Avatar';
 import InteractionSection from '../InteractionSection';
@@ -9,6 +10,7 @@ import {
   pendingCommentID,
   pendingDeleteCommentFlag,
 } from '../../constants';
+import { pushRepliesLayer } from '../../redux/repliesStack/actions';
 
 interface CommentCardProps {
   id: string;
@@ -25,72 +27,81 @@ interface CommentCardProps {
   likeComment: () => void;
   unlikeComment: () => void;
   userControl?: () => void;
+  onPushRepliesLayer: (id: string) => void;
 }
 
-export default React.memo(
-  function CommentCard(props: CommentCardProps) {
-    const navigation = useNavigation<any>();
+function CommentCard(props: CommentCardProps) {
+  const navigation = useNavigation<any>();
 
-    const {
-      id,
-      user,
-      content,
-      userControl = undefined,
-      likeComment,
-      unlikeComment,
-      datePosted,
-      replies,
-      likes,
-      isLiked,
-    } = props;
+  const {
+    id,
+    user,
+    content,
+    userControl = undefined,
+    likeComment,
+    unlikeComment,
+    datePosted,
+    replies,
+    likes,
+    isLiked,
+  } = props;
 
-    const toReplyScreen = () =>
-      navigation.push('ReplyScreen', {
-        comment: {
-          id,
-          user,
-          content,
-          datePosted,
-          replies,
-          likes,
-          isLiked,
+  const toReplyScreen = () => {
+    props.onPushRepliesLayer(id);
+    navigation.push('ReplyScreen', {
+      comment: {
+        id,
+        user,
+        content,
+        datePosted,
+        replies,
+        likes,
+        isLiked,
+      },
+    });
+  };
+
+  return (
+    <View
+      style={[
+        styles.container,
+        {
+          opacity:
+            id === pendingCommentID || id.includes(pendingDeleteCommentFlag)
+              ? 0.4
+              : 1,
         },
-      });
-
-    return (
-      <View
-        style={[
-          styles.container,
-          {
-            opacity:
-              id === pendingCommentID || id.includes(pendingDeleteCommentFlag)
-                ? 0.4
-                : 1,
-          },
-        ]}>
-        <Avatar
-          avatar={user.avatar}
-          onPress={() => console.log('to user screeen')}
+      ]}>
+      <Avatar
+        avatar={user.avatar}
+        onPress={() => console.log('to user screeen')}
+      />
+      <View style={{ marginLeft: 12 }}>
+        <CommentSection
+          username={user.username}
+          datePosted={datePosted}
+          content={content}
+          userControl={userControl}
         />
-        <View style={{ marginLeft: 12 }}>
-          <CommentSection
-            username={user.username}
-            datePosted={datePosted}
-            content={content}
-            userControl={userControl}
-          />
-          <InteractionSection
-            likes={likes}
-            replies={replies}
-            isLiked={isLiked}
-            likeComment={likeComment}
-            unlikeComment={unlikeComment}
-            toReplyScreen={toReplyScreen}
-          />
-        </View>
+        <InteractionSection
+          likes={likes}
+          replies={replies}
+          isLiked={isLiked}
+          likeComment={likeComment}
+          unlikeComment={unlikeComment}
+          toReplyScreen={toReplyScreen}
+        />
       </View>
-    );
-  },
+    </View>
+  );
+}
+
+const mapDispatchToProps = {
+  onPushRepliesLayer: pushRepliesLayer,
+};
+
+export default React.memo(
+  connect(null, mapDispatchToProps)(CommentCard),
   (prevProps, nextProps) => {
     if (prevProps.likes !== nextProps.likes) {
       return false;

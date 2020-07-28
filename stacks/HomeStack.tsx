@@ -7,12 +7,12 @@ import { useNavigation } from '@react-navigation/native';
 import { connect } from 'react-redux';
 import { HomeScreen, PostScreen, ReplyScreen, UserScreen } from '../screens';
 import { Colors } from '../constants';
-import { popPostLayer } from '../redux/commentsStack/actions';
+import { popCommentsLayer } from '../redux/commentsStack/actions';
 
 const Stack = createStackNavigator();
 
 const mapDispatchToProps = {
-  onPopPostLayer: popPostLayer,
+  onPopCommentsLayer: popCommentsLayer,
 };
 
 export default connect(
@@ -61,7 +61,7 @@ export default connect(
           //     {...headerProps}
           //     onPress={goBackAndPopPostStack(
           //       navigation.goBack,
-          //       props.onPopPostLayer,
+          //       props.onPopCommentsLayer,
           //     )}
           //   />
           // ),

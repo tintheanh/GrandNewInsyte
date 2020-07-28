@@ -17,10 +17,10 @@ import { AntDesign } from '../../../constants';
 
 interface SortCommentsProps {
   postID: string;
-  onSetSortComments: (type: 'new' | 'top') => void;
+  onSetSortComments: (type: 'all' | 'top') => void;
   onFetchNewComments: (postID: string) => void;
   onFetchTopComments: (postID: string) => void;
-  label: 'new' | 'top';
+  label: 'all' | 'top';
 }
 
 function SortComments({
@@ -36,9 +36,9 @@ function SortComments({
       'Sort comments by',
       [
         {
-          text: 'New comments',
+          text: 'All comments',
           onPress: () => {
-            onSetSortComments('new');
+            onSetSortComments('all');
             onFetchNewComments(postID);
           },
         },
@@ -62,7 +62,7 @@ function SortComments({
     <TouchableWithoutFeedback onPress={selectCommentFilter}>
       <View style={styles.filterComment}>
         <Text style={styles.filterCommentText}>
-          {label === 'new' ? 'New comments' : 'Top comment'}{' '}
+          {label === 'all' ? 'All comments' : 'Top comment'}{' '}
         </Text>
         <AntDesign name="caretdown" size={11} color="white" />
       </View>
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: AppState) => {
   const { currentTab } = state.commentsStack;
   return {
-    label: state.commentsStack[currentTab].top()?.type ?? 'new',
+    label: state.commentsStack[currentTab].top()?.type ?? 'all',
   };
 };
 

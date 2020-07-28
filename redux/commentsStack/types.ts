@@ -33,10 +33,11 @@ export const CLEAR_CREATE_COMMENT_ERROR = 'CLEAR_CREATE_COMMENT_ERROR';
 export const CLEAR_DELETE_COMMENT_ERROR = 'CLEAR_DELETE_COMMENT_ERROR';
 export const CLEAR_INTERACT_COMMENT_ERROR = 'CLEAR_INTERACT_COMMENT_ERROR';
 
-export const PUSH_POSTLAYER = 'PUSH_POSTLAYER';
-export const POP_POSTLAYER = 'POP_POSTLAYER';
+export const PUSH_COMMENTS_LAYER = 'PUSH_COMMENTS_LAYER';
+export const POP_COMMENTS_LAYER = 'POP_COMMENTS_LAYER';
 export const SET_SORT_COMMENTS = 'SET_SORT_COMMENTS';
 export const CLEAR_STACK = 'CLEAR_STACK';
+export const INCREASE_REPLIES_BY_ONE = 'INCREASE_REPLIES_BY_ONE';
 
 export interface CommentsStackAction {
   type: string;
@@ -67,10 +68,10 @@ export interface CommentsStackAction {
 
 export type CurrentTab = 'homeTabStack' | 'userTabStack';
 
-// commentsStackState is a stack because it associates with push navigation
+// CommentsStackState is a stack because it associates with push navigation
 // every navigation layer is a object of post detail pushed onto
 // the current view postDetails stack
-export interface commentsStackState {
+export interface CommentsStackState {
   homeTabStack: CommentsStack;
   userTabStack: CommentsStack;
   currentTab: CurrentTab;

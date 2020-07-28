@@ -58,8 +58,8 @@ import {
   UNLIKE_POST_FAILURE,
   UNLIKE_POST_STARTED,
   UNLIKE_POST_SUCCESS,
-  INCREASE_COMMENT_NUM_ONE,
-  DECREASE_COMMENT_NUM_ONE,
+  INCREASE_COMMENTS_BY_NUMBER,
+  DECREASE_COMMENTS_BY_NUMBER,
   CLEAR,
 } from './types';
 import { Post } from '../../models';
@@ -1201,7 +1201,7 @@ export const createPost = (
         },
       };
 
-      // TODO need to do some cleanup if these fail
+      // TODO move this to cloud function
       if (user.followers > 0 && newPost.privacy !== 'private') {
         const handleCreatePostForFollowers = fireFuncs.httpsCallable(
           'handleCreatePostForFollowers',
@@ -1213,6 +1213,7 @@ export const createPost = (
         });
       }
 
+      // TODO move this to cloud function
       if (newPost.privacy !== 'private') {
         await fbDB
           .ref(`users/${user!.id}/following_posts`)
@@ -1249,6 +1250,7 @@ export const deletePost = (postID: string) => async (
     // const percent = Math.floor(Math.random() * 100);
     // console.log(percent);
     // if (percent > 50) throw new Error('dummy error');
+    // throw new Error('dummy error');
 
     const postIDPlusPendingDeleteFlag = postID + pendingDeletePostFlag;
     const userPosts = getState().allPosts.userPosts.posts;
@@ -1276,8 +1278,10 @@ export const deletePost = (postID: string) => async (
     ].find((post) => post !== undefined) as Post;
 
     await fsDB.collection('posts').doc(postID).delete();
+    // TODO move this to cloud function
     await deleteMedia(user!.id, desirePost.media);
 
+    // TODO move this to cloud function
     if (user.followers > 0 && desirePost.privacy !== 'private') {
       const handleDeletePostForFollowers = fireFuncs.httpsCallable(
         'handleDeletePostForFollowers',
@@ -1368,21 +1372,21 @@ export const clear = () => (dispatch: (action: PostAction) => void) => {
   });
 };
 
-export const increaseCommentNumOne = (postID: string) => (
+export const increaseCommentBy = (postID: string, by: number) => (
   dispatch: (action: PostAction) => void,
 ) => {
   dispatch({
-    type: INCREASE_COMMENT_NUM_ONE,
-    payload: postID,
+    type: INCREASE_COMMENTS_BY_NUMBER,
+    payload: { postID, by },
   });
 };
 
-export const decreaseCommentNumOne = (postID: string) => (
+export const decreaseCommentBy = (postID: string, by: number) => (
   dispatch: (action: PostAction) => void,
 ) => {
   dispatch({
-    type: DECREASE_COMMENT_NUM_ONE,
-    payload: postID,
+    type: DECREASE_COMMENTS_BY_NUMBER,
+    payload: { postID, by },
   });
 };
 

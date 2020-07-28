@@ -5,7 +5,8 @@ import { Loading } from '../../components';
 import { AppState } from '../../redux/store';
 import HomeAuth from './private_components/HomeAuth';
 import HomeNotAuth from './private_components/HomeNotAuth';
-import { clearStack } from '../../redux/commentsStack/actions';
+import { clearCommentsStack } from '../../redux/commentsStack/actions';
+import { clearRepliesStack } from '../../redux/repliesStack/actions';
 import { fsDB } from '../../config';
 import { generateSubstrForUsername } from '../../utils/functions';
 
@@ -49,7 +50,8 @@ class HomeScreen extends Component<any> {
 
   async componentDidMount() {
     this.screenFocus = this.props.navigation.addListener('focus', (e) => {
-      this.props.onClearStack();
+      this.props.onClearCommentsStack();
+      this.props.onClearRepliesStack();
     });
 
     // try {
@@ -64,6 +66,19 @@ class HomeScreen extends Component<any> {
     // }
 
     for (let i = 0; i < 10; i++) {
+      // const reply = {
+      //   content: faker.lorem.sentence(),
+      //   date_posted: faker.date.between('2020-07-11', '2020-07-26').getTime(),
+      //   likes: faker.random.number(100),
+      //   posted_by: '9DHOf4becGfrx7fmUXPcYdqtc2I3',
+      // };
+      // await fsDB
+      //   .collection('posts')
+      //   .doc('RC3UIywu6KSt1e4LHr7v')
+      //   .collection('comment_list')
+      //   .doc('DxgpOXFI0vJGNti3PoMM')
+      //   .collection('reply_list')
+      //   .add(reply);
       // const comment = {
       //   content: faker.lorem.sentence(),
       //   date_posted: faker.date.between('2020-07-11', '2020-07-21').getTime(),
@@ -189,7 +204,8 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = {
-  onClearStack: clearStack,
+  onClearCommentsStack: clearCommentsStack,
+  onClearRepliesStack: clearRepliesStack,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(HomeScreen);
