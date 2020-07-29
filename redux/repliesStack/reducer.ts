@@ -12,6 +12,15 @@ import {
   CREATE_REPLY_FAILURE,
   CREATE_REPLY_STARTED,
   CREATE_REPLY_SUCCESS,
+  DELETE_REPLY_FAILURE,
+  DELETE_REPLY_STARTED,
+  DELETE_REPLY_SUCCESS,
+  LIKE_REPLY_FAILURE,
+  LIKE_REPLY_STARTED,
+  LIKE_REPLY_SUCCESS,
+  UNLIKE_REPLY_FAILURE,
+  UNLIKE_REPLY_STARTED,
+  UNLIKE_REPLY_SUCCESS,
   CLEAR_STACK,
   CLEAR_CREATE_REPLY_ERROR,
   CLEAR_DELETE_REPLY_ERROR,
@@ -177,7 +186,6 @@ export default function commentsStackReducer(
       return newState;
     }
     case CREATE_REPLY_FAILURE: {
-      console.log('create error reducer');
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
@@ -189,6 +197,159 @@ export default function commentsStackReducer(
           (reply) => reply.id !== pendingReplyID,
         );
         topLayer.replyList = filteredPending;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DELETE_REPLY_STARTED: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = RepliesStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.deleteReplyError = null;
+        const index = topLayer.replyList.findIndex(
+          (reply) => reply.id === (action.payload as string),
+        );
+        if (index !== -1) {
+          topLayer.replyList[index].id += pendingDeleteReplyFlag;
+        }
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DELETE_REPLY_SUCCESS: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = RepliesStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.deleteReplyError = null;
+        const index = topLayer.replyList.findIndex(
+          (reply) => reply.id === (action.payload as string),
+        );
+        if (index !== -1) {
+          topLayer.replyList.splice(index, 1);
+        }
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DELETE_REPLY_FAILURE: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const payload = action.payload as {
+        replyIDwithFlag: string;
+        error: Error;
+      };
+      const newStack = RepliesStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.deleteReplyError = payload.error;
+        const index = topLayer.replyList.findIndex(
+          (reply) => reply.id === payload.replyIDwithFlag,
+        );
+        if (index !== -1) {
+          const splitted = topLayer.replyList[index].id.split(
+            pendingDeleteReplyFlag,
+          );
+          topLayer.replyList[index].id = splitted[0];
+        }
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case LIKE_REPLY_STARTED: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = RepliesStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        const index = topLayer.replyList.findIndex(
+          (reply) => reply.id === (action.payload as string),
+        );
+        if (index !== -1) {
+          topLayer.replyList[index].likes += 1;
+          topLayer.replyList[index].isLiked = true;
+        }
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case LIKE_REPLY_SUCCESS: {
+      return state;
+    }
+    case LIKE_REPLY_FAILURE: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const payload = action.payload as {
+        replyID: string;
+        error: Error | null;
+      };
+      const newStack = RepliesStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        if (payload.replyID.length) {
+          const index = topLayer.replyList.findIndex(
+            (reply) => reply.id === payload.replyID,
+          );
+          if (index !== -1) {
+            topLayer.replyList[index].likes -= 1;
+            topLayer.replyList[index].isLiked = false;
+          }
+        }
+        topLayer.interactReplyError = payload.error;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case UNLIKE_REPLY_STARTED: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = RepliesStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        const index = topLayer.replyList.findIndex(
+          (reply) => reply.id === (action.payload as string),
+        );
+        if (index !== -1) {
+          topLayer.replyList[index].likes -= 1;
+          topLayer.replyList[index].isLiked = false;
+        }
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case UNLIKE_REPLY_SUCCESS: {
+      return state;
+    }
+    case UNLIKE_REPLY_FAILURE: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const payload = action.payload as {
+        replyID: string;
+        error: Error | null;
+      };
+      const newStack = RepliesStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        if (payload.replyID.length) {
+          const index = topLayer.replyList.findIndex(
+            (reply) => reply.id === payload.replyID,
+          );
+          if (index !== -1) {
+            topLayer.replyList[index].likes += 1;
+            topLayer.replyList[index].isLiked = true;
+          }
+        }
+        topLayer.interactReplyError = payload.error;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }

@@ -25,16 +25,12 @@ interface ReplyInputState {
 
 interface ReplyInputProps {
   loading: boolean;
-  postID: string;
   error: Error | null;
   onCreateReply: (content: string) => void;
-  // increaseCommentNumberForPostScreen: () => void;
-  // decreaseCommentNumberForPostScreen: () => void;
-  // decreaseCommentNumberForHomeScreen: (postID: string) => void;
-  // increaseCommentNumberForHomeScreen: (postID: string) => void;
-  increaseReplyNumberForReplyScreen: () => void;
-  decreaseReplyNumberForReplyScreen: () => void;
-  increaseReplyNumberForPostScreen: (commentID: string) => void;
+  increaseRepliesForReplyScreenBy: (numberOfReplies: number) => void;
+  increaseRepliesForPostScreen: () => void;
+  increaseCommentsForPostScreen: () => void;
+  increaseCommentsForHomeScreen: () => void;
 }
 
 class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
@@ -91,18 +87,16 @@ class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
       return alertDialog('Reply cannot be empty');
     }
     const {
-      postID,
-      increaseReplyNumberForReplyScreen,
-      // increaseCommentNumberForHomeScreen,
+      increaseRepliesForReplyScreenBy,
+      increaseRepliesForPostScreen,
+      increaseCommentsForHomeScreen,
+      increaseCommentsForPostScreen,
       onCreateReply,
-      // increaseCommentNumberForPostScreen,
-      increaseReplyNumberForPostScreen,
-      // decreaseCommentNumberForPostScreen,
     } = this.props;
-    // increaseCommentNumberForPostScreen();
-    // increaseCommentNumberForHomeScreen(postID);
-    increaseReplyNumberForReplyScreen();
-    increaseReplyNumberForPostScreen();
+    increaseRepliesForReplyScreenBy(1);
+    increaseRepliesForPostScreen();
+    increaseCommentsForPostScreen();
+    increaseCommentsForHomeScreen();
     Keyboard.dismiss();
     onCreateReply(text);
     this.setState({ text: '' });
@@ -202,7 +196,6 @@ const mapStateToProps = (state: AppState) => {
   return {
     loading: state.repliesStack[currentTab].top()?.createReplyLoading ?? false,
     error: state.repliesStack[currentTab].top()?.createReplyError ?? null,
-    postID: state.repliesStack[currentTab].top()?.postID ?? '',
   };
 };
 

@@ -26,7 +26,8 @@ import {
   CLEAR_CREATE_COMMENT_ERROR,
   CLEAR_DELETE_COMMENT_ERROR,
   CLEAR_INTERACT_COMMENT_ERROR,
-  INCREASE_REPLIES_BY_ONE,
+  INCREASE_REPLIES_BY_NUMBER,
+  DECREASE_REPLIES_BY_NUMBER,
   CLEAR_STACK,
   CommentsStackAction,
 } from './types';
@@ -446,12 +447,21 @@ export const setSortComments = (by: 'new' | 'top') => (
   });
 };
 
-export const increaseRepliesByOne = (commentID: string) => (
+export const increaseRepliesBy = (commentID: string, by: number) => (
   dispatch: (action: CommentsStackAction) => void,
 ) => {
   dispatch({
-    type: INCREASE_REPLIES_BY_ONE,
-    payload: commentID,
+    type: INCREASE_REPLIES_BY_NUMBER,
+    payload: { commentID, by },
+  });
+};
+
+export const decreaseRepliesBy = (commentID: string, by: number) => (
+  dispatch: (action: CommentsStackAction) => void,
+) => {
+  dispatch({
+    type: DECREASE_REPLIES_BY_NUMBER,
+    payload: { commentID, by },
   });
 };
 

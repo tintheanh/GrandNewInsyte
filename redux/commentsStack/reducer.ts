@@ -29,7 +29,8 @@ import {
   SET_SORT_COMMENTS,
   CLEAR_STACK,
   SET_CURRENT_TAB,
-  INCREASE_REPLIES_BY_ONE,
+  INCREASE_REPLIES_BY_NUMBER,
+  DECREASE_REPLIES_BY_NUMBER,
   CurrentTab,
 } from './types';
 import { CommentsStack, Comment } from '../../models';
@@ -419,17 +420,36 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case INCREASE_REPLIES_BY_ONE: {
+    case INCREASE_REPLIES_BY_NUMBER: {
       const newState = { ...state };
+      const payload = action.payload as { commentID: string; by: number };
       const currentTab = state.currentTab;
       const newStack = CommentsStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
         const index = topLayer.commentList.findIndex(
-          (comment) => comment.id === (action.payload as string),
+          (comment) => comment.id === payload.commentID,
         );
         if (index !== -1) {
-          topLayer.commentList[index].replies += 1;
+          topLayer.commentList[index].replies += payload.by;
+        }
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DECREASE_REPLIES_BY_NUMBER: {
+      const newState = { ...state };
+      const payload = action.payload as { commentID: string; by: number };
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === payload.commentID,
+        );
+        if (index !== -1) {
+          topLayer.commentList[index].replies -= payload.by;
         }
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;

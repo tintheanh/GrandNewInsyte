@@ -1245,7 +1245,7 @@ export const deletePost = (postID: string) => async (
   // console.log(postID);
   dispatch(deletePostStarted(postID));
   try {
-    await delay(3000);
+    // await delay(3000);
 
     // const percent = Math.floor(Math.random() * 100);
     // console.log(percent);
@@ -1372,7 +1372,7 @@ export const clear = () => (dispatch: (action: PostAction) => void) => {
   });
 };
 
-export const increaseCommentBy = (postID: string, by: number) => (
+export const increaseCommentsBy = (postID: string, by: number) => (
   dispatch: (action: PostAction) => void,
 ) => {
   dispatch({
@@ -1381,7 +1381,7 @@ export const increaseCommentBy = (postID: string, by: number) => (
   });
 };
 
-export const decreaseCommentBy = (postID: string, by: number) => (
+export const decreaseCommentsBy = (postID: string, by: number) => (
   dispatch: (action: PostAction) => void,
 ) => {
   dispatch({

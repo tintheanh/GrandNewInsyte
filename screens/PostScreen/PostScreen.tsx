@@ -31,14 +31,13 @@ import {
   likePost,
   unlikePost,
   deletePost,
-  decreaseCommentBy,
-  increaseCommentBy,
+  decreaseCommentsBy,
+  increaseCommentsBy,
 } from '../../redux/posts/actions';
 import { AppState } from '../../redux/store';
 import { Post, Comment } from '../../models';
 
 interface PostScreenProps {
-  currentUID: string | undefined;
   navigation: {
     push: (screen: string, options: any) => void;
     setParams: (params: any) => void;
@@ -53,7 +52,9 @@ interface PostScreenProps {
       data: Post;
     };
   };
+
   // redux states
+  currentUID: string | undefined;
   comments: Array<Comment>;
   sortCommentsBy: 'all' | 'top';
   loading: boolean;
@@ -77,11 +78,11 @@ interface PostScreenProps {
   onClearCreateCommentError: () => void;
   onClearDeleteCommentError: () => void;
   onClearInteractCommentError: () => void;
-  onDecreaseCommentByForHomeScreenBy: (
+  onDecreaseCommentsForHomeScreenBy: (
     postID: string,
     numberOfReplies: number,
   ) => void;
-  onIncreaseCommentNumberForHomeScreen: (
+  onIncreaseCommentsForHomeScreen: (
     postID: string,
     numberOfReplies: number,
   ) => void;
@@ -238,7 +239,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     onDeletePost(postID);
   };
 
-  increaseCommentNumberForPostScreenBy = (by: number) => {
+  increaseCommentsForPostScreenBy = (by: number) => {
     this.setState((prevState) => ({
       post: {
         ...prevState.post,
@@ -247,12 +248,13 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     }));
   };
 
-  decreaseCommentNumberForPostScreenBy = (numberOfReplies: number) => {
+  decreaseCommentsForPostScreenBy = (numberOfReplies: number) => {
     this.setState((prevState) => ({
       post: {
         ...prevState.post,
         comments: prevState.post.comments - numberOfReplies,
       },
+      numberOfRepliesAndCommentDeleted: numberOfReplies,
     }));
   };
 
@@ -280,10 +282,10 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
   /* ------------------- comment methods ------------------ */
 
   performDeleteComment = (commentID: string, numberOfReplies: number) => () => {
-    const { onDecreaseCommentByForHomeScreenBy, onDeleteComment } = this.props;
+    const { onDecreaseCommentsForHomeScreenBy, onDeleteComment } = this.props;
     const postID = this.state.post.id;
-    this.decreaseCommentNumberForPostScreenBy(numberOfReplies + 1);
-    onDecreaseCommentByForHomeScreenBy(postID, numberOfReplies + 1);
+    this.decreaseCommentsForPostScreenBy(numberOfReplies + 1);
+    onDecreaseCommentsForHomeScreenBy(postID, numberOfReplies + 1);
     this.setState({ numberOfRepliesAndCommentDeleted: numberOfReplies + 1 });
     onDeleteComment(commentID, numberOfReplies + 1);
   };
@@ -341,24 +343,24 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     const { post } = this.state;
     const {
       onClearCreateCommentError,
-      onDecreaseCommentByForHomeScreenBy,
+      onDecreaseCommentsForHomeScreenBy,
     } = this.props;
     onClearCreateCommentError();
-    this.decreaseCommentNumberForPostScreenBy(1);
-    onDecreaseCommentByForHomeScreenBy(post.id, 1);
+    this.decreaseCommentsForPostScreenBy(1);
+    onDecreaseCommentsForHomeScreenBy(post.id, 1);
   };
 
   performClearDeleteCommentError = () => {
     const postID = this.state.post.id;
     const {
       onClearDeleteCommentError,
-      onIncreaseCommentNumberForHomeScreen,
+      onIncreaseCommentsForHomeScreen,
     } = this.props;
     onClearDeleteCommentError();
-    this.increaseCommentNumberForPostScreenBy(
+    this.increaseCommentsForPostScreenBy(
       this.state.numberOfRepliesAndCommentDeleted,
     );
-    onIncreaseCommentNumberForHomeScreen(
+    onIncreaseCommentsForHomeScreen(
       postID,
       this.state.numberOfRepliesAndCommentDeleted,
     );
@@ -384,6 +386,8 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         }
         likeComment={this.performLikeComment(item.id)}
         unlikeComment={this.performUnlikeComment(item.id)}
+        decreaseCommentsForPostScreenBy={this.decreaseCommentsForPostScreenBy}
+        increaseCommentsForPostScreenBy={this.increaseCommentsForPostScreenBy}
       />
     );
   };
@@ -416,11 +420,9 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
 
     const commentInput = (
       <CommentInput
-        increaseCommentNumberForPostScreenBy={
-          this.increaseCommentNumberForPostScreenBy
-        }
-        increaseCommentNumberForHomeScreen={
-          this.props.onIncreaseCommentNumberForHomeScreen
+        increaseCommentsForPostScreenBy={this.increaseCommentsForPostScreenBy}
+        increaseCommentsForHomeScreen={
+          this.props.onIncreaseCommentsForHomeScreen
         }
       />
     );
@@ -557,8 +559,8 @@ const mapDispatchToProps = {
   onClearInteractCommentError: clearInteractCommentError,
   onClearDeleteCommentError: clearDeleteCommentError,
   onDeleteComment: deleteComment,
-  onDecreaseCommentByForHomeScreenBy: decreaseCommentBy,
-  onIncreaseCommentNumberForHomeScreen: increaseCommentBy,
+  onDecreaseCommentsForHomeScreenBy: decreaseCommentsBy,
+  onIncreaseCommentsForHomeScreen: increaseCommentsBy,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(PostScreen);

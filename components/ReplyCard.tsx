@@ -30,13 +30,13 @@ interface ReplyCardProps {
 
 export default React.memo(
   function ReplyCard(props: ReplyCardProps) {
-    const navigation = useNavigation<any>();
+    // const navigation = useNavigation<any>();
 
     const {
       id,
       user,
       content,
-      userControl = undefined,
+      userControl,
       likeReply,
       unlikeReply,
       datePosted,
@@ -68,21 +68,13 @@ export default React.memo(
                 : 1,
           },
         ]}>
-        <View
-          style={{
-            flexDirection: 'row',
-            width: Layout.window.width - 40 - 14,
-            paddingLeft: 14,
-            paddingRight: 14,
-            paddingTop: 8,
-            paddingBottom: 8,
-          }}>
+        <View style={styles.innerContainer}>
           <Avatar
             avatar={user.avatar}
             onPress={() => console.log('to user screen')}
           />
-          <View style={{ marginLeft: 12 }}>
-            <View>
+          <View style={{ marginLeft: 12, flexShrink: 1 }}>
+            <View style={{ flexShrink: 1 }}>
               <View style={{ flexDirection: 'row' }}>
                 <TouchableWithoutFeedback
                   onPress={() => console.log('to user profile')}>
@@ -90,10 +82,7 @@ export default React.memo(
                 </TouchableWithoutFeedback>
                 <Text style={styles.date}>{convertTime(datePosted)}</Text>
                 {userControl ? (
-                  <View
-                    style={{
-                      flexGrow: 1,
-                    }}>
+                  <View style={{ flexGrow: 1 }}>
                     <TouchableWithoutFeedback onPress={userControl}>
                       <MaterialCommunityIcons
                         name="dots-horizontal"
@@ -108,7 +97,8 @@ export default React.memo(
               <Text style={styles.content}>{content}</Text>
             </View>
             <View style={{ paddingTop: 8 }}>
-              <TouchableWithoutFeedback onPress={() => console.log('like')}>
+              <TouchableWithoutFeedback
+                onPress={isLiked ? unlikeReply : likeReply}>
                 <View style={styles.iconWrapper}>
                   <AntDesign
                     name="like1"
@@ -144,9 +134,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     width: '100%',
-    // borderBottomWidth: 1,
-    // borderBottomColor: Colors.brightColor,
     backgroundColor: Colors.darkColor,
+  },
+  innerContainer: {
+    flexDirection: 'row',
+    width: Layout.window.width - 40 - 14,
+    alignSelf: 'flex-end',
+    paddingLeft: 14,
+    paddingRight: 8,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   username: {
     color: 'white',

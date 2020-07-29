@@ -28,6 +28,8 @@ interface CommentCardProps {
   unlikeComment: () => void;
   userControl?: () => void;
   onPushRepliesLayer: (id: string) => void;
+  decreaseCommentsForPostScreenBy: (numberOfReplies: number) => void;
+  increaseCommentsForPostScreenBy: (numberOfReplies: number) => void;
 }
 
 function CommentCard(props: CommentCardProps) {
@@ -44,6 +46,8 @@ function CommentCard(props: CommentCardProps) {
     replies,
     likes,
     isLiked,
+    decreaseCommentsForPostScreenBy,
+    increaseCommentsForPostScreenBy,
   } = props;
 
   const toReplyScreen = () => {
@@ -58,6 +62,8 @@ function CommentCard(props: CommentCardProps) {
         likes,
         isLiked,
       },
+      decreaseCommentsForPostScreenBy,
+      increaseCommentsForPostScreenBy,
     });
   };
 

@@ -37,7 +37,9 @@ export const PUSH_COMMENTS_LAYER = 'PUSH_COMMENTS_LAYER';
 export const POP_COMMENTS_LAYER = 'POP_COMMENTS_LAYER';
 export const SET_SORT_COMMENTS = 'SET_SORT_COMMENTS';
 export const CLEAR_STACK = 'CLEAR_STACK';
-export const INCREASE_REPLIES_BY_ONE = 'INCREASE_REPLIES_BY_ONE';
+
+export const INCREASE_REPLIES_BY_NUMBER = 'INCREASE_REPLIES_BY_NUMBER';
+export const DECREASE_REPLIES_BY_NUMBER = 'DECREASE_REPLIES_BY_NUMBER';
 
 export interface CommentsStackAction {
   type: string;
@@ -57,6 +59,7 @@ export interface CommentsStackAction {
         commentID: string;
         error: Error | null;
       }
+    | { commentID: string; by: number }
     | {
         commentIDwithFlag: string;
         error: Error;

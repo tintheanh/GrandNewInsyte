@@ -28,8 +28,8 @@ interface CommentInputProps {
   postID: string;
   error: Error | null;
   onCreateComment: (content: string) => void;
-  increaseCommentNumberForPostScreenBy: (by: number) => void;
-  increaseCommentNumberForHomeScreen: (
+  increaseCommentsForPostScreenBy: (by: number) => void;
+  increaseCommentsForHomeScreen: (
     postID: string,
     numberOfReplies: number,
   ) => void;
@@ -90,12 +90,12 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
     }
     const {
       postID,
-      increaseCommentNumberForHomeScreen,
+      increaseCommentsForHomeScreen,
       onCreateComment,
-      increaseCommentNumberForPostScreenBy,
+      increaseCommentsForPostScreenBy,
     } = this.props;
-    increaseCommentNumberForPostScreenBy(1);
-    increaseCommentNumberForHomeScreen(postID, 1);
+    increaseCommentsForPostScreenBy(1);
+    increaseCommentsForHomeScreen(postID, 1);
     Keyboard.dismiss();
     onCreateComment(text);
     this.setState({ text: '' });
