@@ -60,6 +60,10 @@ import {
   UNLIKE_POST_SUCCESS,
   INCREASE_COMMENTS_BY_NUMBER,
   DECREASE_COMMENTS_BY_NUMBER,
+  CLEAR_CREATE_POST_ERROR,
+  CLEAR_DELETE_POST_ERROR,
+  CLEAR_LIKE_POST_ERROR,
+  CLEAR_UNLIKE_POST_ERROR,
   CLEAR,
 } from './types';
 import { Post } from '../../models';
@@ -786,6 +790,7 @@ export const fetchUserPosts = () => async (
   // TODO check auth
   dispatch(fetchUserPostsStarted());
   try {
+    // await delay(3000);
     const { user } = getState().auth;
     const { lastVisible } = getState().allPosts.userPosts;
 
@@ -832,7 +837,7 @@ export const fetchUserPosts = () => async (
     const newLastVisible = newPosts[newPosts.length - 1].datePosted;
     dispatch(fetchUserPostsSuccess(newPosts, newLastVisible));
   } catch (err) {
-    console.log(err.message);
+    console.log('error here', err.message);
     dispatch(fetchUserPostsFailure(new Error('Internal server error')));
   }
 };
@@ -1105,9 +1110,9 @@ export const createPost = (
     taggedUsers: taggedIDs,
     comments: 0,
     user: {
-      id: user?.id as string,
-      avatar: user?.avatar as string,
-      username: user?.username as string,
+      id: user.id,
+      avatar: user.avatar,
+      username: user.username,
     },
   };
   dispatch(createPostStarted(tempPost));
@@ -1115,8 +1120,8 @@ export const createPost = (
     callback();
     // await delay(5000);
     // throw new Error('Failed');
-    const uid = user?.id;
-    const uploadedMedia = await uploadMedia(uid as string, media);
+    const uid = user.id;
+    const uploadedMedia = await uploadMedia(uid, media);
 
     let captionWithTags = caption;
     if (taggedIDs.length > 0) {
@@ -1141,15 +1146,53 @@ export const createPost = (
 
     try {
       // throw new Error('Failed');
-      const postRef = await fsDB.collection('posts').add({
-        caption: captionWithTags,
+      // const postRef = await fsDB.collection('posts').add({
+      //   caption: captionWithTags,
+      //   privacy,
+      //   media: uploadedMedia,
+      //   comments: 0,
+      //   likes: 0,
+      //   posted_by: uid as string,
+      //   tagged_users: taggedIDs,
+      //   date_posted: currentDatePosted,
+      // });
+
+      const newPost = {
+        id: '',
+        caption: '',
         privacy,
         media: uploadedMedia,
-        comments: 0,
+        datePosted: currentDatePosted,
+        timeLabel: convertTime(currentDatePosted),
         likes: 0,
-        posted_by: uid as string,
-        tagged_users: taggedIDs,
-        date_posted: currentDatePosted,
+        isLiked: false,
+        comments: 0,
+        taggedUsers: taggedIDs,
+        user: {
+          id: user.id,
+          avatar: user?.avatar as string,
+          username: user?.username as string,
+        },
+      };
+
+      const userRef = fsDB.collection('users').doc(uid);
+      await fsDB.runTransaction(async (trans) => {
+        const doc = await trans.get(userRef);
+        const newTotalPosts = doc.data()!.total_posts + 1;
+        trans.update(userRef, { total_posts: newTotalPosts });
+        const postRef = fsDB.collection('posts').doc();
+        trans.set(postRef, {
+          caption: captionWithTags,
+          privacy,
+          media: uploadedMedia,
+          comments: 0,
+          likes: 0,
+          posted_by: uid as string,
+          tagged_users: taggedIDs,
+          date_posted: currentDatePosted,
+        });
+        // throw new Error('lala');
+        newPost.id = postRef.id;
       });
 
       let captionWithTagsDone = captionWithTags;
@@ -1184,23 +1227,25 @@ export const createPost = (
         }
       }
 
-      const newPost = {
-        id: postRef.id,
-        caption: captionWithTagsDone,
-        privacy,
-        media: uploadedMedia,
-        datePosted: currentDatePosted,
-        timeLabel: convertTime(currentDatePosted),
-        likes: 0,
-        isLiked: false,
-        comments: 0,
-        taggedUsers: taggedIDs,
-        user: {
-          id: user.id,
-          avatar: user?.avatar as string,
-          username: user?.username as string,
-        },
-      };
+      newPost.caption = captionWithTagsDone;
+
+      // const newPost = {
+      //   id: postRef.id,
+      //   caption: captionWithTagsDone,
+      //   privacy,
+      //   media: uploadedMedia,
+      //   datePosted: currentDatePosted,
+      //   timeLabel: convertTime(currentDatePosted),
+      //   likes: 0,
+      //   isLiked: false,
+      //   comments: 0,
+      //   taggedUsers: taggedIDs,
+      //   user: {
+      //     id: user.id,
+      //     avatar: user?.avatar as string,
+      //     username: user?.username as string,
+      //   },
+      // };
 
       // if (user.followers > 0 && newPost.privacy !== 'private') {
       //   const handleCreatePostForFollowers = fireFuncs.httpsCallable(
@@ -1276,7 +1321,15 @@ export const deletePost = (postID: string) => async (
     //   desirePostInPublic,
     // ].find((post) => post !== undefined) as Post;
 
-    await fsDB.collection('posts').doc(postID).delete();
+    const userRef = fsDB.collection('users').doc(user.id);
+    await fsDB.runTransaction(async (trans) => {
+      const doc = await trans.get(userRef);
+      const newTotalPosts = doc.data()!.total_posts - 1;
+      trans.update(userRef, { total_posts: newTotalPosts });
+      const postRef = fsDB.collection('posts').doc(postID);
+      // throw new Error('test');
+      trans.delete(postRef);
+    });
     // await deleteMedia(user!.id, desirePost.media);
 
     // if (user.followers > 0 && desirePost.privacy !== 'private') {
@@ -1384,6 +1437,42 @@ export const decreaseCommentsBy = (postID: string, by: number) => (
   dispatch({
     type: DECREASE_COMMENTS_BY_NUMBER,
     payload: { postID, by },
+  });
+};
+
+export const clearCreatePostError = () => (
+  dispatch: (action: PostAction) => void,
+) => {
+  dispatch({
+    type: CLEAR_CREATE_POST_ERROR,
+    payload: null,
+  });
+};
+
+export const clearDeletePostError = () => (
+  dispatch: (action: PostAction) => void,
+) => {
+  dispatch({
+    type: CLEAR_DELETE_POST_ERROR,
+    payload: null,
+  });
+};
+
+export const clearLikePostError = () => (
+  dispatch: (action: PostAction) => void,
+) => {
+  dispatch({
+    type: CLEAR_LIKE_POST_ERROR,
+    payload: null,
+  });
+};
+
+export const clearUnlikePostError = () => (
+  dispatch: (action: PostAction) => void,
+) => {
+  dispatch({
+    type: CLEAR_UNLIKE_POST_ERROR,
+    payload: null,
   });
 };
 

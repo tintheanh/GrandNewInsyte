@@ -6,13 +6,17 @@ import {
   FETCH_USER_STARTED,
   FETCH_USER_SUCCESS,
   SET_CURRENT_VIEWABLE_POST_INDEX,
+  FETCH_MORE_POSTS_FROM_USER_FAILURE,
+  FETCH_MORE_POSTS_FROM_USER_STARTED,
+  FETCH_MORE_POSTS_FROM_USER_SUCCESS,
   CLEAR_STACK,
   CurrentTab,
   UsersStackAction,
   UsersStackState,
 } from './types';
-import { UsersStack } from '../../models';
-import { getCurrentUnixTime } from '../../utils/functions';
+import { UsersStack, Post } from '../../models';
+import { FirebaseFirestoreTypes } from '../../config';
+import { removeDuplicatesFromArray } from '../../utils/functions';
 
 const initialState: UsersStackState = {
   homeTabStack: new UsersStack(),
@@ -60,7 +64,7 @@ export default function commentsStackReducer(
         isFollowed: false,
         error: null,
         loading: false,
-        lastVisible: getCurrentUnixTime(),
+        lastVisible: null,
         currentViewableIndex: 0,
         posts: [],
       };
@@ -104,6 +108,52 @@ export default function commentsStackReducer(
       return newState;
     }
     case FETCH_USER_FAILURE: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = UsersStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.loading = false;
+        topLayer.error = action.payload as Error;
+      }
+      return newState;
+    }
+    case FETCH_MORE_POSTS_FROM_USER_STARTED: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = UsersStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.loading = true;
+        topLayer.error = null;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case FETCH_MORE_POSTS_FROM_USER_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
+      };
+      const currentTab = state.currentTab;
+      const newStack = UsersStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.loading = false;
+        topLayer.error = null;
+        const removedDuplicates = removeDuplicatesFromArray(
+          topLayer.posts.concat(payload.posts),
+        );
+        topLayer.posts = removedDuplicates;
+        topLayer.lastVisible = payload.lastVisible;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case FETCH_MORE_POSTS_FROM_USER_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = UsersStack.clone(state[currentTab]);

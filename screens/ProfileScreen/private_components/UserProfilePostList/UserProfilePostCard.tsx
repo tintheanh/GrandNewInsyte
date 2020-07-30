@@ -9,6 +9,7 @@ import {
   likePost,
   unlikePost,
 } from '../../../../redux/posts/actions';
+import { decreaseTotalPostsByOne } from '../../../../redux/auth/actions';
 import { checkPostChanged } from '../../../../utils/functions';
 import { Post } from '../../../../models';
 
@@ -21,10 +22,30 @@ interface UserProfilePostCardProps {
   onDeletePost: (postID: string) => void;
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
+  onDecreaseTotalPostsByOne: () => void;
 }
 
 class UserProfilePostCard extends Component<UserProfilePostCardProps> {
-  shouldComponentUpdate(nextProps: UserProfilePostCardProps) {
+  state = { shouldPlayMedia: true };
+  private onBlur: () => void = () => {};
+  private onFocus: () => void = () => {};
+
+  componentDidMount() {
+    const { navigation } = this.props;
+    this.onBlur = navigation.addListener('blur', () => {
+      this.setState({ shouldPlayMedia: false });
+    });
+    this.onFocus = navigation.addListener('focus', () => {
+      this.setState({ shouldPlayMedia: true });
+    });
+  }
+
+  componentWillUnmount() {
+    this.onBlur();
+    this.onFocus();
+  }
+
+  shouldComponentUpdate(nextProps: UserProfilePostCardProps, nextState: any) {
     const { currentViewableIndex, index, data, isTabFocused } = this.props;
 
     if (checkPostChanged(data, nextProps.data)) {
@@ -36,6 +57,9 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
     }
     if (data.media.length === 1 && data.media[0].type === 'image') {
       return false;
+    }
+    if (this.state.shouldPlayMedia !== nextState.shouldPlayMedia) {
+      return true;
     }
     if (
       currentViewableIndex === index ||
@@ -65,7 +89,10 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
     });
   };
 
-  performDeletePost = () => this.props.onDeletePost(this.props.data.id);
+  performDeletePost = () => {
+    this.props.onDeletePost(this.props.data.id);
+    this.props.onDecreaseTotalPostsByOne();
+  };
 
   postControl = () => {
     Alert.alert(
@@ -95,21 +122,15 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
   };
 
   render() {
-    const {
-      data,
-      currentViewableIndex,
-      index,
-      navigation,
-      isTabFocused,
-    } = this.props;
+    const { data, currentViewableIndex, index, isTabFocused } = this.props;
     // console.log('user post card ', index);
     return (
       <PostCard
         data={data}
         currentViewableIndex={currentViewableIndex}
         index={index}
-        navigation={navigation}
         isTabFocused={isTabFocused}
+        shouldPlayMedia={this.state.shouldPlayMedia}
         navigateWhenClickOnPostOrComment={this.navigateToPost}
         navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
         userPostControl={this.postControl}
@@ -121,14 +142,14 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
 }
 
 interface HOCHomePostCardProps {
-  // TODO make data as Post type
-  data: any;
+  data: Post;
   currentViewableIndex: number;
   index: number;
   isTabFocused: boolean;
   onDeletePost: (postID: string) => void;
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
+  onDecreaseTotalPostsByOne: () => void;
 }
 
 const mapStateToProps = (state: AppState) => ({
@@ -139,6 +160,7 @@ const mapDispathToProps = {
   onDeletePost: deletePost,
   onLikePost: likePost,
   onUnlikePost: unlikePost,
+  onDecreaseTotalPostsByOne: decreaseTotalPostsByOne,
 };
 
 export default connect(

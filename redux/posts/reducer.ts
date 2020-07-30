@@ -62,6 +62,10 @@ import {
   PostAction,
   SET_PUBLIC_FEED_CHOICE,
   SET_FOLLOWING_FEED_CHOICE,
+  CLEAR_CREATE_POST_ERROR,
+  CLEAR_DELETE_POST_ERROR,
+  CLEAR_LIKE_POST_ERROR,
+  CLEAR_UNLIKE_POST_ERROR,
 } from './types';
 import { oneWeek, pendingDeletePostFlag, pendingPostID } from '../../constants';
 import { removeDuplicatesFromArray } from '../../utils/functions';
@@ -1104,7 +1108,26 @@ export default function postsReducer(
       newState.taggedPosts.posts = taggedPosts;
       return newState;
     }
-
+    case CLEAR_CREATE_POST_ERROR: {
+      const newState = { ...state };
+      newState.createPost.error = null;
+      return newState;
+    }
+    case CLEAR_DELETE_POST_ERROR: {
+      const newState = { ...state };
+      newState.deletePost.error = null;
+      return newState;
+    }
+    case CLEAR_LIKE_POST_ERROR: {
+      const newState = { ...state };
+      newState.likePost.error = null;
+      return newState;
+    }
+    case CLEAR_UNLIKE_POST_ERROR: {
+      const newState = { ...state };
+      newState.unlikePost.error = null;
+      return newState;
+    }
     case CLEAR:
       return {
         public: {

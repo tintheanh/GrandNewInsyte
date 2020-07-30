@@ -16,7 +16,17 @@ import { setCurrentTabForRepliesStack } from '../redux/repliesStack/actions';
 import { setCurrentTabForUsersStack } from '../redux/usersStack/actions';
 import { alertDialog } from '../utils/functions';
 import { AppState } from '../redux/store';
-import { checkAuth } from '../redux/auth/actions';
+import {
+  checkAuth,
+  decreaseTotalPostsByOne,
+  increaseTotalPostsByOne,
+} from '../redux/auth/actions';
+import {
+  clearCreatePostError,
+  clearDeletePostError,
+  clearLikePostError,
+  clearUnlikePostError,
+} from '../redux/posts/actions';
 import TabBarIcon from '../components/TabBarIcon';
 import HomeStack from '../stacks/HomeStack';
 import AuthScreen from '../screens/AuthScreen';
@@ -52,19 +62,41 @@ class BottomTabNavigator extends Component<any> {
     return false;
   }
 
+  performClearCreatePostError = () => {
+    this.props.onDecreaseTotalPostsByOne();
+    this.props.onClearCreatePostError();
+  };
+
+  performClearDeletePostError = () => {
+    this.props.onIncreaseTotalPostsByOne();
+    this.props.onClearDeletePostError();
+  };
+
   render() {
     // console.log('bottom', this.props.createPostLoading);
     if (this.props.createPostError) {
-      alertDialog(this.props.createPostError.message);
+      alertDialog(
+        this.props.createPostError.message,
+        this.performClearCreatePostError,
+      );
     }
     if (this.props.deletePostError) {
-      alertDialog(this.props.deletePostError.message);
+      alertDialog(
+        this.props.deletePostError.message,
+        this.performClearDeletePostError,
+      );
     }
     if (this.props.likePostError) {
-      alertDialog(this.props.likePostError.message);
+      alertDialog(
+        this.props.likePostError.message,
+        this.props.onClearLikePostError,
+      );
     }
     if (this.props.unlikePostError) {
-      alertDialog(this.props.unlikePostError.message);
+      alertDialog(
+        this.props.unlikePostError.message,
+        this.props.onClearUnlikePostError,
+      );
     }
     return (
       <BottomTab.Navigator
@@ -183,6 +215,12 @@ const mapDispatchToProps = {
   onSetCurrentTabForCommentsStack: setCurrentTabForCommentsStack,
   onSetCurrentTabForRepliesStack: setCurrentTabForRepliesStack,
   onSetCurrentTabForUsersStack: setCurrentTabForUsersStack,
+  onDecreaseTotalPostsByOne: decreaseTotalPostsByOne,
+  onIncreaseTotalPostsByOne: increaseTotalPostsByOne,
+  onClearCreatePostError: clearCreatePostError,
+  onClearDeletePostError: clearDeletePostError,
+  onClearLikePostError: clearLikePostError,
+  onClearUnlikePostError: clearUnlikePostError,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(BottomTabNavigator);

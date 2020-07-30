@@ -60,7 +60,7 @@ exports.handleCreatePostForFollowers = functions.firestore
         .database()
         .ref(`users/${uid}/following_posts`)
         .child(postID)
-        .set({ date_posted })
+        .set({ date_posted, posted_by: uid })
         .then(() =>
           admin
             .database()
@@ -73,7 +73,7 @@ exports.handleCreatePostForFollowers = functions.firestore
                   .database()
                   .ref(`users/${followerID}/following_posts`)
                   .child(postID)
-                  .set({ date_posted })
+                  .set({ date_posted, posted_by: uid })
                   .catch((err) => {});
               });
             })

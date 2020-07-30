@@ -20,6 +20,7 @@ import {
 } from './private_components';
 import { delay } from '../../utils/functions';
 import { createPost } from '../../redux/posts/actions';
+import { increaseTotalPostsByOne } from '../../redux/auth/actions';
 import {
   clearButKeepSelected,
   setSelectedUserResults,
@@ -378,6 +379,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       return alertDialog('Your post cannot be empty.');
     }
     this.props.onCreatePost(post, this.goBackAndClear);
+    this.props.onIncreaseTotalPostsByOne();
   };
 
   render() {
@@ -461,6 +463,7 @@ const mapDisPatchToProps = {
   onClearButKeepSelected: clearButKeepSelected,
   onClearAll: clearAll,
   onSetSelectedUserResults: setSelectedUserResults,
+  onIncreaseTotalPostsByOne: increaseTotalPostsByOne,
 };
 
 const styles = StyleSheet.create({

@@ -30,6 +30,9 @@ export const EDIT_PROFILE_SUCCESS = 'EDIT_PROFILE_SUCCESS';
 export const EDIT_PROFILE_FAILURE = 'EDIT_PROFILE_FAILURE';
 export const EDIT_PROFILE_END = 'EDIT_PROFILE_END';
 
+export const INCREASE_TOTAL_POSTS_BY_ONE = 'INCREASE_TOTAL_POSTS_BY_ONE';
+export const DECREASE_TOTAL_POSTS_BY_ONE = 'DECREASE_TOTAL_POSTS_BY_ONE';
+
 export interface AuthAction {
   type: string;
   payload:

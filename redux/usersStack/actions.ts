@@ -6,6 +6,9 @@ import {
   FETCH_USER_STARTED,
   FETCH_USER_SUCCESS,
   SET_CURRENT_VIEWABLE_POST_INDEX,
+  FETCH_MORE_POSTS_FROM_USER_FAILURE,
+  FETCH_MORE_POSTS_FROM_USER_STARTED,
+  FETCH_MORE_POSTS_FROM_USER_SUCCESS,
   CLEAR_STACK,
   UsersStackAction,
   CurrentTab,
@@ -87,13 +90,10 @@ export const fetchUser = (userID: string) => async (
       followers: userData!.followers,
       totalPosts: userData!.total_posts,
       isFollowed: false,
-      lastVisible: 0,
+      lastVisible: null as FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
       posts: [] as Array<Post>,
     };
     const myself = getState().auth.user;
-    const { currentTab } = getState().usersStack;
-    const currentLastVisible = getState().usersStack[currentTab].top()
-      ?.lastVisible;
     if (myself) {
       const followingRef = await fsDB
         .collection('users')
@@ -134,17 +134,75 @@ export const fetchUser = (userID: string) => async (
 
     const filterPrivate = posts.filter((post) => post.privacy !== 'private');
 
-    filterPrivate.sort((b, a) => a.datePosted - b.datePosted);
+    // filterPrivate.sort((b, a) => a.datePosted - b.datePosted);
 
-    const removedDuplicates = removeDuplicatesFromArray(filterPrivate);
+    // const removedDuplicates = removeDuplicatesFromArray(filterPrivate);
 
-    userLayer.posts = removedDuplicates;
+    userLayer.posts = filterPrivate;
     userLayer.lastVisible =
-      removedDuplicates[removedDuplicates.length - 1].datePosted;
+      documentSnapshots.docs[documentSnapshots.docs.length - 1];
     dispatch(fetchUserSuccess(userLayer));
   } catch (err) {
     console.log(err.message);
     dispatch(fetchUserFailure(err));
+  }
+};
+
+export const fetchMorePostsFromUser = (
+  userID: string,
+  isFollowed: boolean,
+) => async (
+  dispatch: (action: UsersStackAction) => void,
+  getState: () => AppState,
+) => {
+  dispatch(fetchMorePostsFromUserStarted());
+  try {
+    const { currentTab } = getState().usersStack;
+    const lastVisible = getState().usersStack[currentTab].top()?.lastVisible;
+    if (lastVisible === undefined) {
+      throw new Error('Error occurred.');
+    }
+    let query: FirebaseFirestoreTypes.Query;
+    if (isFollowed) {
+      query = fsDB
+        .collection('posts')
+        .where('posted_by', '==', userID)
+        .orderBy('date_posted', 'desc')
+        .startAfter(lastVisible)
+        .limit(userPostsPerBatch);
+    } else {
+      query = fsDB
+        .collection('posts')
+        .where('privacy', '==', 'public')
+        .where('posted_by', '==', userID)
+        .orderBy('date_posted', 'desc')
+        .startAfter(lastVisible)
+        .limit(userPostsPerBatch);
+    }
+    const documentSnapshots = await query.get();
+
+    if (documentSnapshots.empty) {
+      return dispatch(fetchMorePostsFromUserSuccess([], lastVisible));
+    }
+
+    const posts = await docFStoPostArray(documentSnapshots.docs);
+
+    if (posts.length === 0) {
+      return dispatch(fetchMorePostsFromUserSuccess([], lastVisible));
+    }
+
+    const filterPrivate = posts.filter((post) => post.privacy !== 'private');
+
+    // filterPrivate.sort((b, a) => a.datePosted - b.datePosted);
+
+    // const removedDuplicates = removeDuplicatesFromArray(filterPrivate);
+
+    const newLastVisible =
+      documentSnapshots.docs[documentSnapshots.docs.length - 1];
+    dispatch(fetchMorePostsFromUserSuccess(filterPrivate, newLastVisible));
+  } catch (err) {
+    console.log(err.message);
+    dispatch(fetchMorePostsFromUserFailure(err));
   }
 };
 
@@ -162,6 +220,24 @@ const fetchUserSuccess = (arg: any): UsersStackAction => ({
 
 const fetchUserFailure = (error: Error): UsersStackAction => ({
   type: FETCH_USER_FAILURE,
+  payload: error,
+});
+
+const fetchMorePostsFromUserStarted = (): UsersStackAction => ({
+  type: FETCH_MORE_POSTS_FROM_USER_STARTED,
+  payload: null,
+});
+
+const fetchMorePostsFromUserSuccess = (
+  posts: Array<Post>,
+  lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
+): UsersStackAction => ({
+  type: FETCH_MORE_POSTS_FROM_USER_SUCCESS,
+  payload: { posts, lastVisible },
+});
+
+const fetchMorePostsFromUserFailure = (error: Error): UsersStackAction => ({
+  type: FETCH_MORE_POSTS_FROM_USER_FAILURE,
   payload: error,
 });
 

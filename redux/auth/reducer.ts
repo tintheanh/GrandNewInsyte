@@ -23,6 +23,8 @@ import {
   EDIT_PROFILE_END,
   EDIT_PROFILE_STARTED,
   EDIT_PROFILE_SUCCESS,
+  INCREASE_TOTAL_POSTS_BY_ONE,
+  DECREASE_TOTAL_POSTS_BY_ONE,
 } from './types';
 import { User } from '../../models';
 
@@ -221,6 +223,20 @@ export default function authReducer(
     case EDIT_PROFILE_END: {
       const newState = { ...state };
       newState.update.loading = false;
+      return newState;
+    }
+    case INCREASE_TOTAL_POSTS_BY_ONE: {
+      const newState = { ...state };
+      if (newState.user) {
+        newState.user.totalPosts += 1;
+      }
+      return newState;
+    }
+    case DECREASE_TOTAL_POSTS_BY_ONE: {
+      const newState = { ...state };
+      if (newState.user) {
+        newState.user.totalPosts -= 1;
+      }
       return newState;
     }
     default:

@@ -23,6 +23,8 @@ import {
   EDIT_PROFILE_END,
   EDIT_PROFILE_STARTED,
   EDIT_PROFILE_SUCCESS,
+  INCREASE_TOTAL_POSTS_BY_ONE,
+  DECREASE_TOTAL_POSTS_BY_ONE,
 } from './types';
 import { User } from '../../models';
 import {
@@ -394,6 +396,24 @@ export const editProfile = (
     console.log(err.message);
     dispatch(editProfileFailure(new Error('Error occured. Please try again!')));
   }
+};
+
+export const increaseTotalPostsByOne = () => (
+  dispatch: (action: AuthAction) => void,
+) => {
+  dispatch({
+    type: INCREASE_TOTAL_POSTS_BY_ONE,
+    payload: null,
+  });
+};
+
+export const decreaseTotalPostsByOne = () => (
+  dispatch: (action: AuthAction) => void,
+) => {
+  dispatch({
+    type: DECREASE_TOTAL_POSTS_BY_ONE,
+    payload: null,
+  });
 };
 
 /* ------------------ action dispatches ------------------ */

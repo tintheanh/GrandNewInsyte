@@ -8,6 +8,7 @@ import { deletePost, likePost, unlikePost } from '../../../redux/posts/actions';
 import { pushCommentsLayer } from '../../../redux/commentsStack/actions';
 import { pushUsersLayer } from '../../../redux/usersStack/actions';
 import { checkPostChanged } from '../../../utils/functions';
+import { decreaseTotalPostsByOne } from '../../../redux/auth/actions';
 import { Post } from '../../../models';
 
 interface HomePostCardProps {
@@ -21,6 +22,7 @@ interface HomePostCardProps {
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
   onPushCommentsLayer: (postID: string) => void;
+  onDecreaseTotalPostsByOne: () => void;
   onPushUsersLayer: ({
     id,
     username,
@@ -80,7 +82,10 @@ class HomePostCard extends Component<HomePostCardProps> {
     return false;
   }
 
-  performDeletePost = () => this.props.onDeletePost(this.props.data.id);
+  performDeletePost = () => {
+    this.props.onDeletePost(this.props.data.id);
+    this.props.onDecreaseTotalPostsByOne();
+  };
 
   postControl = () => {
     Alert.alert(
@@ -180,6 +185,7 @@ const mapDispathToProps = {
   onUnlikePost: unlikePost,
   onPushCommentsLayer: pushCommentsLayer,
   onPushUsersLayer: pushUsersLayer,
+  onDecreaseTotalPostsByOne: decreaseTotalPostsByOne,
 };
 
 interface HOCHomePostCardProps {
@@ -192,6 +198,7 @@ interface HOCHomePostCardProps {
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
   onPushCommentsLayer: (postID: string) => void;
+  onDecreaseTotalPostsByOne: () => void;
   onPushUsersLayer: ({
     id,
     username,

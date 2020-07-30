@@ -505,6 +505,7 @@ import {
   fetchUser,
   popUsersLayer,
   setCurrentViewableListIndex,
+  fetchMorePostsFromUser,
 } from '../../redux/usersStack/actions';
 import { delay, checkPostListChanged } from '../../utils/functions';
 import { Post } from '../../models';
@@ -561,6 +562,14 @@ class UserScreen extends Component<any, any> {
     }
   };
 
+  performFetchMorePosts = () => {
+    const { user } = this.props.route.params;
+    this.props.onFetchMorePostsFromUser(
+      user.id,
+      this.props.userLayer.isFollowed,
+    );
+  };
+
   renderItem = ({ item, index }: { item: Post; index: number }) => {
     const { currentTabIndex } = this.props;
     return (
@@ -575,7 +584,7 @@ class UserScreen extends Component<any, any> {
   render() {
     const { user } = this.props.route.params;
     const { userLayer } = this.props;
-    console.log('user screen render');
+    console.log('user screen render', userLayer.posts);
     if (!userLayer) {
       return <View style={styles.container} />;
     }
@@ -668,7 +677,7 @@ class UserScreen extends Component<any, any> {
           data={userLayer.posts}
           renderItem={this.renderItem}
           onViewableItemsChanged={this.onViewableItemsChanged}
-          onEndReached={() => console.log('end')}
+          onEndReached={this.performFetchMorePosts}
           viewabilityConfig={this.viewabilityConfig}
           listHeaderComponent={header}
           checkChangesToUpdate={checkPostListChanged}
@@ -734,6 +743,7 @@ const mapDispatchToProps = {
   onFetchUser: fetchUser,
   onPopUsersLayer: popUsersLayer,
   onSetCurrentViewableListIndex: setCurrentViewableListIndex,
+  onFetchMorePostsFromUser: fetchMorePostsFromUser,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(UserScreen);

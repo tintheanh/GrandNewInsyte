@@ -1,0 +1,124 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  	  match /{document=**} {
+      	allow read, write: if true;
+    	}
+
+// 		match /users/{userId} {
+//       allow read;
+//       allow write;
+//     }
+
+// 		match /users/{userId}/follower_for_search/{followerId} {
+//     	allow read;
+//       allow write;
+//     }
+
+// 		match /posts/{postId} {
+// 			allow read: if allowReadPosts();
+//       allow write: if isSignedIn();
+//     }
+
+// 		match /posts/{postId}/like_list/{userId} {
+//     	allow read;
+//       allow write;
+//     }
+    
+//     match /posts/{postId}/comment_list/{commentId} {
+//     	allow read;
+//       allow write;
+//     }
+    
+//     match /posts/{postId}/comment_list/{commentId}/like_list/{likeId} {
+//     	allow read;
+//       allow write;
+//   	}
+    
+//     match /posts/{postId}/comment_list/{commentId}/reply_list/{replyId} {
+//     	allow read;
+//       allow write;
+//     }
+    
+//     match /posts/{postId}/comment_list/{commentId}/reply_list/{replyId}/like_list/{likeId} {
+//     	allow read;
+//       allow write;
+//   	}
+
+		
+// 		function isSignedIn() {
+//       return request.auth != null;
+//     }
+
+// 		function allowReadPosts() {
+// 			// if resource.data.privacy == 'public' || resource.data.privacy == 'followers' {
+// 			// 	return true;
+// 			// }
+// 			// if resource.data.privacy == 'private' {
+// 			// 	if request.auth != null && request.auth.uid == resource.data.posted_by {
+// 			// 		return true;
+// 			// 	}
+// 			// }
+// 			// return false;
+
+// 			return resource.data.privacy is string;
+// 		}
+
+// //     match /users/{userId} {
+// //     	// allow read;
+// //     	// allow update, delete: if request.auth != null && request.auth.uid == userId;
+// //     	// allow create: if request.auth != null;
+// //       allow read;
+// //       allow write;
+// //     }
+// //     match /users/{userId}/following_posts/{postId} {
+// //     	allow read;
+// //     	allow write;
+// //     }
+// //     match /users/{userId}/following/{followingId} {
+// //     	allow read;
+// //     }
+    
+// //     match /users/{userId}/followers/{followerId} {
+// //     	allow read;
+// //     }
+    
+// //     match /users/{userId}/follower_for_search/{followerId} {
+// //     	allow read;
+// //       allow write;
+// //     }
+    
+// //     match /posts/{postId} {
+// //       // allow read: if resource.data.privacy == 'public';
+// //       // allow create: if request.auth != null;
+// //       // allow create;
+// //       allow read;
+// //       allow write;
+// //     }
+    
+// //     match /posts/{postId}/like_list/{userId} {
+// //     	allow read;
+// //       allow write;
+// //     }
+    
+// //     match /posts/{postId}/comment_list/{commentId} {
+// //     	allow read;
+// //       allow write;
+// //     }
+    
+// //     match /posts/{postId}/comment_list/{commentId}/like_list/{likeId} {
+// //     	allow read;
+// //       allow write;
+// //   	}
+    
+// //     match /posts/{postId}/comment_list/{commentId}/reply_list/{replyId} {
+// //     	allow read;
+// //       allow write;
+// //     }
+    
+// //     match /posts/{postId}/comment_list/{commentId}/reply_list/{replyId}/like_list/{likeId} {
+// //     	allow read;
+// //       allow write;
+// //   	}
+  }
+}

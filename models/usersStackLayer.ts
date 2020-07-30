@@ -1,4 +1,5 @@
 import Post from './post';
+import { FirebaseFirestoreTypes } from '../config';
 
 export default interface UsersStackLayer {
   id: string;
@@ -12,7 +13,7 @@ export default interface UsersStackLayer {
   isFollowed: boolean;
   error: Error | null;
   loading: boolean;
-  lastVisible: number;
+  lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
   currentViewableIndex: number;
   posts: Array<Post>;
 }
