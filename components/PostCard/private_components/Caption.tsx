@@ -9,7 +9,7 @@ import {
 
 interface CaptionProps {
   caption: string;
-  navigateWhenClickOnPostOrComment: () => void;
+  navigateWhenClickOnPostOrComment?: () => void;
 }
 
 export default function Caption({

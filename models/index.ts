@@ -7,6 +7,8 @@ import CommentsStack from './commentsStack';
 import CommentsStackLayer from './commentsStackLayer';
 import RepliesStack from './repliesStack';
 import RepliesStackLayer from './repliesStackLayer';
+import UsersStack from './usersStack';
+import UsersStackLayer from './usersStackLayer';
 
 export {
   Post,
@@ -18,4 +20,6 @@ export {
   CommentsStackLayer,
   RepliesStack,
   RepliesStackLayer,
+  UsersStack,
+  UsersStackLayer,
 };

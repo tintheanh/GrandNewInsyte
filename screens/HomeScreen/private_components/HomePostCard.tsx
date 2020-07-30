@@ -1,9 +1,12 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { PostCard } from '../../../components';
 import { AppState } from '../../../redux/store';
 import { deletePost, likePost, unlikePost } from '../../../redux/posts/actions';
+import { pushCommentsLayer } from '../../../redux/commentsStack/actions';
+import { pushUsersLayer } from '../../../redux/usersStack/actions';
 import { checkPostChanged } from '../../../utils/functions';
 import { Post } from '../../../models';
 
@@ -13,13 +16,43 @@ interface HomePostCardProps {
   index: number;
   currentUID: string | undefined;
   isTabFocused: boolean;
+  navigation: any;
   onDeletePost: (postID: string) => void;
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
+  onPushCommentsLayer: (postID: string) => void;
+  onPushUsersLayer: ({
+    id,
+    username,
+    avatar,
+  }: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => void;
 }
 
 class HomePostCard extends Component<HomePostCardProps> {
-  shouldComponentUpdate(nextProps: HomePostCardProps) {
+  state = { shouldPlayMedia: false };
+  private onBlur: () => void = () => {};
+  private onFocus: () => void = () => {};
+
+  componentDidMount() {
+    const { navigation } = this.props;
+    this.onBlur = navigation.addListener('blur', () => {
+      this.setState({ shouldPlayMedia: false });
+    });
+    this.onFocus = navigation.addListener('focus', () => {
+      this.setState({ shouldPlayMedia: true });
+    });
+  }
+
+  componentWillUnmount() {
+    this.onBlur();
+    this.onFocus();
+  }
+
+  shouldComponentUpdate(nextProps: HomePostCardProps, nextState: any) {
     const { isTabFocused, currentViewableIndex, index, data } = this.props;
 
     if (isTabFocused !== nextProps.isTabFocused) {
@@ -34,6 +67,9 @@ class HomePostCard extends Component<HomePostCardProps> {
     }
     if (data.media.length === 1 && data.media[0].type === 'image') {
       return false;
+    }
+    if (this.state.shouldPlayMedia !== nextState.shouldPlayMedia) {
+      return true;
     }
     if (
       currentViewableIndex === index ||
@@ -65,6 +101,35 @@ class HomePostCard extends Component<HomePostCardProps> {
     );
   };
 
+  navigateWhenClickOnPostOrComment = () => {
+    const { navigation, data, onPushCommentsLayer } = this.props;
+    onPushCommentsLayer(data.id);
+    navigation.push('PostScreen', {
+      data,
+      title: `${data.user.username}'s post`,
+    });
+  };
+
+  navigateWhenClickOnUsernameOrAvatar = () => {
+    const { data, currentUID, navigation } = this.props;
+    if (currentUID !== data.user.id) {
+      this.props.onPushUsersLayer({
+        id: data.user.id,
+        username: data.user.username,
+        avatar: data.user.avatar,
+      });
+      navigation.push('UserScreen', {
+        title: data.user.username,
+        user: data.user,
+      });
+    } else {
+      navigation.push('ProfileScreen', {
+        title: data.user.username,
+        user: data.user,
+      });
+    }
+  };
+
   performLikePost = () => {
     this.props.onLikePost(this.props.data.id);
   };
@@ -89,11 +154,16 @@ class HomePostCard extends Component<HomePostCardProps> {
         currentViewableIndex={currentViewableIndex}
         index={index}
         isTabFocused={isTabFocused}
+        shouldPlayMedia={this.state.shouldPlayMedia}
         userPostControl={
           data.user.id === currentUID ? this.postControl : undefined
         }
         performLikePost={this.performLikePost}
         performUnlikePost={this.performUnlikePost}
+        navigateWhenClickOnPostOrComment={this.navigateWhenClickOnPostOrComment}
+        navigateWhenClickOnUsernameOrAvatar={
+          this.navigateWhenClickOnUsernameOrAvatar
+        }
       />
     );
   }
@@ -108,6 +178,54 @@ const mapDispathToProps = {
   onDeletePost: deletePost,
   onLikePost: likePost,
   onUnlikePost: unlikePost,
+  onPushCommentsLayer: pushCommentsLayer,
+  onPushUsersLayer: pushUsersLayer,
 };
 
-export default connect(mapStateToProps, mapDispathToProps)(HomePostCard);
+interface HOCHomePostCardProps {
+  data: Post;
+  currentViewableIndex: number;
+  index: number;
+  currentUID: string | undefined;
+  isTabFocused: boolean;
+  onDeletePost: (postID: string) => void;
+  onLikePost: (postID: string) => void;
+  onUnlikePost: (postID: string) => void;
+  onPushCommentsLayer: (postID: string) => void;
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispathToProps,
+)(
+  React.memo(
+    function (props: HOCHomePostCardProps) {
+      const navigation = useNavigation();
+      return <HomePostCard {...props} navigation={navigation} />;
+    },
+    (prevProps, nextProps) => {
+      if (prevProps.isTabFocused !== nextProps.isTabFocused) {
+        return false;
+      }
+      if (checkPostChanged(prevProps.data, nextProps.data)) {
+        return false;
+      }
+      if (prevProps.data.media.length === 0) {
+        return true;
+      }
+      if (
+        prevProps.data.media.length === 1 &&
+        prevProps.data.media[0].type === 'image'
+      ) {
+        return true;
+      }
+      if (
+        prevProps.currentViewableIndex === prevProps.index ||
+        nextProps.currentViewableIndex === prevProps.index
+      ) {
+        return false;
+      }
+      return true;
+    },
+  ),
+);

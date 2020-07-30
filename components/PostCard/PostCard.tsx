@@ -5,8 +5,6 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
 } from 'react-native';
-import { connect } from 'react-redux';
-import { useNavigation } from '@react-navigation/native';
 import {
   Colors,
   MaterialCommunityIcons,
@@ -16,42 +14,23 @@ import {
 import Carousel from '../Carousel';
 import { UserSection, Caption, InteractionSection } from './private_components';
 import { checkPostChanged } from '../../utils/functions';
-import { pushCommentsLayer } from '../../redux/commentsStack/actions';
 import { Post } from '../../models';
 
 interface PostCardProps {
   data: Post;
   currentViewableIndex: number;
   index: number;
-  navigation: any;
   isTabFocused?: boolean;
+  shouldPlayMedia: boolean;
   userPostControl?: () => void;
   performLikePost: () => void;
   performUnlikePost: () => void;
-  onPushCommentsLayer: (postID: string) => void;
+  navigateWhenClickOnPostOrComment?: () => void;
+  navigateWhenClickOnUsernameOrAvatar?: () => void;
 }
 
-class PostCard extends Component<PostCardProps> {
-  state = { shouldPlayMedia: true };
-  private onBlur: () => void = () => {};
-  private onFocus: () => void = () => {};
-
-  componentDidMount() {
-    const { navigation } = this.props;
-    this.onBlur = navigation.addListener('blur', () => {
-      this.setState({ shouldPlayMedia: false });
-    });
-    this.onFocus = navigation.addListener('focus', () => {
-      this.setState({ shouldPlayMedia: true });
-    });
-  }
-
-  componentWillUnmount() {
-    this.onBlur();
-    this.onFocus();
-  }
-
-  shouldComponentUpdate(nextProps: PostCardProps, nextState: any) {
+export default class PostCard extends Component<PostCardProps> {
+  shouldComponentUpdate(nextProps: PostCardProps) {
     const { data, currentViewableIndex, index, isTabFocused } = this.props;
 
     if (checkPostChanged(data, nextProps.data)) {
@@ -64,10 +43,6 @@ class PostCard extends Component<PostCardProps> {
 
     if (data.media.length === 1 && data.media[0].type === 'image') {
       return false;
-    }
-
-    if (this.state.shouldPlayMedia !== nextState.shouldPlayMedia) {
-      return true;
     }
     if (isTabFocused !== nextProps.isTabFocused) {
       return true;
@@ -85,26 +60,6 @@ class PostCard extends Component<PostCardProps> {
     return false;
   }
 
-  navigateWhenClickOnPostOrComment = () => {
-    const { navigation, data, onPushCommentsLayer } = this.props;
-    onPushCommentsLayer(data.id);
-    navigation.push('PostScreen', {
-      data,
-      title: `${data.user.username}'s post`,
-    });
-  };
-
-  navigateWhenClickOnUsernameOrAvatar = () => {
-    //   const { navigation, data } = this.props;
-    //   navigation.push('User', {
-    //     title: data.user.username,
-    //     avatar: data.user.avatar,
-    //   });
-    console.log('to user profile');
-  };
-
-  // processMedia = () => this.props.data.media.map((md) => ({ url: md.url }));
-
   render() {
     const {
       data,
@@ -112,8 +67,11 @@ class PostCard extends Component<PostCardProps> {
       index,
       isTabFocused = true,
       userPostControl = undefined,
+      shouldPlayMedia,
       performLikePost,
       performUnlikePost,
+      navigateWhenClickOnPostOrComment,
+      navigateWhenClickOnUsernameOrAvatar,
     } = this.props;
 
     // console.log('card ', index);
@@ -157,10 +115,10 @@ class PostCard extends Component<PostCardProps> {
               timeLabel={data.timeLabel}
               iconPrivacy={iconPrivacy}
               navigateWhenClickOnPostOrComment={
-                this.navigateWhenClickOnPostOrComment
+                navigateWhenClickOnPostOrComment
               }
               navigateWhenClickOnUsernameOrAvatar={
-                this.navigateWhenClickOnUsernameOrAvatar
+                navigateWhenClickOnUsernameOrAvatar
               }
             />
           </View>
@@ -182,17 +140,13 @@ class PostCard extends Component<PostCardProps> {
         </View>
         <Caption
           caption={data.caption}
-          navigateWhenClickOnPostOrComment={
-            this.navigateWhenClickOnPostOrComment
-          }
+          navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}
         />
         {data.media.length ? (
           <Carousel
             items={data.media}
             shouldPlayMedia={
-              this.state.shouldPlayMedia &&
-              currentViewableIndex === index &&
-              isTabFocused
+              shouldPlayMedia && currentViewableIndex === index && isTabFocused
             }
           />
         ) : null}
@@ -202,9 +156,7 @@ class PostCard extends Component<PostCardProps> {
           comments={data.comments}
           performLikePost={performLikePost}
           performUnlikePost={performUnlikePost}
-          navigateWhenClickOnPostOrComment={
-            this.navigateWhenClickOnPostOrComment
-          }
+          navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}
         />
       </View>
     );
@@ -220,62 +172,3 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
   },
 });
-
-interface HOCPostCardProps {
-  data: Post;
-  currentViewableIndex: number;
-  index: number;
-  isTabFocused?: boolean;
-  userPostControl?: () => void;
-  performLikePost: () => void;
-  performUnlikePost: () => void;
-  onPushCommentsLayer: (postID: string) => void;
-}
-
-const mapDispatchToProps = {
-  onPushCommentsLayer: pushCommentsLayer,
-};
-
-export default connect(
-  null,
-  mapDispatchToProps,
-)(
-  React.memo(
-    function (props: HOCPostCardProps) {
-      const navigation = useNavigation();
-      // console.log('card ', props.index);
-      return <PostCard {...props} navigation={navigation} />;
-    },
-    (prevProps, nextProps) => {
-      if (checkPostChanged(prevProps.data, nextProps.data)) {
-        return false;
-      }
-
-      if (prevProps.data.media.length === 0) {
-        return true;
-      }
-
-      if (
-        prevProps.data.media.length === 1 &&
-        prevProps.data.media[0].type === 'image'
-      ) {
-        return true;
-      }
-
-      if (prevProps.isTabFocused !== nextProps.isTabFocused) {
-        return false;
-      }
-      if (prevProps.currentViewableIndex === nextProps.currentViewableIndex) {
-        return true;
-      }
-      if (
-        prevProps.currentViewableIndex === prevProps.index ||
-        nextProps.currentViewableIndex === prevProps.index
-      ) {
-        return false;
-      }
-
-      return true;
-    },
-  ),
-);

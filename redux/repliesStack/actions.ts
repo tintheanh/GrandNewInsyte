@@ -81,7 +81,6 @@ export const fetchReplies = (commentID: string) => async (
   }
   dispatch(fetchRepliesStarted());
   try {
-    console.log('fetch replies');
     const lastVisible = getState().repliesStack[currentTab].top()?.lastVisible;
     const currentUser = {
       id: user.id,

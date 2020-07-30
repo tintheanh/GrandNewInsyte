@@ -5,7 +5,13 @@ import {
 } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
 import { connect } from 'react-redux';
-import { HomeScreen, PostScreen, ReplyScreen, UserScreen } from '../screens';
+import {
+  HomeScreen,
+  PostScreen,
+  ReplyScreen,
+  UserScreen,
+  ProfileScreen,
+} from '../screens';
 import { Colors } from '../constants';
 import { popCommentsLayer } from '../redux/commentsStack/actions';
 
@@ -73,11 +79,18 @@ export default connect(
         options={{ headerTitle: '' }}
       />
       <Stack.Screen
-        name="User"
+        name="UserScreen"
         component={UserScreen}
         options={({ route }: any) => ({
           title: route.params.title,
           headerBackTitle: '',
+        })}
+      />
+      <Stack.Screen
+        name="ProfileScreen"
+        component={ProfileScreen}
+        options={({ route }: any) => ({
+          title: route.params.title,
         })}
       />
     </Stack.Navigator>

@@ -112,22 +112,27 @@ class HomeScreen extends Component<any> {
       //   .set({
       //     prefix: generateSubstrForUsername(user.username),
       //   });
+
       // const post = {
       //   posted_by: 'BQ9bdkbxiicCYG8ZNnL5wW6EZ823',
       //   caption: faker.lorem.sentence(),
       //   date_posted: faker.date.between('2019-01-08', '2020-07-10').getTime(),
-      //   likes: [],
-      //   num_likes: faker.random.number(),
+      //   likes: faker.random.number(),
+      //   comments: 0,
       //   media: [
       //     {
       //       id: '169',
-      //       uri: faker.image.image(),
+      //       url: faker.image.image(),
       //       type: 'image',
+      //       width: 640,
+      //       height: 480,
       //     },
       //   ],
       //   privacy: 'public',
+      //   tagged_users: [],
       // };
       // const docRef = await fsDB.collection('posts').add(post);
+
       // await fbDB.ref('users/BQ9bdkbxiicCYG8ZNnL5wW6EZ823/following_posts/' + docRef.id).set({
       //   date_posted: post.date_posted,
       // });

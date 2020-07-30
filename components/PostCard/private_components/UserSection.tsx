@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  TouchableWithoutFeedback,
-  StyleSheet,
-  Image,
-  Text,
-} from 'react-native';
+import { View, TouchableWithoutFeedback, StyleSheet, Text } from 'react-native';
 import { FontAwesome5 } from '../../../constants';
 import Avatar from '../../../components/Avatar';
 
@@ -14,7 +8,7 @@ interface UserSectionProps {
   username: string;
   timeLabel: string;
   iconPrivacy: string;
-  navigateWhenClickOnPostOrComment: () => void;
+  navigateWhenClickOnPostOrComment?: () => void;
   navigateWhenClickOnUsernameOrAvatar?: () => void;
   userPostControl?: () => void;
 }
@@ -24,7 +18,7 @@ export default function UserSection({
   username,
   timeLabel,
   iconPrivacy,
-  navigateWhenClickOnUsernameOrAvatar = undefined,
+  navigateWhenClickOnUsernameOrAvatar,
   navigateWhenClickOnPostOrComment,
 }: UserSectionProps) {
   return (

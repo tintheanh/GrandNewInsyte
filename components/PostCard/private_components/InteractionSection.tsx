@@ -7,7 +7,7 @@ interface InteractionSectionProps {
   isLiked: boolean;
   likes: number;
   comments: number;
-  navigateWhenClickOnPostOrComment: () => void;
+  navigateWhenClickOnPostOrComment?: () => void;
   performLikePost: () => void;
   performUnlikePost: () => void;
 }
