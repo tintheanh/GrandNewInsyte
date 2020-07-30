@@ -115,7 +115,7 @@ class HomeScreen extends Component<any> {
       //     prefix: generateSubstrForUsername(user.username),
       //   });
       // const post = {
-      //   posted_by: 'BQ9bdkbxiicCYG8ZNnL5wW6EZ823',
+      //   posted_by: '9DHOf4becGfrx7fmUXPcYdqtc2I3',
       //   caption: faker.lorem.sentence(),
       //   date_posted: faker.date.between('2019-01-08', '2020-07-10').getTime(),
       //   likes: faker.random.number(),
@@ -129,7 +129,7 @@ class HomeScreen extends Component<any> {
       //       height: 480,
       //     },
       //   ],
-      //   privacy: 'public',
+      //   privacy: 'followers',
       //   tagged_users: [],
       // };
       // const docRef = await fsDB.collection('posts').add(post);

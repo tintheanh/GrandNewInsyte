@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Animated, FlatList, StyleSheet, View } from 'react-native';
 import { connect } from 'react-redux';
-import Layout from '../../../../constants/Layout';
 import { setCurrentUserListPostIndex } from '../../../../redux/curentViewableItem/actions';
 import {
   fetchUserPosts,
@@ -16,7 +15,7 @@ import {
 } from '../../../../components';
 import UserProfilePostListLoading from './UserProfilePostListLoading';
 import { checkPostListChanged } from '../../../../utils/functions';
-import { Colors } from '../../../../constants';
+import { Colors, Layout } from '../../../../constants';
 import { AppState } from '../../../../redux/store';
 import { Post } from '../../../../models';
 
@@ -168,6 +167,9 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
           onScrollToTop={onScrollToTop}
           onViewableItemsChanged={this.onViewableItemsChanged}
           viewabilityConfig={this.viewabilityConfig}
+          listFooterComponent={
+            <View style={{ paddingBottom: Layout.window.height / 10 }} />
+          }
           onEndReached={onFetchUserPosts}
           isTabFocused={currentTabIndex === 0}
           refreshing={pullLoading}

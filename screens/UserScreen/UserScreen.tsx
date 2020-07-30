@@ -592,8 +592,16 @@ class UserScreen extends Component<any, any> {
                 followingNum={userLayer.following}
               />
               <TouchableWithoutFeedback>
-                <View style={styles.followBtn}>
-                  <Text style={{ textAlign: 'center', color: 'white' }}>
+                <View
+                  style={[
+                    styles.followBtn,
+                    {
+                      backgroundColor: userLayer.isFollowed
+                        ? Colors.brightColor
+                        : Colors.btnColor,
+                    },
+                  ]}>
+                  <Text style={styles.followBtnLabel}>
                     {userLayer.isFollowed ? 'Unfollow' : 'Follow'}
                   </Text>
                 </View>
@@ -622,10 +630,16 @@ class UserScreen extends Component<any, any> {
                 <View style={styles.statWrapper}>
                   <UserStats postNum={0} followersNum={0} followingNum={0} />
                   <TouchableWithoutFeedback>
-                    <View style={styles.followBtn}>
-                      <Text style={{ textAlign: 'center', color: 'white' }}>
-                        Follow
-                      </Text>
+                    <View
+                      style={[
+                        styles.followBtn,
+                        {
+                          backgroundColor: userLayer.isFollowed
+                            ? Colors.brightColor
+                            : Colors.btnColor,
+                        },
+                      ]}>
+                      <Text style={styles.followBtnLabel}>Follow</Text>
                     </View>
                   </TouchableWithoutFeedback>
                 </View>
@@ -679,7 +693,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   followBtn: {
-    backgroundColor: Colors.brightColor,
     width: '80%',
     paddingTop: 4,
     paddingBottom: 4,
@@ -691,8 +704,13 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.2,
     shadowRadius: 1.41,
-
     elevation: 2,
+  },
+  followBtnLabel: {
+    textAlign: 'center',
+    color: 'white',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   divider: {
     flexGrow: 1,

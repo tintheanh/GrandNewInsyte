@@ -46,103 +46,91 @@ exports.deleteUser = functions.https.onCall((data, context) => {
     });
 });
 
-exports.handleCreatePostForFollowers = functions.https.onCall(
-  (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        'failed-precondition',
-        'The function must be called ' + 'while authenticated.',
-      );
-    }
+exports.handleCreatePostForFollowers = functions.firestore
+  .document('posts/{postId}')
+  .onCreate((snapshot, context) => {
+    const newPost = snapshot.data();
+    const postID = context.params.postId;
+    const privacy = newPost.privacy;
+    const date_posted = newPost.date_posted;
+    const uid = newPost.posted_by;
 
-    const { postID, date_posted } = data;
-    if (!(typeof postID === 'string') || postID.length === 0) {
-      throw new functions.https.HttpsError(
-        'invalid-argument',
-        'Invalid Post ID.',
-      );
-    }
-
-    const { uid } = context.auth;
-
-    return admin
-      .database()
-      .ref(`users/${uid}/follower_list`)
-      .once('value')
-      .then((followerListSnapshot) => {
-        followerListSnapshot.forEach((doc) => {
-          const followerID = doc.key;
+    if (privacy !== 'private') {
+      return admin
+        .database()
+        .ref(`users/${uid}/following_posts`)
+        .child(postID)
+        .set({ date_posted })
+        .then(() =>
           admin
             .database()
-            .ref(`users/${followerID}/following_posts`)
-            .child(postID)
-            .set({
-              date_posted,
+            .ref(`users/${uid}/follower_list`)
+            .once('value')
+            .then((followerListSnapshot) => {
+              followerListSnapshot.forEach((doc) => {
+                const followerID = doc.key;
+                admin
+                  .database()
+                  .ref(`users/${followerID}/following_posts`)
+                  .child(postID)
+                  .set({ date_posted })
+                  .catch((err) => {});
+              });
             })
-            .catch((err) => {});
-        });
-      })
-      .catch((err) => {
-        throw new functions.https.HttpsError(err.code, err.message);
-      });
-  },
-);
-
-exports.handleDeletePostForFollowers = functions.https.onCall(
-  (data, context) => {
-    if (!context.auth) {
-      throw new functions.https.HttpsError(
-        'failed-precondition',
-        'The function must be called ' + 'while authenticated.',
-      );
+            .catch((err) => console.log(err.code, err.message)),
+        );
     }
-
-    const { postID } = data;
-    if (!(typeof postID === 'string') || postID.length === 0) {
-      throw new functions.https.HttpsError(
-        'invalid-argument',
-        'Invalid Post ID.',
-      );
-    }
-
-    const { uid } = context.auth;
-
-    return admin
-      .database()
-      .ref(`users/${uid}/following_posts`)
-      .child(postID)
-      .remove()
-      .then(() => {
-        admin
-          .database()
-          .ref(`users/${uid}/follower_list`)
-          .once('value')
-          .then((followerListSnapshot) => {
-            followerListSnapshot.forEach((doc) => {
-              const followerID = doc.key;
-              admin
-                .database()
-                .ref(`users/${followerID}/following_posts`)
-                .child(postID)
-                .remove()
-                .catch((err) => {});
-            });
-          })
-          .catch((err) => {
-            throw new functions.https.HttpsError(err.code, err.message);
-          });
-      })
-      .catch((err) => {
-        throw new functions.https.HttpsError(err.code, err.message);
-      });
-  },
-);
+    return Promise.resolve();
+  });
 
 exports.handleDeletePost = functions.firestore
   .document('posts/{postId}')
   .onDelete((snapshot, context) => {
-    // delete every subcollection (like_list, comment_list, etc) of post
+    const postData = snapshot.data();
     const postID = context.params.postId;
+    const privacy = postData.privacy;
+    const uid = postData.posted_by;
+    const media = postData.media;
+
+    // delete media from storage
+    for (const md of media) {
+      admin
+        .storage()
+        .bucket('gs://grandnewinsyte.appspot.com')
+        .file(`users/${uid}/post_media/${md.id}`)
+        .delete()
+        .catch((err) => {});
+    }
+
+    // delete post from followers
+    if (privacy !== 'private') {
+      admin
+        .database()
+        .ref(`users/${uid}/following_posts`)
+        .child(postID)
+        .remove()
+        .then(() => {
+          admin
+            .database()
+            .ref(`users/${uid}/follower_list`)
+            .once('value')
+            .then((followerListSnapshot) => {
+              followerListSnapshot.forEach((doc) => {
+                const followerID = doc.key;
+                admin
+                  .database()
+                  .ref(`users/${followerID}/following_posts`)
+                  .child(postID)
+                  .remove()
+                  .catch((err) => {});
+              });
+            })
+            .catch((err) => {});
+        })
+        .catch((err) => console.log(err.code, err.message));
+    }
+
+    // completely delete post (including all likes, comments, replies)
     return firebaseTools.firestore.delete(`posts/${postID}`, {
       project: 'grandnewinsyte',
       recursive: true,
@@ -153,11 +141,26 @@ exports.handleDeletePost = functions.firestore
 exports.handleDeleteComment = functions.firestore
   .document('posts/{postId}/comment_list/{commentId}')
   .onDelete((snapshot, context) => {
-    // delete every subcollection (like_list, comment_list, etc) of post
     const postID = context.params.postId;
     const commentID = context.params.commentId;
     return firebaseTools.firestore.delete(
       `posts/${postID}/comment_list/${commentID}`,
+      {
+        project: 'grandnewinsyte',
+        recursive: true,
+        yes: true,
+      },
+    );
+  });
+
+exports.handleDeleteReply = functions.firestore
+  .document('posts/{postId}/comment_list/{commentId}/reply_list/{replyId}')
+  .onDelete((snapshot, context) => {
+    const postID = context.params.postId;
+    const commentID = context.params.commentId;
+    const replyID = context.params.replyId;
+    return firebaseTools.firestore.delete(
+      `posts/${postID}/comment_list/${commentID}/reply_list/${replyID}`,
       {
         project: 'grandnewinsyte',
         recursive: true,

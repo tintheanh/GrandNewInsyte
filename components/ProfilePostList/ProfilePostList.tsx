@@ -15,6 +15,7 @@ interface ProfilePostListProps {
   onScrollToTop: () => void;
   headerHeight: number;
   tabBarHeight: number;
+  listFooterComponent?: JSX.Element;
   isTabFocused: boolean;
   onEndReached: () => void;
   onViewableItemsChanged?:
@@ -92,6 +93,7 @@ export default class ProfilePostList extends Component<ProfilePostListProps> {
       tabBarHeight,
       isTabFocused,
       onViewableItemsChanged = undefined,
+      listFooterComponent,
       viewabilityConfig = undefined,
       posts,
       card,
@@ -125,6 +127,7 @@ export default class ProfilePostList extends Component<ProfilePostListProps> {
         viewabilityConfig={viewabilityConfig}
         initialNumToRender={1}
         maxToRenderPerBatch={1}
+        ListFooterComponent={listFooterComponent}
         windowSize={3}
         onEndReached={this._onEndReached}
         onEndReachedThreshold={0.05}

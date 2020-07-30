@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import { Animated, FlatList, StyleSheet, View } from 'react-native';
 import { connect } from 'react-redux';
-import Layout from '../../../../constants/Layout';
 import { setCurrentUserTaggedListPostIndex } from '../../../../redux/curentViewableItem/actions';
 import {
   fetchTaggedPosts,
@@ -16,7 +15,7 @@ import {
 } from '../../../../components';
 import UserProfileTaggedPostListLoading from './UserProfileTaggedPostListLoading';
 import { checkPostListChanged } from '../../../../utils/functions';
-import { Colors } from '../../../../constants';
+import { Colors, Layout } from '../../../../constants';
 import { AppState } from '../../../../redux/store';
 import { Post } from '../../../../models';
 
@@ -171,6 +170,9 @@ class UserProfileTaggedPostList extends Component<
           viewabilityConfig={this.viewabilityConfig}
           onEndReached={onFetchTaggedPosts}
           isTabFocused={currentTabIndex === 1}
+          listFooterComponent={
+            <View style={{ paddingBottom: windowHeight / 10 }} />
+          }
           refreshing={pullLoading}
           onRefresh={onPullToFetchTaggedPosts}
         />

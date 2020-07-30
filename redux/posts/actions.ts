@@ -1055,6 +1055,7 @@ export const setFollowingFeedChoice = (choice: string) => async (
   });
 };
 
+// TODO refactor this function
 export const createPost = (
   {
     privacy,
@@ -1201,25 +1202,23 @@ export const createPost = (
         },
       };
 
-      // TODO move this to cloud function
-      if (user.followers > 0 && newPost.privacy !== 'private') {
-        const handleCreatePostForFollowers = fireFuncs.httpsCallable(
-          'handleCreatePostForFollowers',
-        );
-        await handleCreatePostForFollowers({
-          uid: user!.id,
-          postID: newPost.id,
-          date_posted: newPost.datePosted,
-        });
-      }
+      // if (user.followers > 0 && newPost.privacy !== 'private') {
+      //   const handleCreatePostForFollowers = fireFuncs.httpsCallable(
+      //     'handleCreatePostForFollowers',
+      //   );
+      //   await handleCreatePostForFollowers({
+      //     uid: user!.id,
+      //     postID: newPost.id,
+      //     date_posted: newPost.datePosted,
+      //   });
+      // }
 
-      // TODO move this to cloud function
-      if (newPost.privacy !== 'private') {
-        await fbDB
-          .ref(`users/${user!.id}/following_posts`)
-          .child(newPost.id)
-          .set({ date_posted: newPost.datePosted });
-      }
+      // if (newPost.privacy !== 'private') {
+      //   await fbDB
+      //     .ref(`users/${user!.id}/following_posts`)
+      //     .child(newPost.id)
+      //     .set({ date_posted: newPost.datePosted });
+      // }
 
       dispatch(createPostSuccess(newPost));
     } catch (err) {
@@ -1252,42 +1251,40 @@ export const deletePost = (postID: string) => async (
     // if (percent > 50) throw new Error('dummy error');
     // throw new Error('dummy error');
 
-    const postIDPlusPendingDeleteFlag = postID + pendingDeletePostFlag;
-    const userPosts = getState().allPosts.userPosts.posts;
-    const publicPosts = getState().allPosts.public.posts;
-    const followingPosts = getState().allPosts.following.posts;
+    // const postIDPlusPendingDeleteFlag = postID + pendingDeletePostFlag;
+    // const userPosts = getState().allPosts.userPosts.posts;
+    // const publicPosts = getState().allPosts.public.posts;
+    // const followingPosts = getState().allPosts.following.posts;
 
     // desire post can be in any post list
-    const desirePostInUser = userPosts.find(
-      (post) => post.id === postIDPlusPendingDeleteFlag,
-    );
-    const desirePostInPublic = publicPosts.find(
-      (post) => post.id === postIDPlusPendingDeleteFlag,
-    );
-    const desirePostInFollowing = followingPosts.find(
-      (post) => post.id === postIDPlusPendingDeleteFlag,
-    );
-    if (!desirePostInUser && !desirePostInPublic && !desirePostInFollowing) {
-      throw new Error('Error occured. Post not found');
-    }
+    // const desirePostInUser = userPosts.find(
+    //   (post) => post.id === postIDPlusPendingDeleteFlag,
+    // );
+    // const desirePostInPublic = publicPosts.find(
+    //   (post) => post.id === postIDPlusPendingDeleteFlag,
+    // );
+    // const desirePostInFollowing = followingPosts.find(
+    //   (post) => post.id === postIDPlusPendingDeleteFlag,
+    // );
+    // if (!desirePostInUser && !desirePostInPublic && !desirePostInFollowing) {
+    //   throw new Error('Error occured. Post not found');
+    // }
 
-    const desirePost = [
-      desirePostInUser,
-      desirePostInFollowing,
-      desirePostInPublic,
-    ].find((post) => post !== undefined) as Post;
+    // const desirePost = [
+    //   desirePostInUser,
+    //   desirePostInFollowing,
+    //   desirePostInPublic,
+    // ].find((post) => post !== undefined) as Post;
 
     await fsDB.collection('posts').doc(postID).delete();
-    // TODO move this to cloud function
-    await deleteMedia(user!.id, desirePost.media);
+    // await deleteMedia(user!.id, desirePost.media);
 
-    // TODO move this to cloud function
-    if (user.followers > 0 && desirePost.privacy !== 'private') {
-      const handleDeletePostForFollowers = fireFuncs.httpsCallable(
-        'handleDeletePostForFollowers',
-      );
-      await handleDeletePostForFollowers({ postID });
-    }
+    // if (user.followers > 0 && desirePost.privacy !== 'private') {
+    //   const handleDeletePostForFollowers = fireFuncs.httpsCallable(
+    //     'handleDeletePostForFollowers',
+    //   );
+    //   await handleDeletePostForFollowers({ postID });
+    // }
 
     dispatch(deletePostSuccess(postID));
   } catch (err) {
