@@ -5,6 +5,8 @@ import {
   FETCH_USER_FAILURE,
   FETCH_USER_STARTED,
   FETCH_USER_SUCCESS,
+  SET_CURRENT_VIEWABLE_POST_INDEX,
+  CLEAR_STACK,
   CurrentTab,
   UsersStackAction,
   UsersStackState,
@@ -28,6 +30,16 @@ export default function commentsStackReducer(
       newState.currentTab = action.payload as CurrentTab;
       return newState;
     }
+    case SET_CURRENT_VIEWABLE_POST_INDEX: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const topLayer = state[currentTab].top();
+      if (topLayer) {
+        topLayer.currentViewableIndex = action.payload as number;
+        state[currentTab].updateTop(topLayer);
+      }
+      return newState;
+    }
     case PUSH_USERS_LAYER: {
       const newState = { ...state };
       const payload = action.payload as {
@@ -49,6 +61,7 @@ export default function commentsStackReducer(
         error: null,
         loading: false,
         lastVisible: getCurrentUnixTime(),
+        currentViewableIndex: 0,
         posts: [],
       };
       const newStack = UsersStack.clone(state[currentTab]);
@@ -107,6 +120,12 @@ export default function commentsStackReducer(
       const newStack = UsersStack.clone(state[currentTab]);
       newStack.pop();
       newState[currentTab] = newStack;
+      return newState;
+    }
+    case CLEAR_STACK: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      newState[currentTab] = new UsersStack();
       return newState;
     }
     default:

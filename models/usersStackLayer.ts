@@ -13,5 +13,6 @@ export default interface UsersStackLayer {
   error: Error | null;
   loading: boolean;
   lastVisible: number;
+  currentViewableIndex: number;
   posts: Array<Post>;
 }

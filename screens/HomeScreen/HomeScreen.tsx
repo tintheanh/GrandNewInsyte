@@ -7,6 +7,7 @@ import HomeAuth from './private_components/HomeAuth';
 import HomeNotAuth from './private_components/HomeNotAuth';
 import { clearCommentsStack } from '../../redux/commentsStack/actions';
 import { clearRepliesStack } from '../../redux/repliesStack/actions';
+import { clearUsersStack } from '../../redux/usersStack/actions';
 import { fsDB } from '../../config';
 import { generateSubstrForUsername } from '../../utils/functions';
 
@@ -52,6 +53,7 @@ class HomeScreen extends Component<any> {
     this.screenFocus = this.props.navigation.addListener('focus', (e) => {
       this.props.onClearCommentsStack();
       this.props.onClearRepliesStack();
+      this.props.onClearUsersStack();
     });
 
     // try {
@@ -112,7 +114,6 @@ class HomeScreen extends Component<any> {
       //   .set({
       //     prefix: generateSubstrForUsername(user.username),
       //   });
-
       // const post = {
       //   posted_by: 'BQ9bdkbxiicCYG8ZNnL5wW6EZ823',
       //   caption: faker.lorem.sentence(),
@@ -132,7 +133,6 @@ class HomeScreen extends Component<any> {
       //   tagged_users: [],
       // };
       // const docRef = await fsDB.collection('posts').add(post);
-
       // await fbDB.ref('users/BQ9bdkbxiicCYG8ZNnL5wW6EZ823/following_posts/' + docRef.id).set({
       //   date_posted: post.date_posted,
       // });
@@ -211,6 +211,7 @@ const mapStateToProps = (state: AppState) => ({
 const mapDispatchToProps = {
   onClearCommentsStack: clearCommentsStack,
   onClearRepliesStack: clearRepliesStack,
+  onClearUsersStack: clearUsersStack,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(HomeScreen);

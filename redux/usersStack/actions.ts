@@ -5,6 +5,8 @@ import {
   FETCH_USER_FAILURE,
   FETCH_USER_STARTED,
   FETCH_USER_SUCCESS,
+  SET_CURRENT_VIEWABLE_POST_INDEX,
+  CLEAR_STACK,
   UsersStackAction,
   CurrentTab,
 } from './types';
@@ -31,7 +33,16 @@ export const pushUsersLayer = ({
   });
 };
 
-export const popRepliesLayer = () => (
+export const setCurrentViewableListIndex = (index: number) => (
+  dispatch: (action: UsersStackAction) => void,
+) => {
+  dispatch({
+    type: SET_CURRENT_VIEWABLE_POST_INDEX,
+    payload: index,
+  });
+};
+
+export const popUsersLayer = () => (
   dispatch: (action: UsersStackAction) => void,
 ) => {
   dispatch({
@@ -46,6 +57,15 @@ export const setCurrentTabForUsersStack = (tab: CurrentTab) => (
   dispatch({
     type: SET_CURRENT_TAB,
     payload: tab,
+  });
+};
+
+export const clearUsersStack = () => (
+  dispatch: (action: UsersStackAction) => void,
+) => {
+  dispatch({
+    type: CLEAR_STACK,
+    payload: null,
   });
 };
 
@@ -89,15 +109,14 @@ export const fetchUser = (userID: string) => async (
     if (userLayer.isFollowed) {
       query = fsDB
         .collection('posts')
-        .where('date_posted', '<=', currentLastVisible)
-        .where('privacy', '<', 'private')
-        .where('privacy', '>', 'private')
+        .where('posted_by', '==', userID)
         .orderBy('date_posted', 'desc')
         .limit(userPostsPerBatch);
     } else {
       query = fsDB
         .collection('posts')
         .where('privacy', '==', 'public')
+        .where('posted_by', '==', userID)
         .orderBy('date_posted', 'desc')
         .limit(userPostsPerBatch);
     }
@@ -113,9 +132,11 @@ export const fetchUser = (userID: string) => async (
       return dispatch(fetchUserSuccess(userLayer));
     }
 
-    posts.sort((b, a) => a.datePosted - b.datePosted);
+    const filterPrivate = posts.filter((post) => post.privacy !== 'private');
 
-    const removedDuplicates = removeDuplicatesFromArray(posts);
+    filterPrivate.sort((b, a) => a.datePosted - b.datePosted);
+
+    const removedDuplicates = removeDuplicatesFromArray(filterPrivate);
 
     userLayer.posts = removedDuplicates;
     userLayer.lastVisible =

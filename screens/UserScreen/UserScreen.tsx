@@ -489,37 +489,176 @@
 // export default UserScreen;
 
 import React, { Component } from 'react';
-import { View, StyleSheet } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  Text,
+  ActivityIndicator,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { connect } from 'react-redux';
-import { UserAvatar, UserStats, UserInfo } from './private_components';
-import { Colors } from '../../constants';
+import { BigAvatar, UserStats, UserInfo, List } from '../../components';
+import { UserPostCard } from './private_components';
+import { Colors, MaterialCommunityIcons } from '../../constants';
 import { AppState } from '../../redux/store';
-import { fetchUser } from '../../redux/usersStack/actions';
+import {
+  fetchUser,
+  popUsersLayer,
+  setCurrentViewableListIndex,
+} from '../../redux/usersStack/actions';
+import { delay, checkPostListChanged } from '../../utils/functions';
+import { Post } from '../../models';
 
 class UserScreen extends Component<any, any> {
+  private unsubscribeDetectScreenGoBack: any;
+  private viewabilityConfig: {};
   constructor(props: any) {
     super(props);
-    this.state = {
-      user: this.props.route.params.user,
+    this.viewabilityConfig = {
+      minimumViewTime: 0,
+      itemVisiblePercentThreshold: 80,
     };
   }
 
-  componentDidMount() {
-    this.props.onFetchUser(this.state.user.id);
+  shouldComponentUpdate(nextProps: any) {
+    const { userLayer } = this.props;
+    if (userLayer && nextProps.userLayer) {
+      if (
+        (userLayer.posts.length === 0 ||
+          nextProps.userLayer.posts.length === 0) &&
+        userLayer.loading !== nextProps.userLayer.loading
+      ) {
+        return true;
+      }
+      if (checkPostListChanged(userLayer.posts, nextProps.userLayer.posts)) {
+        return true;
+      }
+      if (userLayer.error !== nextProps.userLayer.error) {
+        return true;
+      }
+    }
+    return false;
   }
 
-  render() {
-    const { user } = this.state;
-    console.log('user screen render');
+  async componentDidMount() {
+    this.unsubscribeDetectScreenGoBack = this.props.navigation.addListener(
+      'beforeRemove',
+      () => {
+        this.props.onPopUsersLayer();
+      },
+    );
+    await delay(500);
+    this.props.onFetchUser(this.props.route.params.user.id);
+  }
+
+  componentWillUnmount() {
+    this.unsubscribeDetectScreenGoBack();
+  }
+
+  onViewableItemsChanged = ({ viewableItems, _ }: any) => {
+    if (viewableItems && viewableItems.length > 0 && viewableItems[0]) {
+      this.props.onSetCurrentViewableListIndex(viewableItems[0].index);
+    }
+  };
+
+  renderItem = ({ item, index }: { item: Post; index: number }) => {
+    const { currentTabIndex } = this.props;
     return (
-      <View style={styles.container}>
+      <UserPostCard
+        index={index}
+        data={item}
+        isTabFocused={currentTabIndex ? currentTabIndex === 0 : true}
+      />
+    );
+  };
+
+  render() {
+    const { user } = this.props.route.params;
+    const { userLayer } = this.props;
+    console.log('user screen render');
+    if (!userLayer) {
+      return <View style={styles.container} />;
+    }
+
+    const header = (
+      <View>
         <View style={styles.header}>
           <View style={styles.avatarAndStats}>
-            <UserAvatar avatar={user.avatar} />
-            <UserStats postNum={222} followersNum={222} followingNum={222} />
+            <BigAvatar avatar={user.avatar} />
+            <View style={styles.statWrapper}>
+              <UserStats
+                postNum={userLayer.totalPosts}
+                followersNum={userLayer.followers}
+                followingNum={userLayer.following}
+              />
+              <TouchableWithoutFeedback>
+                <View style={styles.followBtn}>
+                  <Text style={{ textAlign: 'center', color: 'white' }}>
+                    {userLayer.isFollowed ? 'Unfollow' : 'Follow'}
+                  </Text>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
           </View>
-          <UserInfo name={this.props.user.name} bio={this.props.user.bio} />
+          <UserInfo name={userLayer.name} bio={userLayer.bio} />
         </View>
+        <View style={styles.divider}>
+          <MaterialCommunityIcons
+            name="card-text-outline"
+            size={20}
+            color="white"
+          />
+        </View>
+      </View>
+    );
+
+    if (userLayer.loading) {
+      return (
+        <View style={styles.container}>
+          <View>
+            <View style={styles.header}>
+              <View style={styles.avatarAndStats}>
+                <BigAvatar avatar={user.avatar} />
+                <View style={styles.statWrapper}>
+                  <UserStats postNum={0} followersNum={0} followingNum={0} />
+                  <TouchableWithoutFeedback>
+                    <View style={styles.followBtn}>
+                      <Text style={{ textAlign: 'center', color: 'white' }}>
+                        Follow
+                      </Text>
+                    </View>
+                  </TouchableWithoutFeedback>
+                </View>
+              </View>
+              <ActivityIndicator
+                size="small"
+                color="white"
+                style={{ marginTop: 14 }}
+              />
+            </View>
+            <View style={styles.divider}>
+              <MaterialCommunityIcons
+                name="card-text-outline"
+                size={20}
+                color="white"
+              />
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.container}>
+        <List
+          data={userLayer.posts}
+          renderItem={this.renderItem}
+          onViewableItemsChanged={this.onViewableItemsChanged}
+          onEndReached={() => console.log('end')}
+          viewabilityConfig={this.viewabilityConfig}
+          listHeaderComponent={header}
+          checkChangesToUpdate={checkPostListChanged}
+        />
       </View>
     );
   }
@@ -535,17 +674,48 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
   },
+  statWrapper: {
+    flexShrink: 1,
+    alignItems: 'center',
+  },
+  followBtn: {
+    backgroundColor: Colors.brightColor,
+    width: '80%',
+    paddingTop: 4,
+    paddingBottom: 4,
+    borderRadius: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+
+    elevation: 2,
+  },
+  divider: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomColor: Colors.brightColor,
+    borderBottomWidth: 2,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
 });
 
 const mapStateToProps = (state: AppState) => {
   const { currentTab } = state.usersStack;
   return {
-    user: state.usersStack[currentTab].top(),
+    userLayer: state.usersStack[currentTab].top(),
   };
 };
 
 const mapDispatchToProps = {
   onFetchUser: fetchUser,
+  onPopUsersLayer: popUsersLayer,
+  onSetCurrentViewableListIndex: setCurrentViewableListIndex,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(UserScreen);

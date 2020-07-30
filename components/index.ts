@@ -15,6 +15,9 @@ import UserResultCard from './UserResultCard';
 import Avatar from './Avatar';
 import InteractionSection from './InteractionSection';
 import CommentSection from './CommentSection';
+import BigAvatar from './BigAvatar';
+import UserStats from './UserStats';
+import UserInfo from './UserInfo';
 
 export {
   TextBox,
@@ -34,4 +37,7 @@ export {
   InteractionSection,
   ProfilePostList,
   UserResultCard,
+  BigAvatar,
+  UserStats,
+  UserInfo,
 };

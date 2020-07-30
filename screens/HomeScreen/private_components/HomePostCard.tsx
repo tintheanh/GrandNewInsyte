@@ -33,7 +33,7 @@ interface HomePostCardProps {
 }
 
 class HomePostCard extends Component<HomePostCardProps> {
-  state = { shouldPlayMedia: false };
+  state = { shouldPlayMedia: true };
   private onBlur: () => void = () => {};
   private onFocus: () => void = () => {};
 
@@ -192,6 +192,15 @@ interface HOCHomePostCardProps {
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
   onPushCommentsLayer: (postID: string) => void;
+  onPushUsersLayer: ({
+    id,
+    username,
+    avatar,
+  }: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => void;
 }
 
 export default connect(
