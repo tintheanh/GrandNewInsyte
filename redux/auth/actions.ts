@@ -25,13 +25,15 @@ import {
   EDIT_PROFILE_SUCCESS,
   INCREASE_TOTAL_POSTS_BY_ONE,
   DECREASE_TOTAL_POSTS_BY_ONE,
+  INCREASE_FOLLOWING_BY_ONE,
+  DECREASE_FOLLOWING_BY_ONE,
 } from './types';
 import { User } from '../../models';
 import {
   emailValidate,
   passwordValidate,
   fetchUser,
-  // delay,
+  delay,
   getCurrentUser,
 } from '../../utils/functions';
 import { AppState } from '../store';
@@ -305,7 +307,7 @@ export const checkAuth = () => async (
 ) => {
   dispatch(checkAuthStarted());
   try {
-    // await delay(2000);
+    // await delay(3000);
     const currentUser = await getCurrentUser();
     if (!currentUser) {
       return dispatch(checkAuthSuccess(null));
@@ -412,6 +414,24 @@ export const decreaseTotalPostsByOne = () => (
 ) => {
   dispatch({
     type: DECREASE_TOTAL_POSTS_BY_ONE,
+    payload: null,
+  });
+};
+
+export const increaseFollowingByOne = () => (
+  dispatch: (action: AuthAction) => void,
+) => {
+  dispatch({
+    type: INCREASE_FOLLOWING_BY_ONE,
+    payload: null,
+  });
+};
+
+export const decreaseFollowingByOne = () => (
+  dispatch: (action: AuthAction) => void,
+) => {
+  dispatch({
+    type: DECREASE_FOLLOWING_BY_ONE,
     payload: null,
   });
 };

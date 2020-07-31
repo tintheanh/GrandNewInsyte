@@ -24,7 +24,12 @@ import {
   setCurrentViewableListIndex,
   fetchMorePostsFromUser,
   followUser,
+  unfollowUser,
 } from '../../redux/usersStack/actions';
+import {
+  increaseFollowingByOne,
+  decreaseFollowingByOne,
+} from '../../redux/auth/actions';
 import { delay, checkPostListChanged } from '../../utils/functions';
 import { Post } from '../../models';
 
@@ -115,6 +120,12 @@ class UserScreen extends Component<any, any> {
 
   performFollow = () => {
     this.props.onFollowUser(this.props.route.params.user.id);
+    this.props.onIncreaseFollowingByOne();
+  };
+
+  performUnfollow = () => {
+    this.props.onUnfollowUser(this.props.route.params.user.id);
+    this.props.onDecreaseFollowingByOne();
   };
 
   render() {
@@ -136,7 +147,12 @@ class UserScreen extends Component<any, any> {
                 followersNum={userLayer.followers}
                 followingNum={userLayer.following}
               />
-              <TouchableWithoutFeedback onPress={this.performFollow}>
+              <TouchableWithoutFeedback
+                onPress={
+                  userLayer.isFollowed
+                    ? this.performUnfollow
+                    : this.performFollow
+                }>
                 <View
                   style={[
                     styles.followBtn,
@@ -231,6 +247,7 @@ class UserScreen extends Component<any, any> {
           refreshing={userLayer.loading}
           onRefresh={this.pullLoading}
           checkChangesToUpdate={checkPostListChanged}
+          extraData={userLayer}
         />
         <View style={styles.loadingWrapper}>
           <FooterLoading loading={userLayer.loading} />
@@ -312,6 +329,9 @@ const mapDispatchToProps = {
   onSetCurrentViewableListIndex: setCurrentViewableListIndex,
   onFetchMorePostsFromUser: fetchMorePostsFromUser,
   onFollowUser: followUser,
+  onUnfollowUser: unfollowUser,
+  onIncreaseFollowingByOne: increaseFollowingByOne,
+  onDecreaseFollowingByOne: decreaseFollowingByOne,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(UserScreen);

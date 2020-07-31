@@ -25,6 +25,8 @@ import {
   EDIT_PROFILE_SUCCESS,
   INCREASE_TOTAL_POSTS_BY_ONE,
   DECREASE_TOTAL_POSTS_BY_ONE,
+  INCREASE_FOLLOWING_BY_ONE,
+  DECREASE_FOLLOWING_BY_ONE,
 } from './types';
 import { User } from '../../models';
 
@@ -236,6 +238,20 @@ export default function authReducer(
       const newState = { ...state };
       if (newState.user) {
         newState.user.totalPosts -= 1;
+      }
+      return newState;
+    }
+    case INCREASE_FOLLOWING_BY_ONE: {
+      const newState = { ...state };
+      if (newState.user) {
+        newState.user.following += 1;
+      }
+      return newState;
+    }
+    case DECREASE_FOLLOWING_BY_ONE: {
+      const newState = { ...state };
+      if (newState.user) {
+        newState.user.following -= 1;
       }
       return newState;
     }

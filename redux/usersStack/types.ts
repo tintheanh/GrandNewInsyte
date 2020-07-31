@@ -22,6 +22,10 @@ export const FOLLOW_USER_STARTED = 'FOLLOW_USER_STARTED';
 export const FOLLOW_USER_SUCCESS = 'FOLLOW_USER_SUCCESS';
 export const FOLLOW_USER_FAILURE = 'FOLLOW_USER_FAILURE';
 
+export const UNFOLLOW_USER_STARTED = 'UNFOLLOW_USER_STARTED';
+export const UNFOLLOW_USER_SUCCESS = 'UNFOLLOW_USER_SUCCESS';
+export const UNFOLLOW_USER_FAILURE = 'UNFOLLOW_USER_FAILURE';
+
 export interface UsersStackAction {
   type: string;
   payload: any;

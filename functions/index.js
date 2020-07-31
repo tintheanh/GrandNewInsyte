@@ -168,3 +168,76 @@ exports.handleDeleteReply = functions.firestore
       },
     );
   });
+
+exports.handleFollow = functions.firestore
+  .document('users/{userId}/following_list/{followingId}')
+  .onCreate((snapshot, context) => {
+    const uid = context.params.userId;
+    const followedUID = context.params.followingId;
+    return admin
+      .database()
+      .ref(`users/${followedUID}/follower_list`)
+      .child(uid)
+      .set(1)
+      .then(async () => {
+        try {
+          const postSnapshots = await admin
+            .firestore()
+            .collection('posts')
+            .where('posted_by', '==', followedUID)
+            .where('privacy', 'in', ['followers', 'public'])
+            .get();
+          postSnapshots.forEach((doc) => {
+            admin
+              .database()
+              .ref(`users/${uid}/following_posts`)
+              .child(doc.id)
+              .set({
+                posted_by: followedUID,
+                date_posted: doc.data().date_posted,
+              })
+              .catch((err) => {});
+          });
+        } catch (err) {
+          console.log(err.code, err.message);
+        }
+      })
+      .catch((err) => console.log(err.code, err.message));
+  });
+
+exports.handleUnfollow = functions.firestore
+  .document('users/{userId}/following_list/{followingId}')
+  .onDelete((snapshot, context) => {
+    const uid = context.params.userId;
+    const unfollowedUID = context.params.followingId;
+    return admin
+      .database()
+      .ref(`users/${unfollowedUID}/follower_list`)
+      .child(uid)
+      .remove()
+      .then(async () => {
+        try {
+          const postSnapshots = await admin
+            .database()
+            .ref(`users/${uid}/following_posts`)
+            .once('value');
+          const postIDs = [];
+          postSnapshots.forEach((doc) => {
+            if (doc.val().posted_by === unfollowedUID) {
+              postIDs.push(doc.key);
+            }
+          });
+          postIDs.forEach((id) =>
+            admin
+              .database()
+              .ref(`users/${uid}/following_posts`)
+              .child(id)
+              .remove()
+              .catch((err) => {}),
+          );
+        } catch (err) {
+          console.log(err.code, err.message);
+        }
+      })
+      .catch((err) => console.log(err.code, err.message));
+  });

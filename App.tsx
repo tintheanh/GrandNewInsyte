@@ -4,8 +4,6 @@ import { Provider } from 'react-redux';
 import store from './redux/store';
 import RootStack from './stacks/RootStack';
 
-// declare const global: { HermesInternal: null | {} };
-
 function App() {
   return (
     <Provider store={store}>

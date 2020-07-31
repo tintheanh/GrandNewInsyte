@@ -12,6 +12,9 @@ import {
   FOLLOW_USER_FAILURE,
   FOLLOW_USER_STARTED,
   FOLLOW_USER_SUCCESS,
+  UNFOLLOW_USER_FAILURE,
+  UNFOLLOW_USER_STARTED,
+  UNFOLLOW_USER_SUCCESS,
   CLEAR_STACK,
   UsersStackAction,
   CurrentTab,
@@ -249,6 +252,42 @@ export const followUser = (followingUserID: string) => async (
   }
 };
 
+export const unfollowUser = (followingUserID: string) => async (
+  dispatch: (action: UsersStackAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  if (!user) {
+    return dispatch(
+      unfollowUserFailure(new Error('Unauthorized. Please sign in.')),
+    );
+  }
+  dispatch(unfollowUserStarted());
+  try {
+    const myselfRef = fsDB.collection('users').doc(user.id);
+    const userRef = fsDB.collection('users').doc(followingUserID);
+    await fsDB.runTransaction(async (trans) => {
+      const myselfDoc = await trans.get(myselfRef);
+      const newFollowing = myselfDoc.data()!.following - 1;
+      trans.update(myselfRef, { following: newFollowing });
+      const userDoc = await trans.get(userRef);
+      const newFollowers = userDoc.data()!.followers - 1;
+      trans.update(userRef, { followers: newFollowers });
+      // throw new Error('dummy');
+      const followingRef = fsDB
+        .collection('users')
+        .doc(user.id)
+        .collection('following_list')
+        .doc(followingUserID);
+      trans.delete(followingRef);
+    });
+    dispatch(unfollowUserSuccess());
+  } catch (err) {
+    console.log(err.message);
+    dispatch(unfollowUserFailure(err));
+  }
+};
+
 /* ------------------- user dispatches ------------------ */
 
 const fetchUserStarted = (): UsersStackAction => ({
@@ -296,6 +335,21 @@ const followUserSuccess = (): UsersStackAction => ({
 
 const followUserFailure = (error: Error): UsersStackAction => ({
   type: FOLLOW_USER_FAILURE,
+  payload: error,
+});
+
+const unfollowUserStarted = (): UsersStackAction => ({
+  type: UNFOLLOW_USER_STARTED,
+  payload: null,
+});
+
+const unfollowUserSuccess = (): UsersStackAction => ({
+  type: UNFOLLOW_USER_SUCCESS,
+  payload: null,
+});
+
+const unfollowUserFailure = (error: Error): UsersStackAction => ({
+  type: UNFOLLOW_USER_FAILURE,
   payload: error,
 });
 

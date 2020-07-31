@@ -3,7 +3,6 @@ import {
   createStackNavigator,
   HeaderBackButton,
 } from '@react-navigation/stack';
-import { useNavigation } from '@react-navigation/native';
 import { connect } from 'react-redux';
 import {
   HomeScreen,
@@ -13,6 +12,7 @@ import {
   ProfileScreen,
 } from '../screens';
 import { Colors } from '../constants';
+import SearchBar from '../screens/HomeScreen/private_components/SearchBar';
 import { popCommentsLayer } from '../redux/commentsStack/actions';
 
 const Stack = createStackNavigator();
@@ -54,7 +54,10 @@ export default connect(
       <Stack.Screen
         name="HomeScreen"
         component={HomeScreen}
-        options={{ headerTitle: 'Home' }}
+        options={{
+          headerTitle: (props) => <SearchBar {...props} />,
+          title: 'Home',
+        }}
       />
       <Stack.Screen
         name="PostScreen"
