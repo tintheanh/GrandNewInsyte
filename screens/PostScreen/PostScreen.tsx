@@ -34,6 +34,7 @@ import {
   decreaseCommentsBy,
   increaseCommentsBy,
 } from '../../redux/posts/actions';
+import { pushUsersLayer } from '../../redux/usersStack/actions';
 import { AppState } from '../../redux/store';
 import { Post, Comment } from '../../models';
 
@@ -86,20 +87,33 @@ interface PostScreenProps {
     postID: string,
     numberOfReplies: number,
   ) => void;
+  onPushUsersLayer: ({
+    id,
+    username,
+    avatar,
+  }: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => void;
 }
 
 interface PostScreenState {
   post: Post;
   numberOfRepliesAndCommentDeleted: number;
+  shouldPlayMedia: boolean;
 }
 
 class PostScreen extends Component<PostScreenProps, PostScreenState> {
   private unsubscribeDetectScreenGoBack: any;
+  private onBlur: () => void = () => {};
+  private onFocus: () => void = () => {};
   constructor(props: PostScreenProps) {
     super(props);
     this.state = {
       post: this.props.route.params.data,
       numberOfRepliesAndCommentDeleted: 0,
+      shouldPlayMedia: true,
     };
   }
 
@@ -118,6 +132,9 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
       likePostError,
       unlikePostError,
     } = this.props;
+    if (this.state.shouldPlayMedia !== nextState.shouldPlayMedia) {
+      return true;
+    }
     if (loading !== nextProps.loading) {
       return true;
     }
@@ -166,6 +183,12 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         onPopCommentsLayer();
       },
     );
+    this.onBlur = navigation.addListener('blur', () => {
+      this.setState({ shouldPlayMedia: false });
+    });
+    this.onFocus = navigation.addListener('focus', () => {
+      this.setState({ shouldPlayMedia: true });
+    });
     const postID = this.state.post.id;
     await delay(500);
     onFetchNewComments(postID);
@@ -173,17 +196,32 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
 
   componentWillUnmount() {
     this.unsubscribeDetectScreenGoBack();
+    this.onBlur();
+    this.onFocus();
   }
 
-  toUserScreen = () => {
-    // const { navigation, route } = this.props;
-    // const post = route.params.data;
-    // const { post } = this.state;
-    // this.props.navigation.push('User', {
-    //   title: post.user.username,
-    //   avatar: post.user.avatar,
-    // });
-    console.log('to user screen');
+  toUserScreen = (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => {
+    const { currentUID, navigation } = this.props;
+    if (currentUID !== user.id) {
+      this.props.onPushUsersLayer({
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      });
+      navigation.push('UserScreen', {
+        title: user.username,
+        user,
+      });
+    } else {
+      navigation.push('ProfileScreen', {
+        title: user.username,
+        user,
+      });
+    }
   };
 
   /* -------------------- post methods -------------------- */
@@ -388,6 +426,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         unlikeComment={this.performUnlikeComment(item.id)}
         decreaseCommentsForPostScreenBy={this.decreaseCommentsForPostScreenBy}
         increaseCommentsForPostScreenBy={this.increaseCommentsForPostScreenBy}
+        navigateToUserScreen={this.toUserScreen(item.user)}
       />
     );
   };
@@ -411,10 +450,11 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         post={post}
         likePost={this.performLikePost}
         unLikePost={this.performUnlikePost}
-        navigateWhenClickOnUsernameOrAvatar={this.toUserScreen}
+        navigateWhenClickOnUsernameOrAvatar={this.toUserScreen(post.user)}
         userControl={
           post.user.id === currentUID ? this.userControlForPost : undefined
         }
+        shouldPlayMedia={this.state.shouldPlayMedia}
       />
     );
 
@@ -483,7 +523,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
           maxToRenderPerBatch={5}
           windowSize={undefined}
           listFooterComponent={<View style={{ height: 136 }} />}
-          extraData={post}
+          extraData={{ post, shouldPlayMedia: this.state.shouldPlayMedia }}
         />
         {currentUID !== undefined ? commentInput : null}
         <View style={styles.loadingWrapper}>
@@ -561,6 +601,7 @@ const mapDispatchToProps = {
   onDeleteComment: deleteComment,
   onDecreaseCommentsForHomeScreenBy: decreaseCommentsBy,
   onIncreaseCommentsForHomeScreen: increaseCommentsBy,
+  onPushUsersLayer: pushUsersLayer,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(PostScreen);

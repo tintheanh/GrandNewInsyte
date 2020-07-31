@@ -30,6 +30,7 @@ interface CommentCardProps {
   onPushRepliesLayer: (id: string) => void;
   decreaseCommentsForPostScreenBy: (numberOfReplies: number) => void;
   increaseCommentsForPostScreenBy: (numberOfReplies: number) => void;
+  navigateToUserScreen?: () => void;
 }
 
 function CommentCard(props: CommentCardProps) {
@@ -48,6 +49,7 @@ function CommentCard(props: CommentCardProps) {
     isLiked,
     decreaseCommentsForPostScreenBy,
     increaseCommentsForPostScreenBy,
+    navigateToUserScreen,
   } = props;
 
   const toReplyScreen = () => {
@@ -78,16 +80,14 @@ function CommentCard(props: CommentCardProps) {
               : 1,
         },
       ]}>
-      <Avatar
-        avatar={user.avatar}
-        onPress={() => console.log('to user screeen')}
-      />
+      <Avatar avatar={user.avatar} onPress={navigateToUserScreen} />
       <View style={{ marginLeft: 12 }}>
         <CommentSection
           username={user.username}
           datePosted={datePosted}
           content={content}
           userControl={userControl}
+          navigateToUserScreen={navigateToUserScreen}
         />
         <InteractionSection
           likes={likes}

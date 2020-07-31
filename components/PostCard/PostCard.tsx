@@ -31,7 +31,13 @@ interface PostCardProps {
 
 export default class PostCard extends Component<PostCardProps> {
   shouldComponentUpdate(nextProps: PostCardProps) {
-    const { data, currentViewableIndex, index, isTabFocused } = this.props;
+    const {
+      data,
+      currentViewableIndex,
+      index,
+      isTabFocused,
+      shouldPlayMedia,
+    } = this.props;
 
     if (checkPostChanged(data, nextProps.data)) {
       return true;
@@ -45,6 +51,9 @@ export default class PostCard extends Component<PostCardProps> {
       return false;
     }
     if (isTabFocused !== nextProps.isTabFocused) {
+      return true;
+    }
+    if (shouldPlayMedia !== nextProps.shouldPlayMedia) {
       return true;
     }
     if (currentViewableIndex === nextProps.currentViewableIndex) {

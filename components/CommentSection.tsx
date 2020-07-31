@@ -8,6 +8,7 @@ interface CommentSectionProps {
   datePosted: number;
   content: string;
   userControl?: undefined | (() => void);
+  navigateToUserScreen?: () => void;
 }
 
 export default function CommentSection({
@@ -15,12 +16,12 @@ export default function CommentSection({
   datePosted,
   content,
   userControl,
+  navigateToUserScreen,
 }: CommentSectionProps) {
   return (
     <View>
       <View style={{ flexDirection: 'row' }}>
-        <TouchableWithoutFeedback
-          onPress={() => console.log('to user profile')}>
+        <TouchableWithoutFeedback onPress={navigateToUserScreen}>
           <Text style={styles.username}>{username}</Text>
         </TouchableWithoutFeedback>
         <Text style={styles.date}>{convertTime(datePosted)}</Text>

@@ -3,7 +3,7 @@ import { Image, TouchableWithoutFeedback } from 'react-native';
 
 interface AvatarProps {
   avatar: string;
-  onPress: () => void;
+  onPress?: () => void;
 }
 
 export default React.memo(

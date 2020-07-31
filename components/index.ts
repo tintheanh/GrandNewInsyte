@@ -18,6 +18,7 @@ import CommentSection from './CommentSection';
 import BigAvatar from './BigAvatar';
 import UserStats from './UserStats';
 import UserInfo from './UserInfo';
+import FooterLoading from './FooterLoading';
 
 export {
   TextBox,
@@ -35,6 +36,7 @@ export {
   ReplyCard,
   NothingView,
   InteractionSection,
+  FooterLoading,
   ProfilePostList,
   UserResultCard,
   BigAvatar,

@@ -25,6 +25,7 @@ import { Post } from '../../../models';
 
 interface PostSectionProps {
   post: Post;
+  shouldPlayMedia: boolean;
   navigateWhenClickOnUsernameOrAvatar?: () => void;
   likePost: () => void;
   unLikePost: () => void;
@@ -34,6 +35,7 @@ interface PostSectionProps {
 export default React.memo(
   function PostSection({
     post,
+    shouldPlayMedia,
     navigateWhenClickOnUsernameOrAvatar = undefined,
     userControl = undefined,
     likePost,
@@ -129,7 +131,9 @@ export default React.memo(
             return <Text key={i}>{element.value} </Text>;
           })}
         </Text>
-        {media.length ? <Carousel items={media} shouldPlayMedia /> : null}
+        {media.length ? (
+          <Carousel items={media} shouldPlayMedia={shouldPlayMedia} />
+        ) : null}
         <View style={styles.interactionSection}>
           <View style={styles.likeAndComment}>
             <TouchableWithoutFeedback onPress={isLiked ? unLikePost : likePost}>
@@ -161,6 +165,9 @@ export default React.memo(
     );
   },
   (prevProps, nextProps) => {
+    if (prevProps.shouldPlayMedia !== nextProps.shouldPlayMedia) {
+      return false;
+    }
     if (prevProps.post.likes !== nextProps.post.likes) {
       return false;
     }

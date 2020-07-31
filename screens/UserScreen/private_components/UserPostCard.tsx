@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { PostCard } from '../../../components';
 import { likePost, unlikePost } from '../../../redux/posts/actions';
+import { pushCommentsLayer } from '../../../redux/commentsStack/actions';
 import { AppState } from '../../../redux/store';
 import { Post } from '../../../models';
 import { checkPostChanged } from '../../../utils/functions';
@@ -15,10 +16,11 @@ interface UserPostCardProps {
   isTabFocused: boolean;
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
+  onPushCommentsLayer: (postID: string) => void;
 }
 
 class UserPostCard extends Component<UserPostCardProps> {
-  state = { shouldPlayMedia: false };
+  state = { shouldPlayMedia: true };
   private onBlur: () => void = () => {};
   private onFocus: () => void = () => {};
 
@@ -67,17 +69,10 @@ class UserPostCard extends Component<UserPostCardProps> {
 
   navigateToPost = () => {
     const { navigation, data } = this.props;
+    this.props.onPushCommentsLayer(data.id);
     navigation.push('PostScreen', {
       data,
       title: `${data.user.username}'s post`,
-    });
-  };
-
-  navigateToUserProfile = () => {
-    const { navigation, data } = this.props;
-    navigation.push('User', {
-      title: data.user.username,
-      avatar: data.user.avatar,
     });
   };
 
@@ -102,7 +97,6 @@ class UserPostCard extends Component<UserPostCardProps> {
         performLikePost={this.performLikePost}
         performUnlikePost={this.performUnlikePost}
         navigateWhenClickOnPostOrComment={this.navigateToPost}
-        navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
       />
     );
   }
@@ -115,6 +109,7 @@ interface HOCHomePostCardProps {
   isTabFocused: boolean;
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
+  onPushCommentsLayer: (postID: string) => void;
 }
 
 const mapStateToProps = (state: AppState) => {
@@ -127,7 +122,14 @@ const mapStateToProps = (state: AppState) => {
   };
 };
 
-export default connect(mapStateToProps)(
+const mapDispatchToProps = {
+  onPushCommentsLayer: pushCommentsLayer,
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(
   React.memo(
     function (props: HOCHomePostCardProps) {
       const navigation = useNavigation();

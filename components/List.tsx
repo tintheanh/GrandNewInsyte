@@ -20,6 +20,7 @@ interface ListProps {
   onEndReached?: () => void;
   listHeaderComponent?: JSX.Element;
   listFooterComponent?: JSX.Element;
+  listEmptyComponent?: JSX.Element;
   onEndReachedThreshold?: number;
   keyboardShouldPersistTaps?: 'always' | 'never' | 'handled';
   checkChangesToUpdate: (
@@ -99,6 +100,7 @@ export default class List extends Component<ListProps> {
       onEndReachedThreshold = 0.5,
       listFooterComponent = undefined,
       refreshing = false,
+      listEmptyComponent,
       renderItem,
       onRefresh,
       extraData,
@@ -123,6 +125,7 @@ export default class List extends Component<ListProps> {
           onEndReachedThreshold={onEndReachedThreshold}
           ListHeaderComponent={listHeaderComponent}
           ListFooterComponent={listFooterComponent}
+          ListEmptyComponent={listEmptyComponent}
           keyboardShouldPersistTaps={keyboardShouldPersistTaps}
           refreshControl={
             onRefresh ? (
