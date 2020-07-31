@@ -23,6 +23,7 @@ import {
   popUsersLayer,
   setCurrentViewableListIndex,
   fetchMorePostsFromUser,
+  followUser,
 } from '../../redux/usersStack/actions';
 import { delay, checkPostListChanged } from '../../utils/functions';
 import { Post } from '../../models';
@@ -49,6 +50,12 @@ class UserScreen extends Component<any, any> {
         return true;
       }
       if (userLayer.loading !== nextProps.userLayer.loading) {
+        return true;
+      }
+      if (userLayer.isFollowed !== nextProps.userLayer.isFollowed) {
+        return true;
+      }
+      if (userLayer.followers !== nextProps.userLayer.followers) {
         return true;
       }
       if (checkPostListChanged(userLayer.posts, nextProps.userLayer.posts)) {
@@ -106,6 +113,10 @@ class UserScreen extends Component<any, any> {
     this.props.onFetchUser(this.props.route.params.user.id);
   };
 
+  performFollow = () => {
+    this.props.onFollowUser(this.props.route.params.user.id);
+  };
+
   render() {
     const { user } = this.props.route.params;
     const { userLayer } = this.props;
@@ -125,7 +136,7 @@ class UserScreen extends Component<any, any> {
                 followersNum={userLayer.followers}
                 followingNum={userLayer.following}
               />
-              <TouchableWithoutFeedback>
+              <TouchableWithoutFeedback onPress={this.performFollow}>
                 <View
                   style={[
                     styles.followBtn,
@@ -163,7 +174,7 @@ class UserScreen extends Component<any, any> {
                 <BigAvatar avatar={user.avatar} />
                 <View style={styles.statWrapper}>
                   <UserStats postNum={0} followersNum={0} followingNum={0} />
-                  <TouchableWithoutFeedback>
+                  <TouchableWithoutFeedback disabled>
                     <View
                       style={[
                         styles.followBtn,
@@ -300,6 +311,7 @@ const mapDispatchToProps = {
   onPopUsersLayer: popUsersLayer,
   onSetCurrentViewableListIndex: setCurrentViewableListIndex,
   onFetchMorePostsFromUser: fetchMorePostsFromUser,
+  onFollowUser: followUser,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(UserScreen);

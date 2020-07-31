@@ -18,6 +18,10 @@ export const FETCH_MORE_POSTS_FROM_USER_SUCCESS =
 export const FETCH_MORE_POSTS_FROM_USER_FAILURE =
   'FETCH_MORE_POSTS_FROM_USER_FAILURE';
 
+export const FOLLOW_USER_STARTED = 'FOLLOW_USER_STARTED';
+export const FOLLOW_USER_SUCCESS = 'FOLLOW_USER_SUCCESS';
+export const FOLLOW_USER_FAILURE = 'FOLLOW_USER_FAILURE';
+
 export interface UsersStackAction {
   type: string;
   payload: any;

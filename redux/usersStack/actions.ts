@@ -9,6 +9,9 @@ import {
   FETCH_MORE_POSTS_FROM_USER_FAILURE,
   FETCH_MORE_POSTS_FROM_USER_STARTED,
   FETCH_MORE_POSTS_FROM_USER_SUCCESS,
+  FOLLOW_USER_FAILURE,
+  FOLLOW_USER_STARTED,
+  FOLLOW_USER_SUCCESS,
   CLEAR_STACK,
   UsersStackAction,
   CurrentTab,
@@ -206,6 +209,46 @@ export const fetchMorePostsFromUser = (
   }
 };
 
+export const followUser = (followingUserID: string) => async (
+  dispatch: (action: UsersStackAction) => void,
+  getState: () => AppState,
+) => {
+  const { user } = getState().auth;
+  if (!user) {
+    return dispatch(
+      followUserFailure(new Error('Unauthorized. Please sign in.')),
+    );
+  }
+  dispatch(followUserStarted());
+  try {
+    const myselfRef = fsDB.collection('users').doc(user.id);
+    const userRef = fsDB.collection('users').doc(followingUserID);
+    await fsDB.runTransaction(async (trans) => {
+      const myselfDoc = await trans.get(myselfRef);
+      const newFollowing = myselfDoc.data()!.following + 1;
+      trans.update(myselfRef, { following: newFollowing });
+      const userDoc = await trans.get(userRef);
+      const newFollowers = userDoc.data()!.followers + 1;
+      trans.update(userRef, { followers: newFollowers });
+      // throw new Error('dummy');
+      const followingRef = fsDB
+        .collection('users')
+        .doc(user.id)
+        .collection('following_list')
+        .doc(followingUserID);
+      const following = await followingRef.get();
+      if (following.exists) {
+        throw new Error('Invalid operation.');
+      }
+      trans.set(followingRef, { c: 1 });
+    });
+    dispatch(followUserSuccess());
+  } catch (err) {
+    console.log(err.message);
+    dispatch(followUserFailure(err));
+  }
+};
+
 /* ------------------- user dispatches ------------------ */
 
 const fetchUserStarted = (): UsersStackAction => ({
@@ -238,6 +281,21 @@ const fetchMorePostsFromUserSuccess = (
 
 const fetchMorePostsFromUserFailure = (error: Error): UsersStackAction => ({
   type: FETCH_MORE_POSTS_FROM_USER_FAILURE,
+  payload: error,
+});
+
+const followUserStarted = (): UsersStackAction => ({
+  type: FOLLOW_USER_STARTED,
+  payload: null,
+});
+
+const followUserSuccess = (): UsersStackAction => ({
+  type: FOLLOW_USER_SUCCESS,
+  payload: null,
+});
+
+const followUserFailure = (error: Error): UsersStackAction => ({
+  type: FOLLOW_USER_FAILURE,
   payload: error,
 });
 

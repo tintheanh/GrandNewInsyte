@@ -9,6 +9,9 @@ import {
   FETCH_MORE_POSTS_FROM_USER_FAILURE,
   FETCH_MORE_POSTS_FROM_USER_STARTED,
   FETCH_MORE_POSTS_FROM_USER_SUCCESS,
+  FOLLOW_USER_FAILURE,
+  FOLLOW_USER_STARTED,
+  FOLLOW_USER_SUCCESS,
   CLEAR_STACK,
   CurrentTab,
   UsersStackAction,
@@ -63,6 +66,7 @@ export default function commentsStackReducer(
         totalPosts: 0,
         isFollowed: false,
         error: null,
+        followError: null,
         loading: false,
         lastVisible: null,
         currentViewableIndex: 0,
@@ -161,6 +165,39 @@ export default function commentsStackReducer(
       if (topLayer) {
         topLayer.loading = false;
         topLayer.error = action.payload as Error;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case FOLLOW_USER_STARTED: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = UsersStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.followError = null;
+        topLayer.isFollowed = true;
+        topLayer.followers += 1;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case FOLLOW_USER_SUCCESS: {
+      return state;
+    }
+    case FOLLOW_USER_FAILURE: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = UsersStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.followError = action.payload as Error;
+        topLayer.isFollowed = false;
+        topLayer.followers -= 1;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
       }
       return newState;
     }

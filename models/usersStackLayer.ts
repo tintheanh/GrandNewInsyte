@@ -12,6 +12,7 @@ export default interface UsersStackLayer {
   totalPosts: number;
   isFollowed: boolean;
   error: Error | null;
+  followError: Error | null;
   loading: boolean;
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
   currentViewableIndex: number;
