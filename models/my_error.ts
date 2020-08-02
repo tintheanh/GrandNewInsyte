@@ -5,6 +5,7 @@ export enum MyErrorCodes {
   UsernameFailed = 'username-failed',
   PasswordsDontMatch = 'passwords-dont-match',
   DataNotFound = 'data-not-found',
+  NotAuthenticated = 'not-authenticated',
 }
 
 /**

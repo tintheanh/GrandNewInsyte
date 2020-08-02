@@ -1,71 +1,4 @@
-import {
-  FETCH_PUBLIC_NEWPOSTS_STARTED,
-  FETCH_PUBLIC_NEWPOSTS_SUCCESS,
-  FETCH_PUBLIC_NEWPOSTS_FAILURE,
-  FETCH_PUBLIC_NEWPOSTS_END,
-  PULL_TO_FETCH_PUBLIC_NEWPOSTS_FAILURE,
-  PULL_TO_FETCH_PUBLIC_NEWPOSTS_STARTED,
-  PULL_TO_FETCH_PUBLIC_NEWPOSTS_SUCCESS,
-  FETCH_PUBLIC_HOTPOSTS_END,
-  FETCH_PUBLIC_HOTPOSTS_FAILURE,
-  FETCH_PUBLIC_HOTPOSTS_STARTED,
-  FETCH_PUBLIC_HOTPOSTS_SUCCESS,
-  PULL_TO_FETCH_PUBLIC_HOTPOSTS_FAILURE,
-  PULL_TO_FETCH_PUBLIC_HOTPOSTS_STARTED,
-  PULL_TO_FETCH_PUBLIC_HOTPOSTS_SUCCESS,
-  FETCH_FOLLOWING_NEWPOSTS_STARTED,
-  FETCH_FOLLOWING_NEWPOSTS_SUCCESS,
-  FETCH_FOLLOWING_NEWPOSTS_FAILURE,
-  FETCH_FOLLOWING_NEWPOSTS_END,
-  PULL_TO_FETCH_FOLLOWING_NEWPOSTS_FAILURE,
-  PULL_TO_FETCH_FOLLOWING_NEWPOSTS_STARTED,
-  PULL_TO_FETCH_FOLLOWING_NEWPOSTS_SUCCESS,
-  FETCH_FOLLOWING_HOTPOSTS_END,
-  FETCH_FOLLOWING_HOTPOSTS_FAILURE,
-  FETCH_FOLLOWING_HOTPOSTS_STARTED,
-  FETCH_FOLLOWING_HOTPOSTS_SUCCESS,
-  PULL_TO_FETCH_FOLLOWING_HOTPOSTS_FAILURE,
-  PULL_TO_FETCH_FOLLOWING_HOTPOSTS_STARTED,
-  PULL_TO_FETCH_FOLLOWING_HOTPOSTS_SUCCESS,
-  FETCH_USER_POSTS_FAILURE,
-  FETCH_USER_POSTS_STARTED,
-  FETCH_USER_POSTS_SUCCESS,
-  FETCH_USER_POSTS_END,
-  PULL_TO_FETCH_USER_POSTS_FAILURE,
-  PULL_TO_FETCH_USER_POSTS_STARTED,
-  PULL_TO_FETCH_USER_POSTS_SUCCESS,
-  FETCH_TAGGED_POSTS_END,
-  FETCH_TAGGED_POSTS_FAILURE,
-  FETCH_TAGGED_POSTS_STARTED,
-  FETCH_TAGGED_POSTS_SUCCESS,
-  PULL_TO_FETCH_TAGGED_POSTS_FAILURE,
-  PULL_TO_FETCH_TAGGED_POSTS_STARTED,
-  PULL_TO_FETCH_TAGGED_POSTS_SUCCESS,
-  PostAction,
-  SET_PUBLIC_HOTTIME,
-  SET_FOLLOWING_HOTTIME,
-  SET_PUBLIC_FEED_CHOICE,
-  SET_FOLLOWING_FEED_CHOICE,
-  CREATE_POST_FAILURE,
-  CREATE_POST_STARTED,
-  CREATE_POST_SUCCESS,
-  DELETE_POST_FAILURE,
-  DELETE_POST_STARTED,
-  DELETE_POST_SUCCESS,
-  LIKE_POST_STARTED,
-  LIKE_POST_FAILURE,
-  LIKE_POST_SUCCESS,
-  UNLIKE_POST_FAILURE,
-  UNLIKE_POST_STARTED,
-  UNLIKE_POST_SUCCESS,
-  INCREASE_COMMENTS_BY_NUMBER,
-  DECREASE_COMMENTS_BY_NUMBER,
-  CLEAR_CREATE_POST_ERROR,
-  CLEAR_DELETE_POST_ERROR,
-  CLEAR_LIKE_POST_ERROR,
-  CLEAR_UNLIKE_POST_ERROR,
-  CLEAR,
-} from './types';
+import { PostAction, DispatchTypes } from './types';
 import { Post } from '../../models';
 import {
   fsDB,
@@ -77,13 +10,14 @@ import {
 import { AppState } from '../store';
 import {
   getCurrentUnixTime,
-  docFStoPostArray,
+  FSdocsToPostArray,
   docFBtoPostArray,
   uploadMedia,
   delay,
   deleteMedia,
   convertTime,
 } from '../../utils/functions';
+import { MyError, MyErrorCodes } from '../../models';
 import {
   pendingDeletePostFlag,
   pendingPostID,
@@ -95,28 +29,17 @@ import {
 
 /* ---------------- public posts methods ---------------- */
 
+/**
+ * Method fetch public new posts by batch
+ */
 export const fetchPublicNewPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
-  // console.log('fetch public new');
   dispatch(fetchPublicNewPostsStarted());
   try {
-    // await delay(500);
-    // const percent = Math.floor(Math.random() * 100);
-    // console.log(percent);
-    // if (percent > 50) throw new Error('dummy error');
-    // throw new Error('dummy error');
-
-    const { lastNewVisible } = getState().allPosts.public;
-    const { user } = getState().auth;
-    const currentUser = {
-      id: user?.id,
-      username: user?.username,
-      avatar: user?.avatar,
-    };
-
     let query: FirebaseFirestoreTypes.Query;
+    const { lastNewVisible } = getState().allPosts.public;
     if (lastNewVisible === 0) {
       query = fsDB
         .collection('posts')
@@ -134,44 +57,51 @@ export const fetchPublicNewPosts = () => async (
 
     const documentSnapshots = await query.get();
 
-    if (documentSnapshots.size === 0) {
-      return dispatch(fetchPublicNewPostsEnd());
+    if (documentSnapshots.empty) {
+      return dispatch(fetchPublicNewPostsSuccess([], lastNewVisible));
     }
 
-    const newPosts = await docFStoPostArray(
+    // get post array from firestore docs
+    const { user } = getState().auth;
+    let currentUser = null;
+    if (user) {
+      currentUser = {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      };
+    }
+    const newPosts = await FSdocsToPostArray(
       documentSnapshots.docs,
       currentUser,
     );
 
     if (newPosts.length === 0) {
-      return dispatch(fetchPublicNewPostsEnd());
+      return dispatch(fetchPublicNewPostsSuccess([], lastNewVisible));
     }
 
     const newLastNewVisible = newPosts[newPosts.length - 1].datePosted;
 
     dispatch(fetchPublicNewPostsSuccess(newPosts, newLastNewVisible));
   } catch (err) {
-    console.log(err.message);
-    dispatch(fetchPublicNewPostsFailure(new Error('Internal server error')));
+    dispatch(
+      fetchPublicNewPostsFailure(
+        new Error('Error occurred. Please try again.'),
+      ),
+    );
   }
 };
 
+/**
+ * Method refetch public new posts when pulling list
+ */
 export const pullToFetchPublicNewPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(pullToFetchPublicNewPostsStarted());
   try {
-    // await delay(3000);
-    const { user } = getState().auth;
-    const currentPosts = getState().allPosts.public.posts;
-    const createPostLoading = getState().allPosts.createPost.loading;
-    const deletePostLoading = getState().allPosts.deletePost.loading;
-    const currentUser = {
-      id: user?.id,
-      username: user?.username,
-      avatar: user?.avatar,
-    };
+    const { lastNewVisible } = getState().allPosts.public;
     const documentSnapshots = await fsDB
       .collection('posts')
       .where('privacy', '==', 'public')
@@ -179,88 +109,114 @@ export const pullToFetchPublicNewPosts = () => async (
       .limit(postsPerBatch)
       .get();
 
-    if (documentSnapshots.size === 0) {
-      return dispatch(fetchPublicNewPostsEnd());
+    if (documentSnapshots.empty) {
+      return dispatch(fetchPublicNewPostsSuccess([], lastNewVisible));
     }
 
-    const newPosts = await docFStoPostArray(
+    // get post array from firestore docs
+    const { user } = getState().auth;
+    let currentUser = null;
+    if (user) {
+      currentUser = {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      };
+    }
+    const newPosts = await FSdocsToPostArray(
       documentSnapshots.docs,
       currentUser,
     );
 
     if (newPosts.length === 0) {
-      return dispatch(fetchPublicNewPostsEnd());
+      return dispatch(fetchPublicNewPostsSuccess([], lastNewVisible));
     }
 
-    // Keep pending-delete and pending posts
+    /**
+     * Because pending-delete posts might still be in the post list,
+     * newly fetched posts can be duplicates with pending-delete
+     * posts and appear twice in the post list
+     *
+     * Solution: get all pending-delete posts' original ids then filter
+     * them out of newly fetched posts + current posts to get a post list
+     * with no duplicates
+     */
+
+    const currentPosts = getState().allPosts.public.posts;
+
+    // keep pending-delete and pending posts
     const pendingPosts = currentPosts.filter(
       (post) =>
         post.id === pendingPostID || post.id.includes(pendingDeletePostFlag),
     );
 
-    let allPosts = [];
+    let finalPosts = [];
     if (pendingPosts.length > 0) {
-      // Because pending-delete posts might be still in the post list, newly fetched
-      // posts might be duplicates with pending-delete posts and appear twice
-      // in the post list
-      // Solution: get all pending-delete post ids then filter the newly fetched
-      // posts from them to get new posts with no duplicates
+      // get pending-delete post ids from pending posts
       const pendingDeletePostIDs = pendingPosts
         .filter((post) => post.id.includes(pendingDeletePostFlag))
         .map((post) => {
           const splited = post.id.split(pendingDeletePostFlag);
           return splited[0];
         });
+
+      // merge with newly fetched posts
       const mergedPosts = newPosts.concat(pendingPosts);
+
+      // filter pending-delete post ids out of merged post list
       const postsWithNoDuplicateWithPendingDeletePosts = mergedPosts.filter(
         (post) => !pendingDeletePostIDs.includes(post.id),
       );
       const sortedByDate = postsWithNoDuplicateWithPendingDeletePosts.sort(
         (a, b) => b.datePosted - a.datePosted,
       );
-      allPosts = sortedByDate;
+      finalPosts = sortedByDate;
     } else {
-      allPosts = newPosts;
+      finalPosts = newPosts;
     }
 
-    // While absolutely no post is being created or deleted,
-    // wipe out all remaining pending posts
+    /**
+     * while absolutely no post is being created or deleted,
+     * wipe out all remaining pending posts
+     */
+    const createPostLoading = getState().allPosts.createPost.loading;
+    const deletePostLoading = getState().allPosts.deletePost.loading;
     if (createPostLoading === false && deletePostLoading === false) {
-      const noPending = allPosts.filter(
+      const noPending = finalPosts.filter(
         (post) =>
           post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
       );
-      allPosts = noPending;
+      finalPosts = noPending;
     }
 
-    const newLastNewVisible = allPosts[allPosts.length - 1].datePosted;
+    const newLastNewVisible = finalPosts[finalPosts.length - 1].datePosted;
 
-    dispatch(pullToFetchPublicNewPostsSuccess(allPosts, newLastNewVisible));
+    dispatch(pullToFetchPublicNewPostsSuccess(finalPosts, newLastNewVisible));
   } catch (err) {
-    console.log(err.message);
     dispatch(
-      pullToFetchPublicNewPostsFailure(new Error('Internal server error')),
+      pullToFetchPublicNewPostsFailure(
+        new Error('Error occurred. Please try again.'),
+      ),
     );
   }
 };
 
+/**
+ * Method fetch public hot posts by batch
+ * from 1 week/month/year ago
+ */
 export const fetchPublicHotPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(fetchPublicHotPostsStarted());
   try {
-    // console.log('fetch public hot');
-    const currentTime = getCurrentUnixTime();
-
+    /**
+     * Calculate epoch time 1 week/month/year ago
+     * hot time could be either 1 week/month/year
+     */
     const { lastHotVisible, hotTime } = getState().allPosts.public;
-    const { user } = getState().auth;
-    const currentUser = {
-      id: user?.id,
-      username: user?.username,
-      avatar: user?.avatar,
-    };
-
+    const currentTime = getCurrentUnixTime();
     const timeAgo = currentTime - hotTime;
 
     let query: FirebaseFirestoreTypes.Query;
@@ -283,21 +239,28 @@ export const fetchPublicHotPosts = () => async (
 
     const documentSnapshots = await query.get();
 
-    if (documentSnapshots.size === 0) {
-      return dispatch(fetchPublicHotPostsEnd());
+    if (documentSnapshots.empty) {
+      return dispatch(fetchPublicHotPostsSuccess([], lastHotVisible));
     }
 
-    const newPosts = await docFStoPostArray(
+    // get post array from firestore docs
+    const { user } = getState().auth;
+    let currentUser = null;
+    if (user) {
+      currentUser = {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      };
+    }
+    const newPosts = await FSdocsToPostArray(
       documentSnapshots.docs,
       currentUser,
     );
 
     if (newPosts.length === 0) {
-      return dispatch(fetchPublicHotPostsEnd());
+      return dispatch(fetchPublicHotPostsSuccess([], lastHotVisible));
     }
-
-    // Ensure no duplicates
-    // const removedDuplicates = removeDuplicatesFromArray(newPosts);
 
     const newLastHotVisible = newPosts[newPosts.length - 1].datePosted;
 
@@ -305,30 +268,29 @@ export const fetchPublicHotPosts = () => async (
 
     dispatch(fetchPublicHotPostsSuccess(sortedByLikes, newLastHotVisible));
   } catch (err) {
-    console.log(err.message);
-    dispatch(fetchPublicHotPostsFailure(new Error('Internal server error')));
+    dispatch(
+      fetchPublicHotPostsFailure(
+        new Error('Error occurred. Please try again.'),
+      ),
+    );
   }
 };
 
+/**
+ * Method refetch public hot posts when pulling list
+ */
 export const pullToFetchPublicHotPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(pullToFetchPublicHotPostsStarted());
   try {
+    /**
+     * Calculate epoch time 1 week/month/year ago
+     * hot time could be either 1 week/month/year
+     */
+    const { lastHotVisible, hotTime } = getState().allPosts.public;
     const currentTime = getCurrentUnixTime();
-
-    const hotTime = getState().allPosts.public.hotTime;
-    const { user } = getState().auth;
-    const currentPosts = getState().allPosts.public.posts;
-    const createPostLoading = getState().allPosts.createPost.loading;
-    const deletePostLoading = getState().allPosts.deletePost.loading;
-    const currentUser = {
-      id: user?.id,
-      username: user?.username,
-      avatar: user?.avatar,
-    };
-
     const timeAgo = currentTime - hotTime;
 
     const documentSnapshots = await fsDB
@@ -339,18 +301,40 @@ export const pullToFetchPublicHotPosts = () => async (
       .limit(postsPerBatch)
       .get();
 
-    if (documentSnapshots.size === 0) {
-      return dispatch(fetchPublicHotPostsEnd());
+    if (documentSnapshots.empty) {
+      return dispatch(fetchPublicHotPostsSuccess([], lastHotVisible));
     }
 
-    const newPosts = await docFStoPostArray(
+    // get post array from firestore docs
+    const { user } = getState().auth;
+    let currentUser = null;
+    if (user) {
+      currentUser = {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      };
+    }
+    const newPosts = await FSdocsToPostArray(
       documentSnapshots.docs,
       currentUser,
     );
 
     if (newPosts.length === 0) {
-      return dispatch(fetchPublicHotPostsEnd());
+      return dispatch(fetchPublicHotPostsSuccess([], lastHotVisible));
     }
+
+    /**
+     * Because pending-delete posts might still be in the post list,
+     * newly fetched posts can be duplicates with pending-delete
+     * posts and appear twice in the post list
+     *
+     * Solution: get all pending-delete posts' original ids then filter
+     * them out of newly fetched posts + current posts to get a post list
+     * with no duplicates
+     */
+
+    const currentPosts = getState().allPosts.public.posts;
 
     // Keep pending-delete and pending posts
     const pendingPosts = currentPosts.filter(
@@ -358,46 +342,48 @@ export const pullToFetchPublicHotPosts = () => async (
         post.id === pendingPostID || post.id.includes(pendingDeletePostFlag),
     );
 
-    let allPosts = [];
+    let finalPosts = [];
     if (pendingPosts.length > 0) {
-      // Because pending-delete posts might be still in the post list, newly fetched
-      // posts might be duplicates with pending-delete posts and appear twice
-      // in the post list
-      // Solution: get all pending-delete post ids then filter the newly fetched
-      // posts from them to get new posts with no duplicates
+      // get pending-delete post ids from pending posts
       const pendingDeletePostIDs = pendingPosts
         .filter((post) => post.id.includes(pendingDeletePostFlag))
         .map((post) => {
           const splited = post.id.split(pendingDeletePostFlag);
           return splited[0];
         });
+
+      // merge with newly fetched posts
       const mergedPosts = newPosts.concat(pendingPosts);
+
+      // filter pending-delete post ids out of merged post list
       const postsWithNoDuplicateWithPendingDeletePosts = mergedPosts.filter(
         (post) => !pendingDeletePostIDs.includes(post.id),
       );
       const sortedByDate = postsWithNoDuplicateWithPendingDeletePosts.sort(
         (a, b) => b.datePosted - a.datePosted,
       );
-      allPosts = sortedByDate;
+      finalPosts = sortedByDate;
     } else {
-      allPosts = newPosts;
+      finalPosts = newPosts;
     }
 
-    // While absolutely no post is being created or deleted,
-    // wipe out all remaining pending posts
+    /**
+     * while absolutely no post is being created or deleted,
+     * wipe out all remaining pending posts
+     */
+    const createPostLoading = getState().allPosts.createPost.loading;
+    const deletePostLoading = getState().allPosts.deletePost.loading;
     if (createPostLoading === false && deletePostLoading === false) {
-      const noPending = allPosts.filter(
+      const noPending = finalPosts.filter(
         (post) =>
           post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
       );
-      allPosts = noPending;
+      finalPosts = noPending;
     }
 
-    const newLastHotVisible = allPosts[allPosts.length - 1].datePosted;
+    const newLastHotVisible = finalPosts[finalPosts.length - 1].datePosted;
 
-    // const newLastHotVisible = newPosts[newPosts.length - 1].datePosted;
-
-    const sortedByLikes = allPosts.sort((a, b) => b.likes - a.likes);
+    const sortedByLikes = finalPosts.sort((a, b) => b.likes - a.likes);
 
     dispatch(
       pullToFetchPublicHotPostsSuccess(sortedByLikes, newLastHotVisible),
@@ -414,32 +400,44 @@ export const pullToFetchPublicHotPosts = () => async (
 
 /* --------------- following posts methods -------------- */
 
+/**
+ * Method fetch posts from people the user has followed
+ */
 export const fetchFollowingNewPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
-  // console.log('fetch following new');
   dispatch(fetchFollowingNewPostsStarted());
   try {
-    const { allPosts, auth } = getState();
-    const { lastNewVisible } = allPosts.following;
-
+    const { user } = getState().auth;
+    if (!user) {
+      throw new MyError(
+        'Not authenticated. Please sign in.',
+        MyErrorCodes.NotAuthenticated,
+      );
+    }
     const currentUser = {
-      id: auth.user?.id,
-      username: auth.user?.username,
-      avatar: auth.user?.avatar,
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar,
     };
 
-    let docCollection: Array<string> = [];
+    // const { allPosts, auth } = getState();
+    const { lastNewVisible } = getState().allPosts.following;
+    let postIDs: Array<string> = [];
 
     if (lastNewVisible === 0) {
-      // get document from realtime db
+      // get documents from realtime db
       const snapshots = await fbDB
         .ref(`users/${currentUser.id}/following_posts`)
         .orderByChild('date_posted')
         .limitToLast(postsPerBatch)
         .once('value');
 
+      /**
+       * Get array of id and date_posted first
+       * to sort, then map to array of ids only
+       */
       const dataForSorting: Array<{
         id: string;
         date_posted: number;
@@ -447,15 +445,16 @@ export const fetchFollowingNewPosts = () => async (
 
       snapshots.forEach((doc: { key: string; val: Function }) => {
         dataForSorting.push({
-          id: doc.key as string,
+          id: doc.key,
           date_posted: doc.val().date_posted,
         });
       });
+
       // ensure sorted by date
       dataForSorting.sort((a, b) => b.date_posted - a.date_posted);
 
       // array of document's id
-      docCollection = dataForSorting.map((doc) => doc.id);
+      postIDs = dataForSorting.map((doc) => doc.id);
     } else {
       const snapshots = await fbDB
         .ref(`users/${currentUser.id}/following_posts`)
@@ -463,19 +462,23 @@ export const fetchFollowingNewPosts = () => async (
         .endAt(lastNewVisible)
         .limitToLast(postsPerBatch + 1)
         .once('value');
+
       const dataForSorting: Array<{
         id: string;
         date_posted: number;
       }> = [];
+
       snapshots.forEach((doc: { key: string; val: Function }) => {
         dataForSorting.push({
-          id: doc.key as string,
+          id: doc.key,
           date_posted: doc.val().date_posted,
         });
       });
+
       dataForSorting.pop();
+
       dataForSorting.sort((a, b) => b.date_posted - a.date_posted);
-      docCollection = dataForSorting.map((doc) => doc.id);
+      postIDs = dataForSorting.map((doc) => doc.id);
     }
 
     if (docCollection.length === 0) {
@@ -822,7 +825,7 @@ export const fetchUserPosts = () => async (
       return dispatch(fetchUserPostsEnd());
     }
 
-    const newPosts = await docFStoPostArray(
+    const newPosts = await FSdocsToPostArray(
       documentSnapshots.docs,
       currentUser,
     );
@@ -864,7 +867,7 @@ export const pullToFetchUserPosts = () => async (
       return dispatch(fetchUserPostsEnd());
     }
 
-    const newPosts = await docFStoPostArray(documentSnapshots.docs, {
+    const newPosts = await FSdocsToPostArray(documentSnapshots.docs, {
       id: currentUser?.id,
       username: currentUser?.username,
       avatar: currentUser?.avatar,
@@ -964,7 +967,7 @@ export const fetchTaggedPosts = () => async (
       return dispatch(fetchTaggedPostsEnd());
     }
 
-    const newPosts = await docFStoPostArray(
+    const newPosts = await FSdocsToPostArray(
       documentSnapshots.docs,
       currentUser,
     );
@@ -1005,7 +1008,7 @@ export const pullToFetchTaggedPosts = () => async (
       return dispatch(fetchTaggedPostsEnd());
     }
 
-    const newPosts = await docFStoPostArray(
+    const newPosts = await FSdocsToPostArray(
       documentSnapshots.docs,
       currentUser,
     );
@@ -1483,30 +1486,25 @@ export const clearUnlikePostError = () => (
 /* ----------------- public posts actions ---------------- */
 
 const fetchPublicNewPostsStarted = (): PostAction => ({
-  type: FETCH_PUBLIC_NEWPOSTS_STARTED,
+  type: DispatchTypes.FETCH_PUBLIC_NEWPOSTS_STARTED,
   payload: null,
 });
 
 const fetchPublicNewPostsSuccess = (
-  posts: Array<any>,
+  posts: Array<Post>,
   lastVisible: number,
 ): PostAction => ({
-  type: FETCH_PUBLIC_NEWPOSTS_SUCCESS,
+  type: DispatchTypes.FETCH_PUBLIC_NEWPOSTS_SUCCESS,
   payload: { posts, lastVisible },
 });
 
 const fetchPublicNewPostsFailure = (error: Error): PostAction => ({
-  type: FETCH_PUBLIC_NEWPOSTS_FAILURE,
+  type: DispatchTypes.FETCH_PUBLIC_NEWPOSTS_FAILURE,
   payload: error,
 });
 
-const fetchPublicNewPostsEnd = (): PostAction => ({
-  type: FETCH_PUBLIC_NEWPOSTS_END,
-  payload: null,
-});
-
 const pullToFetchPublicNewPostsStarted = (): PostAction => ({
-  type: PULL_TO_FETCH_PUBLIC_NEWPOSTS_STARTED,
+  type: DispatchTypes.PULL_TO_FETCH_PUBLIC_NEWPOSTS_STARTED,
   payload: null,
 });
 
@@ -1514,17 +1512,17 @@ const pullToFetchPublicNewPostsSuccess = (
   posts: Array<any>,
   lastVisible: number,
 ): PostAction => ({
-  type: PULL_TO_FETCH_PUBLIC_NEWPOSTS_SUCCESS,
+  type: DispatchTypes.PULL_TO_FETCH_PUBLIC_NEWPOSTS_SUCCESS,
   payload: { posts, lastVisible },
 });
 
 const pullToFetchPublicNewPostsFailure = (error: Error): PostAction => ({
-  type: PULL_TO_FETCH_PUBLIC_NEWPOSTS_FAILURE,
+  type: DispatchTypes.PULL_TO_FETCH_PUBLIC_NEWPOSTS_FAILURE,
   payload: error,
 });
 
 const fetchPublicHotPostsStarted = (): PostAction => ({
-  type: FETCH_PUBLIC_HOTPOSTS_STARTED,
+  type: DispatchTypes.FETCH_PUBLIC_HOTPOSTS_STARTED,
   payload: null,
 });
 
@@ -1532,12 +1530,12 @@ const fetchPublicHotPostsSuccess = (
   posts: Array<any>,
   lastVisible: number,
 ): PostAction => ({
-  type: FETCH_PUBLIC_HOTPOSTS_SUCCESS,
+  type: DispatchTypes.FETCH_PUBLIC_HOTPOSTS_SUCCESS,
   payload: { posts, lastVisible },
 });
 
 const fetchPublicHotPostsFailure = (error: Error): PostAction => ({
-  type: FETCH_PUBLIC_HOTPOSTS_FAILURE,
+  type: DispatchTypes.FETCH_PUBLIC_HOTPOSTS_FAILURE,
   payload: error,
 });
 
@@ -1547,7 +1545,7 @@ const fetchPublicHotPostsEnd = (): PostAction => ({
 });
 
 const pullToFetchPublicHotPostsStarted = (): PostAction => ({
-  type: PULL_TO_FETCH_PUBLIC_HOTPOSTS_STARTED,
+  type: DispatchTypes.PULL_TO_FETCH_PUBLIC_HOTPOSTS_STARTED,
   payload: null,
 });
 
@@ -1555,12 +1553,12 @@ const pullToFetchPublicHotPostsSuccess = (
   posts: Array<any>,
   lastVisible: number,
 ): PostAction => ({
-  type: PULL_TO_FETCH_PUBLIC_HOTPOSTS_SUCCESS,
+  type: DispatchTypes.PULL_TO_FETCH_PUBLIC_HOTPOSTS_SUCCESS,
   payload: { posts, lastVisible },
 });
 
 const pullToFetchPublicHotPostsFailure = (error: Error): PostAction => ({
-  type: PULL_TO_FETCH_PUBLIC_HOTPOSTS_FAILURE,
+  type: DispatchTypes.PULL_TO_FETCH_PUBLIC_HOTPOSTS_FAILURE,
   payload: error,
 });
 
@@ -1569,7 +1567,7 @@ const pullToFetchPublicHotPostsFailure = (error: Error): PostAction => ({
 /* --------------- following posts actions -------------- */
 
 const fetchFollowingNewPostsStarted = (): PostAction => ({
-  type: FETCH_FOLLOWING_NEWPOSTS_STARTED,
+  type: DispatchTypes.FETCH_FOLLOWING_NEWPOSTS_STARTED,
   payload: null,
 });
 
@@ -1577,12 +1575,12 @@ const fetchFollowingNewPostsSuccess = (
   posts: Array<any>,
   lastVisible: number,
 ): PostAction => ({
-  type: FETCH_FOLLOWING_NEWPOSTS_SUCCESS,
+  type: DispatchTypes.FETCH_FOLLOWING_NEWPOSTS_SUCCESS,
   payload: { posts, lastVisible },
 });
 
 const fetchFollowingNewPostsFailure = (error: Error): PostAction => ({
-  type: FETCH_FOLLOWING_NEWPOSTS_FAILURE,
+  type: DispatchTypes.FETCH_FOLLOWING_NEWPOSTS_FAILURE,
   payload: error,
 });
 

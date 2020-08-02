@@ -419,13 +419,19 @@ const getCurrentUser = () => {
   });
 };
 
-const docFStoPostArray = async (
+/**
+ * Method firestore docs to post array
+ * @param docs Firestore docs
+ * @param currentUser Can be used to save getting user data
+ * if the post's owner is the same as the current user
+ */
+const FSdocsToPostArray = async (
   docs: Array<FirebaseFirestoreTypes.QueryDocumentSnapshot>,
-  currentUser?: {
-    id: string | undefined;
-    username: string | undefined;
-    avatar: string | undefined;
-  },
+  currentUser: {
+    id: string;
+    username: string;
+    avatar: string;
+  } | null = null,
 ): Promise<Array<Post>> => {
   const newPosts = [];
 
@@ -433,11 +439,7 @@ const docFStoPostArray = async (
     const postData = doc.data();
     let userData = null;
     try {
-      if (
-        currentUser &&
-        currentUser.id &&
-        currentUser.id === postData!.posted_by
-      ) {
+      if (currentUser && currentUser.id === postData!.posted_by) {
         userData = {
           username: currentUser.username,
           avatar: currentUser.avatar,
@@ -896,7 +898,7 @@ export {
   checkUserResultListChanged,
   checkPostCommentListChanged,
   checkPostChanged,
-  docFStoPostArray,
+  FSdocsToPostArray,
   docFBtoPostArray,
   alertDialog,
   filterImageArray,

@@ -22,7 +22,7 @@ import {
 import { AppState } from '../store';
 import { fsDB, userPostsPerBatch, FirebaseFirestoreTypes } from '../../config';
 import {
-  docFStoPostArray,
+  FSdocsToPostArray,
   removeDuplicatesFromArray,
 } from '../../utils/functions';
 import { Post } from '../../models';
@@ -132,7 +132,7 @@ export const fetchUser = (userID: string) => async (
       return dispatch(fetchUserSuccess(userLayer));
     }
 
-    const posts = await docFStoPostArray(documentSnapshots.docs);
+    const posts = await FSdocsToPostArray(documentSnapshots.docs);
 
     if (posts.length === 0) {
       return dispatch(fetchUserSuccess(userLayer));
@@ -191,7 +191,7 @@ export const fetchMorePostsFromUser = (
       return dispatch(fetchMorePostsFromUserSuccess([], lastVisible));
     }
 
-    const posts = await docFStoPostArray(documentSnapshots.docs);
+    const posts = await FSdocsToPostArray(documentSnapshots.docs);
 
     if (posts.length === 0) {
       return dispatch(fetchMorePostsFromUserSuccess([], lastVisible));
