@@ -9,6 +9,7 @@ import RepliesStack from './repliesStack';
 import RepliesStackLayer from './repliesStackLayer';
 import UsersStack from './usersStack';
 import UsersStackLayer from './usersStackLayer';
+import MyError, { MyErrorCodes } from './my_error';
 
 export {
   Post,
@@ -22,4 +23,6 @@ export {
   RepliesStackLayer,
   UsersStack,
   UsersStackLayer,
+  MyError,
+  MyErrorCodes,
 };

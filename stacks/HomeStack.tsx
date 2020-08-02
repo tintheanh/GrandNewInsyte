@@ -14,8 +14,25 @@ import {
 import { Colors } from '../constants';
 import SearchBar from '../screens/HomeScreen/private_components/SearchBar';
 import { popCommentsLayer } from '../redux/commentsStack/actions';
+import { Post } from '../models';
 
-const Stack = createStackNavigator();
+export type HomeStackParamList = {
+  HomeScreen: undefined;
+  PostScreen: Post;
+  ReplyScreen: undefined;
+  UserScreen: {
+    id: string;
+    username: string;
+    avatar: string;
+  };
+  ProfileScreen: {
+    id: string;
+    username: string;
+    avatar: string;
+  };
+};
+
+const Stack = createStackNavigator<HomeStackParamList>();
 
 const mapDispatchToProps = {
   onPopCommentsLayer: popCommentsLayer,
@@ -62,9 +79,11 @@ export default connect(
       <Stack.Screen
         name="PostScreen"
         component={PostScreen}
-        options={({ route }: any) => ({
-          title: route.params.title,
-          avatar: route.params.avatar,
+        options={({ route }) => {
+          return {
+            title: `${route.params.user.username}'s post`,
+          };
+          // avatar: route.params.avatar,
           // headerLeft: (headerProps) => (
           //   <HeaderBackButton
           //     {...headerProps}
@@ -74,7 +93,7 @@ export default connect(
           //     )}
           //   />
           // ),
-        })}
+        }}
       />
       <Stack.Screen
         name="ReplyScreen"
@@ -84,16 +103,16 @@ export default connect(
       <Stack.Screen
         name="UserScreen"
         component={UserScreen}
-        options={({ route }: any) => ({
-          title: route.params.title,
+        options={({ route }) => ({
+          title: route.params.username,
           headerBackTitle: '',
         })}
       />
       <Stack.Screen
         name="ProfileScreen"
         component={ProfileScreen}
-        options={({ route }: any) => ({
-          title: route.params.title,
+        options={({ route }) => ({
+          title: route.params.username,
         })}
       />
     </Stack.Navigator>

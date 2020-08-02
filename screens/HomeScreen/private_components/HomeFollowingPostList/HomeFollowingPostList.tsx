@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { View, StyleSheet } from 'react-native';
 import { List, Loading, ErrorView, NothingView } from '../../../../components';
 import { setCurrentHomeListPostIndex } from '../../../../redux/curentViewableItem/actions';
-import HomePostCard from '../HomePostCard';
+import HomePostCard from '../HomePostCardWrapper';
 import HomeFollowingPostListLoading from './HomeFollowingPostListLoading';
 import SortFollowingPostList from './SortFollowingPostList';
 import {

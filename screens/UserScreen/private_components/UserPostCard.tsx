@@ -96,7 +96,7 @@ class UserPostCard extends Component<UserPostCardProps> {
         shouldPlayMedia={this.state.shouldPlayMedia}
         performLikePost={this.performLikePost}
         performUnlikePost={this.performUnlikePost}
-        navigateWhenClickOnPostOrComment={this.navigateToPost}
+        navigateWhenPressOnPostOrComment={this.navigateToPost}
       />
     );
   }

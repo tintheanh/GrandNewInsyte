@@ -18,15 +18,58 @@ import { Post } from '../../models';
 
 interface PostCardProps {
   data: Post;
-  currentViewableIndex: number;
+
+  /**
+   * Index of post card
+   */
   index: number;
-  isTabFocused?: boolean;
+
+  /**
+   * Current scrolling index of the list
+   */
+  currentViewableIndex: number;
+
+  /**
+   * Determine if post card should play videos
+   */
   shouldPlayMedia: boolean;
-  userPostControl?: () => void;
+
+  /**
+   * Method navigate to post screen
+   * when pressing on empty remaining
+   * space or comment icon
+   */
+  navigateWhenPressOnPostOrComment: () => void;
+
+  /**
+   * Optional props detect if current tab is focused
+   * Some lists in certain screens may not have tabs
+   */
+  isTabFocused?: boolean;
+
+  /**
+   * Method like post
+   */
   performLikePost: () => void;
+
+  /**
+   * Method unlike post
+   */
   performUnlikePost: () => void;
-  navigateWhenClickOnPostOrComment?: () => void;
-  navigateWhenClickOnUsernameOrAvatar?: () => void;
+
+  /**
+   * Optional method delete post
+   * Only posts belong to current user can have this
+   */
+  userPostControl?: () => void;
+
+  /**
+   * Optional method navigate to user screen
+   * when pressing username or avatar
+   * Do nothing if post of post card is already
+   * appeared in its owner user screen
+   */
+  navigateWhenPressOnUsernameOrAvatar?: () => void;
 }
 
 export default class PostCard extends Component<PostCardProps> {
@@ -39,31 +82,31 @@ export default class PostCard extends Component<PostCardProps> {
       shouldPlayMedia,
     } = this.props;
 
+    // component re-render when next post data is changed
     if (checkPostChanged(data, nextProps.data)) {
       return true;
     }
 
-    if (data.media.length === 0) {
-      return false;
-    }
-
-    if (data.media.length === 1 && data.media[0].type === 'image') {
-      return false;
-    }
     if (isTabFocused !== nextProps.isTabFocused) {
       return true;
     }
     if (shouldPlayMedia !== nextProps.shouldPlayMedia) {
       return true;
     }
-    if (currentViewableIndex === nextProps.currentViewableIndex) {
-      return false;
-    }
+
+    // when current scrolling index equals to post card index
+    // re-render only when post having > 1 media
+    // or the only one media has to be a video
     if (
       currentViewableIndex === index ||
       nextProps.currentViewableIndex === index
     ) {
-      return true;
+      if (data.media.length > 1) {
+        return true;
+      }
+      if (data.media.length === 1 && data.media[0].type === 'video') {
+        return true;
+      }
     }
 
     return false;
@@ -75,15 +118,14 @@ export default class PostCard extends Component<PostCardProps> {
       currentViewableIndex,
       index,
       isTabFocused = true,
-      userPostControl = undefined,
       shouldPlayMedia,
+      userPostControl,
       performLikePost,
       performUnlikePost,
-      navigateWhenClickOnPostOrComment,
-      navigateWhenClickOnUsernameOrAvatar,
+      navigateWhenPressOnPostOrComment,
+      navigateWhenPressOnUsernameOrAvatar,
     } = this.props;
 
-    // console.log('card ', index);
     let iconPrivacy = '';
     switch (data.privacy) {
       case 'public':
@@ -96,20 +138,25 @@ export default class PostCard extends Component<PostCardProps> {
         iconPrivacy = 'lock';
         break;
     }
+
     return (
       <View
         pointerEvents={
+          // disable interaction when post card is being added or deleted
           data.id === pendingPostID || data.id.includes(pendingDeletePostFlag)
             ? 'none'
             : 'auto'
         }
-        style={{
-          ...styles.container,
-          opacity:
-            data.id === pendingPostID || data.id.includes(pendingDeletePostFlag)
-              ? 0.4
-              : 1,
-        }}>
+        style={[
+          styles.container,
+          {
+            opacity:
+              data.id === pendingPostID ||
+              data.id.includes(pendingDeletePostFlag)
+                ? 0.4
+                : 1,
+          },
+        ]}>
         <View
           style={{
             flexDirection: 'row',
@@ -123,11 +170,11 @@ export default class PostCard extends Component<PostCardProps> {
               username={data.user.username}
               timeLabel={data.timeLabel}
               iconPrivacy={iconPrivacy}
-              navigateWhenClickOnPostOrComment={
-                navigateWhenClickOnPostOrComment
+              navigateWhenPressOnPostOrComment={
+                navigateWhenPressOnPostOrComment
               }
-              navigateWhenClickOnUsernameOrAvatar={
-                navigateWhenClickOnUsernameOrAvatar
+              navigateWhenPressOnUsernameOrAvatar={
+                navigateWhenPressOnUsernameOrAvatar
               }
             />
           </View>
@@ -149,7 +196,7 @@ export default class PostCard extends Component<PostCardProps> {
         </View>
         <Caption
           caption={data.caption}
-          navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}
+          navigateWhenPressOnPostOrComment={navigateWhenPressOnPostOrComment}
         />
         {data.media.length ? (
           <Carousel
@@ -165,7 +212,7 @@ export default class PostCard extends Component<PostCardProps> {
           comments={data.comments}
           performLikePost={performLikePost}
           performUnlikePost={performUnlikePost}
-          navigateWhenClickOnPostOrComment={navigateWhenClickOnPostOrComment}
+          navigateWhenPressOnPostOrComment={navigateWhenPressOnPostOrComment}
         />
       </View>
     );

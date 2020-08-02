@@ -26,7 +26,7 @@ import { Post } from '../../../models';
 interface PostSectionProps {
   post: Post;
   shouldPlayMedia: boolean;
-  navigateWhenClickOnUsernameOrAvatar?: () => void;
+  navigateWhenPressOnUsernameOrAvatar?: () => void;
   likePost: () => void;
   unLikePost: () => void;
   userControl?: () => void;
@@ -36,7 +36,7 @@ export default React.memo(
   function PostSection({
     post,
     shouldPlayMedia,
-    navigateWhenClickOnUsernameOrAvatar = undefined,
+    navigateWhenPressOnUsernameOrAvatar = undefined,
     userControl = undefined,
     likePost,
     unLikePost,
@@ -70,11 +70,11 @@ export default React.memo(
         <View style={styles.userWrapper}>
           <Avatar
             avatar={user.avatar}
-            onPress={navigateWhenClickOnUsernameOrAvatar!}
+            onPress={navigateWhenPressOnUsernameOrAvatar!}
           />
           <View style={styles.usernameAndTimeWrapper}>
             <TouchableWithoutFeedback
-              onPress={navigateWhenClickOnUsernameOrAvatar}>
+              onPress={navigateWhenPressOnUsernameOrAvatar}>
               <Text style={styles.username}>{user.username}</Text>
             </TouchableWithoutFeedback>
             <View style={styles.timeAndPrivacyWrapper}>

@@ -19,6 +19,10 @@ import BigAvatar from './BigAvatar';
 import UserStats from './UserStats';
 import UserInfo from './UserInfo';
 import FooterLoading from './FooterLoading';
+import EmailTextBox from './EmailTextBox';
+import PasswordTextBox from './PasswordTextBox';
+import BigButton from './BigButton';
+import SortPostListHeader from './SortPostListHeader';
 
 export {
   TextBox,
@@ -32,9 +36,12 @@ export {
   CommentCard,
   PlaceCard,
   ErrorView,
+  SortPostListHeader,
   Avatar,
   ReplyCard,
+  EmailTextBox,
   NothingView,
+  PasswordTextBox,
   InteractionSection,
   FooterLoading,
   ProfilePostList,
@@ -42,4 +49,5 @@ export {
   BigAvatar,
   UserStats,
   UserInfo,
+  BigButton,
 };

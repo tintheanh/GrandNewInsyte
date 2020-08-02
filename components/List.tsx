@@ -88,6 +88,7 @@ export default class List extends Component<ListProps> {
   };
 
   render() {
+    console.log('list');
     const {
       data,
       onViewableItemsChanged = undefined,

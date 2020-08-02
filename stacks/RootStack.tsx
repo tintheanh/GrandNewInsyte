@@ -10,23 +10,22 @@ import CreatePostStack from './CreatePostStack';
 
 const Stack = createStackNavigator();
 
-class RootStack extends Component<any> {
+interface RootStackProps {
+  loading: boolean;
+
+  /**
+   * Method check if user signed in
+   */
+  onCheckAuth: () => void;
+}
+
+class RootStack extends Component<RootStackProps> {
   componentDidMount() {
     this.props.onCheckAuth();
   }
 
-  // shouldComponentUpdate(nextProps: any) {
-  //   if (!this.props.user && this.props.loading) return false;
-  //   if (
-  //     nextProps.user !== this.props.user
-  //   )
-  //     return true;
-  //   return false;
-  // }
-
   render() {
-    // console.log('root stack');
-    if (!this.props.user && this.props.loading) {
+    if (this.props.loading) {
       return <Loading />;
     }
     return (
@@ -41,8 +40,7 @@ class RootStack extends Component<any> {
 }
 
 const mapStateToProps = (state: AppState) => ({
-  user: state.auth.user,
-  loading: state.auth.loading,
+  loading: state.auth.loadings.checkAuthLoading,
 });
 
 const mapDispatchToProps = {

@@ -1,29 +1,26 @@
 import React from 'react';
-import { SimpleLineIcons } from '../../../constants';
-import { TextBox } from '../../../components';
+import { SimpleLineIcons } from '../constants';
+import TextBox from './TextBox';
 
 interface PasswordTextBoxProps {
   value: string;
 
   /**
-   * Required method set retype-password value
-   * @param value New retype-password value to set
+   * Required method set password value
+   * @param value New password value to set
    */
-  setRetypePassword: (value: string) => void;
+  setPassword: (value: string) => void;
 }
 
 export default React.memo(
-  function RetypePasswordTextBox({
-    value,
-    setRetypePassword,
-  }: PasswordTextBoxProps) {
+  function PasswordTextBox({ value, setPassword }: PasswordTextBoxProps) {
     return (
       <TextBox
         icon={<SimpleLineIcons name="lock" size={26} color="#a6a9b4" />}
         secureTextEntry={true}
-        placeholder="retype password"
+        placeholder="password"
         value={value}
-        onChangeText={setRetypePassword}
+        onChangeText={setPassword}
       />
     );
   },

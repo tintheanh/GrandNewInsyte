@@ -11,7 +11,15 @@ import {
   FirebaseAuthTypes,
   FirebaseFirestoreTypes,
 } from '../config';
-import { Post, UserResult, Comment, Reply } from '../models';
+import {
+  Post,
+  UserResult,
+  Comment,
+  Reply,
+  User,
+  MyError,
+  MyErrorCodes,
+} from '../models';
 import { Colors, tokenForTag, separatorForTag } from '../constants';
 
 const alertDialog = (alertText: string, callback?: (args?: any) => void) => {
@@ -29,14 +37,30 @@ const alertDialog = (alertText: string, callback?: (args?: any) => void) => {
   );
 };
 
-const emailValidate = (email: string) => {
+/**
+ * Method check if email is valid
+ * @param email
+ */
+const isEmailValid = (email: string) => {
   const regex = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  const isValid = regex.test(String(email).toLowerCase());
-  return !isValid ? 'Email is invalid.' : '';
+  return regex.test(email.toLowerCase());
 };
 
-const passwordValidate = (password: string) => {
-  return password.length < 6 ? 'Password must be at least 6 characters.' : '';
+/**
+ * Method check if password is valid
+ * @param password
+ */
+const isPasswordValid = (password: string) => {
+  return password.length >= 6;
+};
+
+/**
+ * Method check if username is valid
+ * @param username
+ */
+const isUsernameValid = (username: string) => {
+  const regex = /^(?=[a-z_\d]*[a-z])[a-z_\d]{4,}$/;
+  return regex.test(username);
 };
 
 const convertTime = (unix: number) => {
@@ -111,7 +135,11 @@ const checkURL = (url: string) => {
   return true;
 };
 
-const generateSubstrForUsername = (username: string) => {
+/**
+ * Method general substring array from username
+ * @param username
+ */
+const generateSubstringForUsername = (username: string) => {
   const toLower = username.toLocaleLowerCase();
   const result = new Set<string>();
   const len = toLower.length;
@@ -217,45 +245,33 @@ const openURL = (url: string) => async () => {
   }
 };
 
-const fetchUser = async (uid: string) => {
+/**
+ * Method fetch signed in user data
+ * @param uid user id to fetch
+ */
+const fetchMyself = async (uid: string): Promise<User> => {
   try {
     const userRef = await fsDB.collection('users').doc(uid).get();
-    if (userRef.exists) {
-      const userData = userRef.data();
-      const user = {
-        id: uid,
-        avatar: userData!.avatar as string,
-        email: '',
-        name: userData!.name as string,
-        username: userData!.username as string,
-        bio: userData!.bio as string,
-        followers: userData!.followers as number,
-        following: userData!.following as number,
-        totalPosts: userData!.total_posts as number,
-      };
-      // if (user.totalPosts !== 0) {
-      //   const querySnapshot = await fsDB.collection('posts').get();
-      //   const posts = [];
-      //   querySnapshot.forEach(doc => {
-      //     posts.push({
 
-      //     })
-      //   })
-      // }
-      return user;
-    } else {
-      const err = new Error('User not found.');
-      (err as any).code = 'my-custom-error/user-not-found';
-      (err as any).idNotFound = uid;
-      throw err;
+    if (!userRef.exists) {
+      throw new MyError('User not found.', MyErrorCodes.DataNotFound);
     }
+
+    const userData = userRef.data();
+    const user = {
+      id: uid,
+      avatar: userData!.avatar as string,
+      email: '', // email does not belong in firestore, get it later
+      name: userData!.name as string,
+      username: userData!.username as string,
+      bio: userData!.bio as string,
+      followers: userData!.followers as number,
+      following: userData!.following as number,
+      totalPosts: userData!.total_posts as number,
+    };
+    return user;
   } catch (err) {
-    if (err.code === 'my-custom-error/user-not-found') {
-      throw err;
-    }
-    const myErr = new Error(err.message);
-    (myErr as any).code = 'my-custom-error/firestore-off';
-    throw myErr;
+    throw err;
   }
 };
 
@@ -359,6 +375,11 @@ const checkPostListChanged = (list1: Array<Post>, list2: Array<Post>) => {
   return false;
 };
 
+/**
+ * Method check if two posts are different
+ * @param post1
+ * @param post2
+ */
 const checkPostChanged = (post1: Post, post2: Post) => {
   if (
     post1.isLiked !== post2.isLiked ||
@@ -385,12 +406,16 @@ const checkCommentChanged = (comment1: Comment, comment2: Comment) => {
   return false;
 };
 
+/**
+ * Method get current user
+ * @returns null if there's no signed in user
+ */
 const getCurrentUser = () => {
-  return new Promise<FirebaseAuthTypes.User | null>((resolve, reject) => {
+  return new Promise<FirebaseAuthTypes.User | null>((resolve) => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       unsubscribe();
       resolve(user);
-    }, reject);
+    });
   });
 };
 
@@ -858,13 +883,14 @@ const deleteMedia = async (
 };
 
 export {
-  emailValidate,
-  passwordValidate,
+  isEmailValid,
+  isPasswordValid,
   convertTime,
   convertNumber,
-  fetchUser,
+  fetchMyself,
   delay,
   getCurrentUser,
+  isUsernameValid,
   getCurrentUnixTime,
   checkPostListChanged,
   checkUserResultListChanged,
@@ -880,7 +906,7 @@ export {
   wrapPostCaption,
   checkURL,
   openURL,
-  generateSubstrForUsername,
+  generateSubstringForUsername,
   generateCaptionWithTagsAndUrls,
   docFStoCommentArray,
   docFStoReplyArray,

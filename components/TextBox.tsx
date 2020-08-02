@@ -2,12 +2,15 @@ import React, { useState } from 'react';
 import { View, TextInput, StyleSheet } from 'react-native';
 
 interface TextBoxProps {
+  // Required props
   icon: JSX.Element;
+  value: string;
+
+  // Optional props
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   autoCorrect?: boolean;
   secureTextEntry?: boolean;
   placeholder?: string;
-  value: string;
   type?:
     | 'default'
     | 'email-address'
@@ -21,47 +24,41 @@ interface TextBoxProps {
     | 'url'
     | 'name-phone-pad'
     | 'twitter'
-    | 'web-search'
-    | undefined;
-  onChangeText: ((text: string) => void) | undefined;
-  onWatchFocus?: (...args: any) => void | any;
-  onWatchBlur?: (...args: any) => void | any;
+    | 'web-search';
+
+  /**
+   * Required method set text value for component
+   * @param text New text value to set
+   */
+  onChangeText: (text: string) => void;
 }
 
-const TextBox = ({
+export default function TextBox({
   icon,
+  value,
   autoCapitalize = 'none',
   autoCorrect = false,
-  secureTextEntry = false,
-  placeholder = '',
-  value = 'default',
-  type,
+  secureTextEntry,
+  placeholder,
+  type = 'default',
   onChangeText,
-  onWatchFocus,
-  onWatchBlur,
-}: TextBoxProps) => {
+}: TextBoxProps) {
+  /**
+   * Local state
+   * @var isFocused Boolean state detect when component is focused
+   */
   const [isFocused, setFocus] = useState(false);
 
-  const onFocus = () => {
-    setFocus(true);
-    if (onWatchFocus) {
-      onWatchFocus();
-    }
-  };
+  const performOnWatchFocus = () => setFocus(true);
 
-  const onBlur = () => {
-    setFocus(false);
-    if (onWatchBlur) {
-      onWatchBlur();
-    }
-  };
+  const performOnWatchBlur = () => setFocus(false);
 
   return (
     <View style={styles.textBoxWrapper}>
       <View style={styles.icon}>{icon}</View>
       <TextInput
-        onFocus={onFocus}
-        onBlur={onBlur}
+        onFocus={performOnWatchFocus}
+        onBlur={performOnWatchBlur}
         autoCapitalize={autoCapitalize}
         autoCorrect={autoCorrect}
         keyboardType={type}
@@ -70,14 +67,14 @@ const TextBox = ({
         placeholderTextColor="#a6a9b4"
         value={value}
         onChangeText={onChangeText}
-        style={{
-          ...styles.textBox,
-          borderColor: isFocused ? '#bbaf80' : '#737583',
-        }}
+        style={[
+          styles.textBox,
+          { borderColor: isFocused ? '#bbaf80' : '#737583' },
+        ]}
       />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   textBoxWrapper: {
@@ -99,5 +96,3 @@ const styles = StyleSheet.create({
     top: 30,
   },
 });
-
-export default TextBox;

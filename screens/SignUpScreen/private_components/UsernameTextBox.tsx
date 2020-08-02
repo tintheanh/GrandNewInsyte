@@ -1,41 +1,32 @@
 import React from 'react';
-import { connect } from 'react-redux';
-import { SimpleLineIcons } from '../../../constants';
 import { TextBox } from '../../../components';
-import { AppState } from '../../../redux/store';
-import { setUsername } from '../../../redux/auth/actions';
+import { SimpleLineIcons } from '../../../constants';
 
 interface UsernameTextBoxProps {
-  username: string;
-  onSetUsername: (username: string) => void;
-  onWatchFocus: (...args: any) => void | any;
-  onWatchBlur: (...args: any) => void | any;
+  value: string;
+
+  /**
+   * Required method set input username
+   * @param value New username value to set
+   */
+  setUsername: (value: string) => void;
 }
 
-const UsernameTextBox = ({
-  username,
-  onSetUsername,
-  onWatchBlur,
-  onWatchFocus,
-}: UsernameTextBoxProps) => {
-  return (
-    <TextBox
-      icon={<SimpleLineIcons name="user" size={24} color="#a6a9b4" />}
-      placeholder="username"
-      value={username}
-      onChangeText={onSetUsername}
-      onWatchFocus={onWatchFocus}
-      onWatchBlur={onWatchBlur}
-    />
-  );
-};
-
-const mapStateToProps = (state: AppState) => ({
-  username: state.auth.signup.username,
-});
-
-const mapDispatchToProps = {
-  onSetUsername: setUsername,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(UsernameTextBox);
+export default React.memo(
+  function UsernameTextBox({ value, setUsername }: UsernameTextBoxProps) {
+    return (
+      <TextBox
+        icon={<SimpleLineIcons name="user" size={24} color="#a6a9b4" />}
+        placeholder="username"
+        value={value}
+        onChangeText={setUsername}
+      />
+    );
+  },
+  (prevProps, nextProps) => {
+    if (prevProps.value !== nextProps.value) {
+      return false;
+    }
+    return true;
+  },
+);

@@ -7,7 +7,7 @@ interface InteractionSectionProps {
   isLiked: boolean;
   likes: number;
   comments: number;
-  navigateWhenClickOnPostOrComment?: () => void;
+  navigateWhenPressOnPostOrComment?: () => void;
   performLikePost: () => void;
   performUnlikePost: () => void;
 }
@@ -16,7 +16,7 @@ export default function InteractionSection({
   isLiked,
   likes,
   comments,
-  navigateWhenClickOnPostOrComment,
+  navigateWhenPressOnPostOrComment,
   performLikePost,
   performUnlikePost,
 }: InteractionSectionProps) {
@@ -40,7 +40,7 @@ export default function InteractionSection({
             </Text>
           </View>
         </TouchableWithoutFeedback>
-        <TouchableWithoutFeedback onPress={navigateWhenClickOnPostOrComment}>
+        <TouchableWithoutFeedback onPress={navigateWhenPressOnPostOrComment}>
           <View style={styles.iconWrapper}>
             <MaterialIcons name="mode-comment" size={18} color="white" />
             <Text style={styles.interactionText}>

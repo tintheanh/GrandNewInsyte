@@ -111,7 +111,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
   constructor(props: PostScreenProps) {
     super(props);
     this.state = {
-      post: this.props.route.params.data,
+      post: this.props.route.params,
       numberOfRepliesAndCommentDeleted: 0,
       shouldPlayMedia: true,
     };
@@ -450,7 +450,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         post={post}
         likePost={this.performLikePost}
         unLikePost={this.performUnlikePost}
-        navigateWhenClickOnUsernameOrAvatar={this.toUserScreen(post.user)}
+        navigateWhenPressOnUsernameOrAvatar={this.toUserScreen(post.user)}
         userControl={
           post.user.id === currentUID ? this.userControlForPost : undefined
         }

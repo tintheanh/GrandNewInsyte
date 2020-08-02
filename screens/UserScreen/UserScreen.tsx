@@ -81,7 +81,7 @@ class UserScreen extends Component<any, any> {
       },
     );
     await delay(500);
-    this.props.onFetchUser(this.props.route.params.user.id);
+    this.props.onFetchUser(this.props.route.params.id);
   }
 
   componentWillUnmount() {
@@ -95,7 +95,7 @@ class UserScreen extends Component<any, any> {
   };
 
   performFetchMorePosts = () => {
-    const { user } = this.props.route.params;
+    const user = this.props.route.params;
     this.props.onFetchMorePostsFromUser(
       user.id,
       this.props.userLayer.isFollowed,
@@ -107,7 +107,7 @@ class UserScreen extends Component<any, any> {
   };
 
   emptyHandler = () => {
-    const { user } = this.props.route.params;
+    const user = this.props.route.params;
     this.props.onFetchMorePostsFromUser(
       user.id,
       this.props.userLayer.isFollowed,
@@ -115,21 +115,21 @@ class UserScreen extends Component<any, any> {
   };
 
   pullLoading = () => {
-    this.props.onFetchUser(this.props.route.params.user.id);
+    this.props.onFetchUser(this.props.route.params.id);
   };
 
   performFollow = () => {
-    this.props.onFollowUser(this.props.route.params.user.id);
+    this.props.onFollowUser(this.props.route.params.id);
     this.props.onIncreaseFollowingByOne();
   };
 
   performUnfollow = () => {
-    this.props.onUnfollowUser(this.props.route.params.user.id);
+    this.props.onUnfollowUser(this.props.route.params.id);
     this.props.onDecreaseFollowingByOne();
   };
 
   render() {
-    const { user } = this.props.route.params;
+    const user = this.props.route.params;
     const { userLayer } = this.props;
     // console.log('user screen render', userLayer.posts);
     if (!userLayer) {

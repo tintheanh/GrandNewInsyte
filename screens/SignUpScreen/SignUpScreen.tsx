@@ -1,46 +1,197 @@
 import React, { Component } from 'react';
-import { View, StyleSheet, Animated, Dimensions } from 'react-native';
-
-import Colors from '../../constants/Colors';
 import {
-  RetypePasswordTextBox,
+  View,
+  StyleSheet,
+  Animated,
+  EmitterSubscription,
+  Keyboard,
+} from 'react-native';
+import { connect } from 'react-redux';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { CommonActions } from '@react-navigation/native';
+import { NotAuthedStackParamList } from '../../stacks/NotAuthedStack';
+import { Colors, Layout } from '../../constants';
+import {
+  ErrorText,
   EmailTextBox,
   PasswordTextBox,
-  UsernameTextBox,
-} from './private_components';
-import { SignUpBtn, SignUpErrorText } from './private_components';
+  BigButton,
+} from '../../components';
+import { UsernameTextBox, RetypePasswordTextBox } from './private_components';
+import { signup, clearSignUpError } from '../../redux/auth/actions';
+import { AppState } from '../../redux/store';
 
-const screenHeight = Math.round(Dimensions.get('window').height);
+const screenHeight = Layout.window.height;
 
-class SignUpScreen extends Component {
-  private moveAnimation: Animated.Value;
+type SignUpScreenNavigationProp = StackNavigationProp<
+  NotAuthedStackParamList,
+  'SignUpScreen'
+>;
 
-  constructor(props: any) {
+interface SignUpScreenProps {
+  navigation: SignUpScreenNavigationProp;
+  error: Error | null;
+  loading: boolean;
+
+  /** Method sign up with email and password
+   * @param username
+   * @param email
+   * @param password
+   * @param retypePassword
+   */
+  onSignUp: (
+    username: string,
+    email: string,
+    password: string,
+    retypePassword: string,
+  ) => void;
+
+  /**
+   * Method clear sign up error, the error is
+   * not automatically swallowed so needs to clear
+   * when screen going back
+   */
+  onClearSignUpError: () => void;
+}
+
+/**
+ * Local state
+ * @var username Email value changes during every keystroke
+ * @var email Email value changes during every keystroke
+ * @var password Password value changes during every keystroke
+ * @var retypePassword Retype-password value changes during every keystroke
+ */
+interface SignUpScreenState {
+  username: string;
+  email: string;
+  password: string;
+  retypePassword: string;
+}
+
+class SignUpScreen extends Component<SignUpScreenProps, SignUpScreenState> {
+  /**
+   * @var moveUpValue used for component moving up when keyboard is on
+   * @var keyboardWillShowListener used for detect keyboard is on
+   * @var keyboardWillHideListener used for detect keyboard is off
+   * @var detectScreenGoBackUnsubscriber unsubscriber function when screen going back
+   */
+  private moveUpValue: Animated.Value;
+  private keyboardWillShowListener: EmitterSubscription | null;
+  private keyboardWillHideListener: EmitterSubscription | null;
+  private detectScreenGoBackUnsubscriber: () => void = () => {};
+
+  constructor(props: SignUpScreenProps) {
     super(props);
-    this.moveAnimation = new Animated.Value(0);
+    this.state = {
+      username: '',
+      email: '',
+      password: '',
+      retypePassword: '',
+    };
+    this.moveUpValue = new Animated.Value(0);
+    this.keyboardWillShowListener = null;
+    this.keyboardWillHideListener = null;
   }
 
-  _move = (value: number) => () => {
-    Animated.timing(this.moveAnimation, {
+  componentDidMount() {
+    const { navigation, onClearSignUpError } = this.props;
+    this.keyboardWillShowListener = Keyboard.addListener(
+      'keyboardWillShow',
+      this.moveUp,
+    );
+    this.keyboardWillHideListener = Keyboard.addListener(
+      'keyboardWillHide',
+      this.moveDown,
+    );
+    this.detectScreenGoBackUnsubscriber = navigation.addListener(
+      'beforeRemove',
+      () => onClearSignUpError(),
+    );
+  }
+
+  componentWillUnmount() {
+    this.keyboardWillHideListener?.remove();
+    this.keyboardWillShowListener?.remove();
+    this.detectScreenGoBackUnsubscriber();
+  }
+
+  /**
+   * Method move component vertically, triggered when
+   * keyboard is on/off
+   * @param value Moving value in pixel counting from the
+   * starting point, '+' move down, '-' move up
+   * @param duration Time in milliseconds need to take to finish animation
+   */
+  move = (value: number, duration = 200) => {
+    Animated.timing(this.moveUpValue, {
       toValue: value,
-      duration: 200,
+      duration,
       useNativeDriver: true,
     }).start();
   };
 
-  _moveUp = () => {
-    this._move(-screenHeight / 6)();
+  moveUp = () => this.move(-screenHeight / 10);
+
+  moveDown = () => this.move(0);
+
+  /**
+   * Method set email value
+   * @param username New username value to set
+   */
+  performSetUsername = (username: string) => this.setState({ username });
+
+  /**
+   * Method set email value
+   * @param email New email value to set
+   */
+  performSetEmail = (email: string) => this.setState({ email });
+
+  /**
+   * Method set password value
+   * @param password New password value to set
+   */
+  performSetPassword = (password: string) => this.setState({ password });
+
+  /**
+   * Method set retype-password value
+   * @param retypePassword New retypePassword value to set
+   */
+  performSetRetypePassword = (retypePassword: string) =>
+    this.setState({ retypePassword });
+
+  performSignUp = async () => {
+    const { onSignUp } = this.props;
+    const { username, email, password, retypePassword } = this.state;
+
+    this.moveDown();
+    Keyboard.dismiss();
+
+    await onSignUp(username, email, password, retypePassword);
+
+    // forcefully navigate to Home after successfully sign up
+    this.props.navigation.dangerouslyGetParent()!.dispatch(
+      CommonActions.navigate({
+        name: 'HomeScreen',
+      }),
+    );
   };
 
-  _moveDown = () => {
-    this._move(0)();
+  renderErrorText = () => {
+    const { error } = this.props;
+    return (
+      <View style={{ marginTop: 12 }}>
+        <ErrorText text={error ? error.message : ' '} />
+      </View>
+    );
   };
 
   render() {
+    const { username, email, password, retypePassword } = this.state;
+
     const animStyle = {
       transform: [
         {
-          translateY: this.moveAnimation,
+          translateY: this.moveUpValue,
         },
       ],
     };
@@ -49,23 +200,24 @@ class SignUpScreen extends Component {
       <View style={styles.container}>
         <Animated.View style={[styles.textBoxsWrapper, animStyle]}>
           <UsernameTextBox
-            onWatchFocus={this._moveUp}
-            onWatchBlur={this._moveDown}
+            value={username}
+            setUsername={this.performSetUsername}
           />
-          <EmailTextBox
-            onWatchFocus={this._moveUp}
-            onWatchBlur={this._moveDown}
-          />
+          <EmailTextBox value={email} setEmail={this.performSetEmail} />
           <PasswordTextBox
-            onWatchFocus={this._moveUp}
-            onWatchBlur={this._moveDown}
+            value={password}
+            setPassword={this.performSetPassword}
           />
           <RetypePasswordTextBox
-            onWatchFocus={this._moveUp}
-            onWatchBlur={this._moveDown}
+            value={retypePassword}
+            setRetypePassword={this.performSetRetypePassword}
           />
-          <SignUpErrorText />
-          <SignUpBtn callback={this._move(0)} />
+          {this.renderErrorText()}
+          <BigButton
+            label="Sign up"
+            loading={this.props.loading}
+            onPress={this.performSignUp}
+          />
         </Animated.View>
       </View>
     );
@@ -86,4 +238,14 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SignUpScreen;
+const mapStateToProps = (state: AppState) => ({
+  error: state.auth.errors.signupError,
+  loading: state.auth.loadings.signupLoading,
+});
+
+const mapDispatchToProps = {
+  onSignUp: signup,
+  onClearSignUpError: clearSignUpError,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(SignUpScreen);

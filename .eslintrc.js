@@ -6,6 +6,7 @@ module.exports = {
   rules: {
     'no-useless-escape': 0,
     'react-native/no-inline-styles': 0,
+    'eslint-comments/no-unlimited-disable': 0,
     semi: 0,
   },
 };

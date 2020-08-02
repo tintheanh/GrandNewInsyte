@@ -64,8 +64,8 @@ class UserTaggedPostCard extends Component<UserTaggedPostCardProps> {
         index={index}
         navigation={navigation}
         isTabFocused={isTabFocused}
-        navigateWhenClickOnPostOrComment={this.navigateToPost}
-        navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
+        navigateWhenPressOnPostOrComment={this.navigateToPost}
+        navigateWhenPressOnUsernameOrAvatar={this.navigateToUserProfile}
       />
     );
   }

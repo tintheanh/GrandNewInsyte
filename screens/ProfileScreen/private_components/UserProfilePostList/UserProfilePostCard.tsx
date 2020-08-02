@@ -131,8 +131,8 @@ class UserProfilePostCard extends Component<UserProfilePostCardProps> {
         index={index}
         isTabFocused={isTabFocused}
         shouldPlayMedia={this.state.shouldPlayMedia}
-        navigateWhenClickOnPostOrComment={this.navigateToPost}
-        navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
+        navigateWhenPressOnPostOrComment={this.navigateToPost}
+        navigateWhenPressOnUsernameOrAvatar={this.navigateToUserProfile}
         userPostControl={this.postControl}
         performLikePost={this.performLikePost}
         performUnlikePost={this.performUnlikePost}

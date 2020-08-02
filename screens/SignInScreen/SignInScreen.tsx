@@ -5,56 +5,176 @@ import {
   StyleSheet,
   Animated,
   TouchableOpacity,
-  Dimensions,
+  EmitterSubscription,
+  Keyboard,
 } from 'react-native';
-
-import Colors from '../../constants/Colors';
+import { connect } from 'react-redux';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { CommonActions } from '@react-navigation/native';
+import { NotAuthedStackParamList } from '../../stacks/NotAuthedStack';
+import { Colors, Layout } from '../../constants';
 import {
-  SignInBtn,
-  SignInErrorText,
+  ErrorText,
   EmailTextBox,
   PasswordTextBox,
-} from './private_components';
+  BigButton,
+} from '../../components';
+import { signin } from '../../redux/auth/actions';
+import { clear } from '../../redux/posts/actions';
+import { AppState } from '../../redux/store';
+import { delay } from '../../utils/functions';
 
-const screenHeight = Math.round(Dimensions.get('window').height);
+const screenHeight = Layout.window.height;
+
+type SignInScreenNavigationProp = StackNavigationProp<
+  NotAuthedStackParamList,
+  'SignInScreen'
+>;
 
 interface SignInScreenProps {
-  navigation?: any;
+  navigation: SignInScreenNavigationProp;
+  error: Error | null;
+  loading: boolean;
+
+  /** Method sign in with email and password
+   * @param email
+   * @param password
+   */
+  onSignIn: (email: string, password: string) => void;
+
+  /**
+   * Method clear all current post lists after
+   * successfully sign in
+   */
+  onClearPosts: () => void;
 }
 
-class SignInScreen extends Component<SignInScreenProps> {
-  private moveAnimation: Animated.Value;
+/**
+ * Local state
+ * @var email Email value changes during every keystroke
+ * @var password Password value changes during every keystroke
+ */
+interface SignInScreenState {
+  email: string;
+  password: string;
+}
+
+class SignInScreen extends Component<SignInScreenProps, SignInScreenState> {
+  /**
+   * @var moveUpValue used for component moving up when keyboard is on
+   * @var keyboardWillShowListener used for detect keyboard is on
+   * @var keyboardWillHideListener used for detect keyboard is off
+   */
+  private moveUpValue: Animated.Value;
+  private keyboardWillShowListener: EmitterSubscription | null;
+  private keyboardWillHideListener: EmitterSubscription | null;
 
   constructor(props: SignInScreenProps) {
     super(props);
-    this.moveAnimation = new Animated.Value(0);
+    this.state = {
+      email: '',
+      password: '',
+    };
+    this.moveUpValue = new Animated.Value(0);
+    this.keyboardWillShowListener = null;
+    this.keyboardWillHideListener = null;
   }
 
-  _move = (value: number) => () => {
-    Animated.timing(this.moveAnimation, {
+  componentDidMount() {
+    this.keyboardWillShowListener = Keyboard.addListener(
+      'keyboardWillShow',
+      this.moveUp,
+    );
+    this.keyboardWillHideListener = Keyboard.addListener(
+      'keyboardWillHide',
+      this.moveDown,
+    );
+  }
+
+  componentWillUnmount() {
+    this.keyboardWillHideListener?.remove();
+    this.keyboardWillShowListener?.remove();
+  }
+
+  /**
+   * Method move component vertically, triggered when
+   * keyboard is on/off
+   * @param value Moving value in pixel counting from the
+   * starting point, '+' move down, '-' move up
+   * @param duration Time in milliseconds need to take to finish animation
+   */
+  move = (value: number, duration = 200) => {
+    Animated.timing(this.moveUpValue, {
       toValue: value,
-      duration: 200,
+      duration,
       useNativeDriver: true,
     }).start();
   };
 
-  _moveUp = () => {
-    this._move(-screenHeight / 6)();
+  moveUp = () => this.move(-screenHeight / 14);
+
+  moveDown = () => this.move(0);
+
+  navigateToSignUpScreen = () => {
+    this.props.navigation.navigate('SignUpScreen');
   };
 
-  _moveDown = () => {
-    this._move(0)();
+  /**
+   * Method set email value
+   * @param email New email value to set
+   */
+  performSetEmail = (email: string) => this.setState({ email });
+
+  /**
+   * Method set password value
+   * @param password New password value to set
+   */
+  performSetPassword = (password: string) => this.setState({ password });
+
+  performSignIn = async () => {
+    const { onSignIn, onClearPosts } = this.props;
+    const { email, password } = this.state;
+
+    this.moveDown();
+    Keyboard.dismiss();
+
+    await onSignIn(email, password);
+
+    // delay(500).then(() => {
+
+    // });
+    if (this.props.error === null) {
+      // clear current post lists to refetch
+      // new posts with signed in user
+
+      // forcefully navigate to Home after successfully sign in
+      this.props.navigation.dangerouslyGetParent()!.dispatch(
+        CommonActions.navigate({
+          name: 'HomeScreen',
+        }),
+      );
+
+      // await delay(500);
+      // onClearPosts();
+    }
   };
 
-  navigateToSignUp = () => {
-    this.props.navigation.navigate('SignUp');
+  renderErrorText = () => {
+    const { error } = this.props;
+    return (
+      <View style={{ marginTop: 12 }}>
+        <ErrorText text={error ? error.message : ' '} />
+      </View>
+    );
   };
 
   render() {
+    const { email, password } = this.state;
+
     const animStyle = {
       transform: [
         {
-          translateY: this.moveAnimation,
+          translateY: this.moveUpValue,
         },
       ],
     };
@@ -62,22 +182,20 @@ class SignInScreen extends Component<SignInScreenProps> {
     return (
       <View style={styles.container}>
         <Animated.View style={[styles.textBoxsWrapper, animStyle]}>
-          <EmailTextBox
-            onWatchFocus={this._moveUp}
-            onWatchBlur={this._moveDown}
-          />
+          <EmailTextBox value={email} setEmail={this.performSetEmail} />
           <PasswordTextBox
-            onWatchFocus={this._moveUp}
-            onWatchBlur={this._moveDown}
+            value={password}
+            setPassword={this.performSetPassword}
           />
-          <SignInErrorText />
-          <SignInBtn
-            callback={this._move(0)}
-            navigation={this.props.navigation}
+          {this.renderErrorText()}
+          <BigButton
+            label="Sign in"
+            loading={this.props.loading}
+            onPress={this.performSignIn}
           />
           <View style={styles.signupView}>
             <Text style={{ color: 'white' }}>First time here? </Text>
-            <TouchableOpacity onPress={this.navigateToSignUp}>
+            <TouchableOpacity onPress={this.navigateToSignUpScreen}>
               <Text style={{ color: '#bac9d4', fontWeight: 'bold' }}>
                 Sign up
               </Text>
@@ -109,4 +227,14 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SignInScreen;
+const mapStateToProps = (state: AppState) => ({
+  error: state.auth.errors.signinError,
+  loading: state.auth.loadings.signinLoading,
+});
+
+const mapDispatchToProps = {
+  onSignIn: signin,
+  onClearPosts: clear,
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(SignInScreen);

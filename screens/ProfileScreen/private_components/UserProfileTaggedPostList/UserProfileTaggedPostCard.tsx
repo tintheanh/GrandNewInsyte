@@ -85,8 +85,8 @@ class UserProfileTaggedPostCard extends Component<
         index={index}
         navigation={navigation}
         isTabFocused={isTabFocused}
-        navigateWhenClickOnPostOrComment={this.navigateToPost}
-        navigateWhenClickOnUsernameOrAvatar={this.navigateToUserProfile}
+        navigateWhenPressOnPostOrComment={this.navigateToPost}
+        navigateWhenPressOnUsernameOrAvatar={this.navigateToUserProfile}
         performLikePost={this.performLikePost}
         performUnlikePost={this.performUnlikePost}
       />

@@ -9,15 +9,15 @@ import {
 
 interface CaptionProps {
   caption: string;
-  navigateWhenClickOnPostOrComment?: () => void;
+  navigateWhenPressOnPostOrComment?: () => void;
 }
 
 export default function Caption({
   caption,
-  navigateWhenClickOnPostOrComment,
+  navigateWhenPressOnPostOrComment,
 }: CaptionProps) {
   return (
-    <TouchableWithoutFeedback onPress={navigateWhenClickOnPostOrComment}>
+    <TouchableWithoutFeedback onPress={navigateWhenPressOnPostOrComment}>
       {caption.length <= 200 ? (
         <Text style={styles.caption}>
           {/* {generateCaptionTextArray(caption).map((text, i) => {

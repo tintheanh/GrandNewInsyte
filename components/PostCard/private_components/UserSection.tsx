@@ -8,8 +8,8 @@ interface UserSectionProps {
   username: string;
   timeLabel: string;
   iconPrivacy: string;
-  navigateWhenClickOnPostOrComment?: () => void;
-  navigateWhenClickOnUsernameOrAvatar?: () => void;
+  navigateWhenPressOnPostOrComment?: () => void;
+  navigateWhenPressOnUsernameOrAvatar?: () => void;
   userPostControl?: () => void;
 }
 
@@ -18,12 +18,12 @@ export default function UserSection({
   username,
   timeLabel,
   iconPrivacy,
-  navigateWhenClickOnUsernameOrAvatar,
-  navigateWhenClickOnPostOrComment,
+  navigateWhenPressOnUsernameOrAvatar,
+  navigateWhenPressOnPostOrComment,
 }: UserSectionProps) {
   return (
     <View style={styles.userWrapper}>
-      {/* <TouchableWithoutFeedback onPress={navigateWhenClickOnUsernameOrAvatar}>
+      {/* <TouchableWithoutFeedback onPress={navigateWhenPressOnUsernameOrAvatar}>
         <Image
           style={styles.avatar}
           source={
@@ -32,9 +32,9 @@ export default function UserSection({
           defaultSource={require('../../../assets/user.png')}
         />
       </TouchableWithoutFeedback> */}
-      <Avatar avatar={avatar} onPress={navigateWhenClickOnUsernameOrAvatar!} />
+      <Avatar avatar={avatar} onPress={navigateWhenPressOnUsernameOrAvatar!} />
       <View style={styles.usernameAndTimeWrapper}>
-        <TouchableWithoutFeedback onPress={navigateWhenClickOnUsernameOrAvatar}>
+        <TouchableWithoutFeedback onPress={navigateWhenPressOnUsernameOrAvatar}>
           <Text style={styles.username}>{username}</Text>
         </TouchableWithoutFeedback>
         <View style={styles.timeAndPrivacyWrapper}>
@@ -48,7 +48,7 @@ export default function UserSection({
         </View>
       </View>
       {/* remaining space for pressing */}
-      <TouchableWithoutFeedback onPress={navigateWhenClickOnPostOrComment}>
+      <TouchableWithoutFeedback onPress={navigateWhenPressOnPostOrComment}>
         <View style={{ flex: 1 }} />
       </TouchableWithoutFeedback>
     </View>

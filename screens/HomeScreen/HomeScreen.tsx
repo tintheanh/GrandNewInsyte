@@ -9,7 +9,7 @@ import { clearCommentsStack } from '../../redux/commentsStack/actions';
 import { clearRepliesStack } from '../../redux/repliesStack/actions';
 import { clearUsersStack } from '../../redux/usersStack/actions';
 import { fsDB } from '../../config';
-import { generateSubstrForUsername } from '../../utils/functions';
+import { generateSubstringForUsername } from '../../utils/functions';
 
 // interface FeedProps {
 //   onFetchPublicNewPosts: () => void;
@@ -67,7 +67,7 @@ class HomeScreen extends Component<any> {
     //   console.log(err);
     // }
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 50; i++) {
       // const reply = {
       //   content: faker.lorem.sentence(),
       //   date_posted: faker.date.between('2020-07-11', '2020-07-26').getTime(),
@@ -112,7 +112,7 @@ class HomeScreen extends Component<any> {
       //   .collection('follower_for_search')
       //   .doc('fake' + i)
       //   .set({
-      //     prefix: generateSubstrForUsername(user.username),
+      //     prefix: generateSubstringForUsername(user.username),
       //   });
       // const post = {
       //   posted_by: '9DHOf4becGfrx7fmUXPcYdqtc2I3',
@@ -129,7 +129,7 @@ class HomeScreen extends Component<any> {
       //       height: 480,
       //     },
       //   ],
-      //   privacy: 'followers',
+      //   privacy: 'public',
       //   tagged_users: [],
       // };
       // const docRef = await fsDB.collection('posts').add(post);
@@ -180,9 +180,9 @@ class HomeScreen extends Component<any> {
     // console.log(this.props.user);
     // return this.props.user ? <HomeAuth /> : <HomeNotAuth />;
     // console.log(this.props.user);
-    if (this.props.user === undefined) {
-      return <Loading />;
-    }
+    // if (!this.props.user) {
+    //   return <Loading />;
+    // }
     return this.props.user ? <HomeAuth /> : <HomeNotAuth />;
 
     // return (

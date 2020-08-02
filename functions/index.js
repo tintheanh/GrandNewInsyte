@@ -4,6 +4,22 @@ const firebaseTools = require('firebase-tools');
 
 admin.initializeApp();
 
+/**
+ * Method general substring array from username
+ * @param username
+ */
+const generateSubstringForUsername = (username) => {
+  const toLower = username.toLocaleLowerCase();
+  const result = new Set();
+  const len = toLower.length;
+  for (let i = 0; i < len; i++) {
+    for (let j = i + 1; j < len + 1; j++) {
+      result.add(toLower.slice(i, j));
+    }
+  }
+  return [...result];
+};
+
 exports.checkUsername = functions.https.onCall((data, context) => {
   const { username } = data;
   if (!(typeof username === 'string') || username.length < 4) {
@@ -31,57 +47,82 @@ exports.checkUsername = functions.https.onCall((data, context) => {
     });
 });
 
-exports.deleteUser = functions.https.onCall((data, context) => {
-  const { uid } = data;
+// exports.deleteUser = functions.https.onCall((data, context) => {
+//   const { uid } = data;
 
-  if (!(typeof username === 'string') || uid.length === 0) {
-    throw new functions.https.HttpsError('invalid-argument', 'Invalid UID.');
-  }
+//   if (!(typeof username === 'string') || uid.length === 0) {
+//     throw new functions.https.HttpsError('invalid-argument', 'Invalid UID.');
+//   }
 
+//   return admin
+//     .auth()
+//     .deleteUser(uid)
+//     .catch((err) => {
+//       throw new functions.https.HttpsError(err.code, err.message);
+//     });
+// });
+
+// exports.handleCreatePostForFollowers = functions.firestore
+//   .document('posts/{postId}')
+//   .onCreate((snapshot, context) => {
+//     const newPost = snapshot.data();
+//     const postID = context.params.postId;
+//     const privacy = newPost.privacy;
+//     const date_posted = newPost.date_posted;
+//     const uid = newPost.posted_by;
+
+//     if (privacy !== 'private') {
+//       return admin
+//         .database()
+//         .ref(`users/${uid}/following_posts`)
+//         .child(postID)
+//         .set({ date_posted, posted_by: uid })
+//         .then(() =>
+//           admin
+//             .database()
+//             .ref(`users/${uid}/follower_list`)
+//             .once('value')
+//             .then((followerListSnapshot) => {
+//               followerListSnapshot.forEach((doc) => {
+//                 const followerID = doc.key;
+//                 admin
+//                   .database()
+//                   .ref(`users/${followerID}/following_posts`)
+//                   .child(postID)
+//                   .set({ date_posted, posted_by: uid })
+//                   .catch((err) => {});
+//               });
+//             })
+//             .catch((err) => console.log(err.code, err.message)),
+//         );
+//     }
+//     return Promise.resolve();
+//   });
+
+exports.handleUserSignUp = functions.auth.user().onCreate((user) => {
   return admin
     .auth()
-    .deleteUser(uid)
-    .catch((err) => {
-      throw new functions.https.HttpsError(err.code, err.message);
+    .getUser(user.uid)
+    .then((userRes) => {
+      const { uid, email, displayName } = userRes;
+      admin
+        .firestore()
+        .collection('users')
+        .doc(uid)
+        .set({
+          avatar: '',
+          name: '',
+          email,
+          username: displayName,
+          bio: '',
+          total_posts: 0,
+          following: 0,
+          followers: 0,
+          for_search: generateSubstringForUsername(displayName),
+        })
+        .catch((err) => console.log(err.message));
     });
 });
-
-exports.handleCreatePostForFollowers = functions.firestore
-  .document('posts/{postId}')
-  .onCreate((snapshot, context) => {
-    const newPost = snapshot.data();
-    const postID = context.params.postId;
-    const privacy = newPost.privacy;
-    const date_posted = newPost.date_posted;
-    const uid = newPost.posted_by;
-
-    if (privacy !== 'private') {
-      return admin
-        .database()
-        .ref(`users/${uid}/following_posts`)
-        .child(postID)
-        .set({ date_posted, posted_by: uid })
-        .then(() =>
-          admin
-            .database()
-            .ref(`users/${uid}/follower_list`)
-            .once('value')
-            .then((followerListSnapshot) => {
-              followerListSnapshot.forEach((doc) => {
-                const followerID = doc.key;
-                admin
-                  .database()
-                  .ref(`users/${followerID}/following_posts`)
-                  .child(postID)
-                  .set({ date_posted, posted_by: uid })
-                  .catch((err) => {});
-              });
-            })
-            .catch((err) => console.log(err.code, err.message)),
-        );
-    }
-    return Promise.resolve();
-  });
 
 exports.handleDeletePost = functions.firestore
   .document('posts/{postId}')
