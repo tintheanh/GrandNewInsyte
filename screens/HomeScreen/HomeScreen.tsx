@@ -176,7 +176,6 @@ class HomeScreen extends Component<any> {
   }
 
   render() {
-    // console.log('home');
     // console.log(this.props.user);
     // return this.props.user ? <HomeAuth /> : <HomeNotAuth />;
     // console.log(this.props.user);

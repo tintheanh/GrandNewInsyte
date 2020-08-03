@@ -40,8 +40,6 @@ type HomeScreenNavigationProp = StackNavigationProp<
   'HomeScreen'
 >;
 
-const height = Layout.window.height;
-
 interface HomePublicPostListProps {
   navigation: HomeScreenNavigationProp;
 
@@ -66,20 +64,20 @@ interface HomePublicPostListProps {
    * Boolean loading props when
    * first fetch posts
    */
-  loading: boolean;
+  fetchLoading: boolean;
 
   error: Error | null;
 
   /**
    * Current feed selection, either 'new' or 'hot
    */
-  feedChoice: string;
+  feedChoice: 'new' | 'hot';
 
   /**
    * Current time selection for hot feed
    * Either 1 week, 1 month, or 1 year in epoch
    */
-  timeChoice: number;
+  hotTime: number;
 
   /**
    * Method set current scrolling index
@@ -149,7 +147,7 @@ interface HomePublicPostListProps {
   currentTabIndex?: number;
 }
 
-class HomePublicPostList extends Component<HomePublicPostListProps, any> {
+class HomePublicPostList extends Component<HomePublicPostListProps> {
   /**
    * Configuration object for list scrolling
    */
@@ -164,21 +162,35 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
   }
 
   shouldComponentUpdate(nextProps: HomePublicPostListProps) {
-    if (checkPostListChanged(this.props.posts, nextProps.posts)) {
-      return true;
-    }
+    const {
+      posts,
+      currentTabIndex,
+      fetchLoading,
+      pullLoading,
+      feedChoice,
+      hotTime,
+      error,
+    } = this.props;
 
-    if (this.props.currentTabIndex !== nextProps.currentTabIndex) {
+    if (checkPostListChanged(posts, nextProps.posts)) {
       return true;
     }
-    if (this.props.loading !== nextProps.loading) {
+    if (currentTabIndex !== nextProps.currentTabIndex) {
       return true;
     }
-    if (this.props.pullLoading !== nextProps.pullLoading) {
+    if (fetchLoading !== nextProps.fetchLoading) {
       return true;
     }
-
-    if (this.props.error !== nextProps.error) {
+    if (pullLoading !== nextProps.pullLoading) {
+      return true;
+    }
+    if (feedChoice !== nextProps.feedChoice) {
+      return true;
+    }
+    if (hotTime !== nextProps.hotTime) {
+      return true;
+    }
+    if (error !== nextProps.error) {
       return true;
     }
     return false;
@@ -240,6 +252,9 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
     }
   };
 
+  /**
+   * Method alert and perform select sorting filter for post list
+   */
   performSelectPostFilter = () => {
     const {
       feedChoice,
@@ -278,12 +293,11 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
     );
   };
 
+  /**
+   * Method alert and perform select time filter for post list
+   */
   performSelectTimeFilter = () => {
-    const {
-      timeChoice,
-      onSetPublicHotTime,
-      onFetchPublicHotPosts,
-    } = this.props;
+    const { hotTime, onSetPublicHotTime, onFetchPublicHotPosts } = this.props;
     Alert.alert(
       '',
       'Sort hot posts by',
@@ -291,7 +305,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
         {
           text: 'This week',
           onPress: () => {
-            if (timeChoice !== oneWeek) {
+            if (hotTime !== oneWeek) {
               onSetPublicHotTime(oneWeek);
               onFetchPublicHotPosts();
             }
@@ -300,7 +314,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
         {
           text: 'This month',
           onPress: () => {
-            if (timeChoice !== oneMonth) {
+            if (hotTime !== oneMonth) {
               onSetPublicHotTime(oneMonth);
               onFetchPublicHotPosts();
             }
@@ -309,7 +323,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
         {
           text: 'This year',
           onPress: () => {
-            if (timeChoice !== oneYear) {
+            if (hotTime !== oneYear) {
               onSetPublicHotTime(oneYear);
               onFetchPublicHotPosts();
             }
@@ -351,21 +365,20 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
   render() {
     const {
       posts,
+      pullLoading,
+      hotTime,
+      currentTabIndex,
+      fetchLoading,
+      feedChoice,
+      error,
       onFetchPublicNewPosts,
       onFetchPublicHotPosts,
       onPullToFetchPublicNewPosts,
       onPullToFetchPublicHotPosts,
-      pullLoading,
-      timeChoice,
-      currentTabIndex,
-      loading,
-      feedChoice,
-      error,
     } = this.props;
-    // console.log('home list', posts);
 
     let timeLabel = '';
-    switch (timeChoice) {
+    switch (hotTime) {
       case oneWeek:
         timeLabel = 'this week';
         break;
@@ -377,40 +390,23 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
         break;
     }
 
-    const sortHeader = (
+    let emptyListComponent = null;
+    if (error) {
+      emptyListComponent = <ErrorView errorText={error.message} />;
+    } else if (fetchLoading && posts.length === 0) {
+      emptyListComponent = <Loading />;
+    } else {
+      emptyListComponent = <NothingView />;
+    }
+
+    const headerListComponent = (
       <SortPostListHeader
         sortBy={feedChoice as 'new' | 'hot'}
-        timeChoice={timeLabel as 'this week' | 'this month' | 'this year'}
+        timeLabel={timeLabel as 'this week' | 'this month' | 'this year'}
         selectPostFilter={this.performSelectPostFilter}
         selectTimeFilter={this.performSelectTimeFilter}
       />
     );
-
-    if (error) {
-      return (
-        <View style={styles.container}>
-          {sortHeader}
-          <ErrorView errorText={error.message} handle={onFetchPublicNewPosts} />
-        </View>
-      );
-    }
-
-    if (loading && posts.length === 0) {
-      return (
-        <View style={styles.container}>
-          {sortHeader}
-          <Loading />
-        </View>
-      );
-    }
-    if (posts.length === 0) {
-      return (
-        <View style={styles.container}>
-          {sortHeader}
-          <NothingView handle={onFetchPublicNewPosts} />
-        </View>
-      );
-    }
 
     return (
       <View style={styles.container}>
@@ -420,6 +416,13 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
             renderItem={this.renderItem}
             onViewableItemsChanged={this.onViewableItemsChanged}
             viewabilityConfig={this.viewabilityConfig}
+            refreshing={pullLoading}
+            listEmptyComponent={emptyListComponent}
+            listHeaderComponent={headerListComponent}
+            listFooterComponent={
+              <View style={{ paddingBottom: Layout.window.height / 10 }} />
+            }
+            isFocused={currentTabIndex ? currentTabIndex === 0 : true}
             onEndReached={
               feedChoice === 'new'
                 ? onFetchPublicNewPosts
@@ -430,18 +433,15 @@ class HomePublicPostList extends Component<HomePublicPostListProps, any> {
                 ? onPullToFetchPublicNewPosts
                 : onPullToFetchPublicHotPosts
             }
-            refreshing={pullLoading}
-            listHeaderComponent={sortHeader}
-            listFooterComponent={
-              <View style={{ paddingBottom: height / 10 }} />
-            }
             checkChangesToUpdate={checkPostListChanged}
-            isFocused={currentTabIndex ? currentTabIndex === 0 : true}
+            extraData={fetchLoading}
           />
         </View>
-        <View style={styles.loadingWrapper}>
-          <FooterLoading loading={loading} />
-        </View>
+        {posts.length > 0 ? (
+          <View style={styles.loadingWrapper}>
+            <FooterLoading loading={fetchLoading} />
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -451,11 +451,11 @@ const mapStateToProps = (state: AppState) => {
   return {
     currentUID: state.auth.user?.id,
     pullLoading: state.allPosts.public.pullLoading,
-    loading: state.allPosts.public.loading,
+    fetchLoading: state.allPosts.public.fetchLoading,
     error: state.allPosts.public.error,
     posts: state.allPosts.public.posts,
     feedChoice: state.allPosts.public.feedChoice,
-    timeChoice: state.allPosts.public.hotTime,
+    hotTime: state.allPosts.public.hotTime,
   };
 };
 

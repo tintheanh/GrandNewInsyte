@@ -5,13 +5,14 @@ import { NavigationContainer } from '@react-navigation/native';
 import { Loading } from '../components';
 import { checkAuth } from '../redux/auth/actions';
 import { AppState } from '../redux/store';
+import { User } from '../models';
 import BottomTabNavigator from '../navigation/BottomTabNavigator';
 import CreatePostStack from './CreatePostStack';
 
 const Stack = createStackNavigator();
 
 interface RootStackProps {
-  loading: boolean;
+  user: User | null | undefined;
 
   /**
    * Method check if user signed in
@@ -25,7 +26,7 @@ class RootStack extends Component<RootStackProps> {
   }
 
   render() {
-    if (this.props.loading) {
+    if (this.props.user === undefined) {
       return <Loading />;
     }
     return (
@@ -40,7 +41,7 @@ class RootStack extends Component<RootStackProps> {
 }
 
 const mapStateToProps = (state: AppState) => ({
-  loading: state.auth.loadings.checkAuthLoading,
+  user: state.auth.user,
 });
 
 const mapDispatchToProps = {

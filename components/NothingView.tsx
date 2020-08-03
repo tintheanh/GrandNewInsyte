@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { MaterialIcons, Colors } from '../constants';
 
-export default function NothingView({ handle }: { handle: () => void }) {
+export default function NothingView() {
   return (
     <View
       style={{
@@ -15,22 +15,6 @@ export default function NothingView({ handle }: { handle: () => void }) {
       <Text style={{ color: 'rgba(255, 255, 255, 0.6)', marginTop: 4 }}>
         Nothing to show here
       </Text>
-      <TouchableOpacity onPress={handle}>
-        <View style={{ flexDirection: 'row', marginTop: 12 }}>
-          <MaterialIcons
-            name="refresh"
-            size={22}
-            color="rgba(255, 255, 255, 0.6)"
-          />
-          <Text
-            style={{
-              color: 'rgba(255, 255, 255, 0.6)',
-              fontSize: 18,
-            }}>
-            Refresh
-          </Text>
-        </View>
-      </TouchableOpacity>
     </View>
   );
 }

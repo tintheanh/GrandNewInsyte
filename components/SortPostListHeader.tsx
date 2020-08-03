@@ -4,7 +4,7 @@ import { Entypo, MaterialCommunityIcons, AntDesign } from '../constants';
 
 interface SortPostListHeaderProps {
   sortBy: 'new' | 'hot';
-  timeChoice: 'this week' | 'this month' | 'this year';
+  timeLabel: 'this week' | 'this month' | 'this year';
 
   /**
    * Method sort posts by new or hot
@@ -19,7 +19,7 @@ interface SortPostListHeaderProps {
 
 function SortPostListHeader({
   sortBy,
-  timeChoice,
+  timeLabel,
   selectPostFilter,
   selectTimeFilter,
 }: SortPostListHeaderProps) {
@@ -53,7 +53,7 @@ function SortPostListHeader({
         style={{ alignSelf: 'flex-start' }}>
         <View style={styles.btnContainer}>
           <Entypo name="back-in-time" size={13} color="white" />
-          <Text style={styles.label}>{timeChoice}</Text>
+          <Text style={styles.label}>{timeLabel}</Text>
         </View>
       </TouchableOpacity>
     </View>

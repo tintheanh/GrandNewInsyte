@@ -20,9 +20,7 @@ import {
   BigButton,
 } from '../../components';
 import { signin } from '../../redux/auth/actions';
-import { clear } from '../../redux/posts/actions';
 import { AppState } from '../../redux/store';
-import { delay } from '../../utils/functions';
 
 const screenHeight = Layout.window.height;
 
@@ -132,7 +130,7 @@ class SignInScreen extends Component<SignInScreenProps, SignInScreenState> {
   performSetPassword = (password: string) => this.setState({ password });
 
   performSignIn = async () => {
-    const { onSignIn, onClearPosts } = this.props;
+    const { onSignIn, navigation } = this.props;
     const { email, password } = this.state;
 
     this.moveDown();
@@ -140,22 +138,13 @@ class SignInScreen extends Component<SignInScreenProps, SignInScreenState> {
 
     await onSignIn(email, password);
 
-    // delay(500).then(() => {
-
-    // });
     if (this.props.error === null) {
-      // clear current post lists to refetch
-      // new posts with signed in user
-
       // forcefully navigate to Home after successfully sign in
-      this.props.navigation.dangerouslyGetParent()!.dispatch(
+      navigation.dangerouslyGetParent()!.dispatch(
         CommonActions.navigate({
           name: 'HomeScreen',
         }),
       );
-
-      // await delay(500);
-      // onClearPosts();
     }
   };
 
@@ -234,7 +223,6 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = {
   onSignIn: signin,
-  onClearPosts: clear,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(SignInScreen);

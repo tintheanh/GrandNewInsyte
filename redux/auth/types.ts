@@ -47,7 +47,11 @@ export interface AuthAction {
 }
 
 export interface AuthState {
-  user: User | null;
+  /**
+   * undefined means the app doesn't know
+   * whether there's a user signed in yet
+   */
+  user: User | null | undefined;
   loadings: {
     checkAuthLoading: boolean;
     signinLoading: boolean;

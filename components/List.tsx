@@ -3,38 +3,121 @@ import { SafeAreaView, FlatList, RefreshControl } from 'react-native';
 
 interface ListProps {
   data: Array<any>;
+
+  /**
+   * Method render each item for list
+   */
+  renderItem: ({ item, index }: { item: any; index: number }) => JSX.Element;
+
+  /**
+   * Method check if the list needs to re-render
+   */
+  checkChangesToUpdate: (
+    prevProps: Array<any>,
+    nextProps: Array<any>,
+  ) => boolean;
+
+  /**
+   * Optional props configuring current viewable item
+   */
   viewabilityConfig?: {
     minimumViewTime?: number;
     viewAreaCoveragePercentThreshold?: number;
     itemVisiblePercentThreshold?: number;
     waitForInteraction?: boolean;
   };
-  renderItem: ({ item, index }: { item: any; index: number }) => JSX.Element;
-  onViewableItemsChanged?:
-    | ((info: { viewableItems: any[]; changed: any[] }) => void)
-    | null
-    | undefined;
+
+  /**
+   * Optional props setting how many items to render in the initial batch
+   * default is 10
+   */
   initialNumToRender?: number;
+
+  /**
+   * Optional props controlling number of items rendered per batch
+   * default is 10
+   */
   maxToRenderPerBatch?: number;
+
+  /**
+   * Optional props measuring viewport height for each item
+   * default is 21, 10 above, 10 below, 1 in between
+   */
   windowSize?: number;
-  onEndReached?: () => void;
+
+  /**
+   * Optional props rendering header component for the list
+   */
   listHeaderComponent?: JSX.Element;
+
+  /**
+   * Optional props rendering footer component for the list
+   */
   listFooterComponent?: JSX.Element;
+
+  /**
+   * Optional props rendering component when the list is empty
+   */
   listEmptyComponent?: JSX.Element;
+
+  /**
+   * Optional props setting threshold in pixels for calling onEndReached
+   */
   onEndReachedThreshold?: number;
+
+  /**
+   * Optional props determining when the
+   * keyboard should stay visible after a tap
+   */
   keyboardShouldPersistTaps?: 'always' | 'never' | 'handled';
-  checkChangesToUpdate: (
-    prevProps: Array<any>,
-    nextProps: Array<any>,
-  ) => boolean;
-  onRefresh?: () => void;
+
+  /**
+   * Optional props indicating that the list is being refreshed
+   */
   refreshing?: boolean;
+
+  /**
+   * Optional props detect if the list is being focused by current tab screen.
+   * Some screen may not have tabs
+   */
   isFocused?: boolean;
+
+  /**
+   * Optional props telling the list to re-render when it is changed
+   */
   extraData?: any;
-  _onEndReachedDuringMomentum?: () => void;
+
+  /**
+   * Optional method get curent viewable item
+   */
+  onViewableItemsChanged?: (info: {
+    viewableItems: any[];
+    changed: any[];
+  }) => void;
+
+  /**
+   * Optional method refresh the list when it's being pulled down
+   */
+  onRefresh?: () => void;
+
+  /**
+   * Optional method updating the list when it reaches the last item
+   */
+  onEndReached?: () => void;
+
+  /**
+   * Optional method update the list when
+   * it reaches the last item but only when
+   * the list is being interacted by user
+   */
+  onEndReachedDuringMomentum?: () => void;
 }
 
 export default class List extends Component<ListProps> {
+  /**
+   * @var onEndReachedCalledDuringMomentum detect when the list is being interacted by
+   * user. Used in onEndReachedDuringMomentum()
+   */
   private onEndReachedCalledDuringMomentum: boolean;
   constructor(props: ListProps) {
     super(props);
@@ -42,42 +125,38 @@ export default class List extends Component<ListProps> {
   }
 
   shouldComponentUpdate(nextProps: ListProps) {
-    // console.log(checkPostListChanged(this.props.data, nextProps.data));
-    if (this.props.refreshing !== nextProps.refreshing) {
+    const { data, refreshing, isFocused, extraData } = this.props;
+
+    if (this.props.checkChangesToUpdate(data, nextProps.data)) {
       return true;
     }
-    // if (this.props.data.length !== nextProps.data.length) return true;
-    if (this.props.checkChangesToUpdate(this.props.data, nextProps.data)) {
+    if (refreshing !== nextProps.refreshing) {
       return true;
     }
-    if (this.props.isFocused !== nextProps.isFocused) {
+    if (isFocused !== nextProps.isFocused) {
       return true;
     }
-    if (this.props.extraData !== nextProps.extraData) {
+    if (extraData !== nextProps.extraData) {
       return true;
     }
     return false;
   }
 
-  _onEndReached = ({ distanceFromEnd }: { distanceFromEnd: number }) => {
+  onEndReached = ({ distanceFromEnd }: { distanceFromEnd: number }) => {
     if (distanceFromEnd < 0) {
       return;
     }
     this.props.onEndReached!();
   };
 
-  _onEndReachedDuringMomentum = ({
-    distanceFromEnd,
-  }: {
-    distanceFromEnd: number;
-  }) => {
+  onEndReachedDuringMomentum = () => {
     if (!this.onEndReachedCalledDuringMomentum) {
-      this.props._onEndReachedDuringMomentum!();
+      this.props.onEndReachedDuringMomentum!();
       this.onEndReachedCalledDuringMomentum = true;
     }
   };
 
-  _onMomentumScrollBegin = () => {
+  onMomentumScrollBegin = () => {
     this.onEndReachedCalledDuringMomentum = false;
   };
 
@@ -88,25 +167,25 @@ export default class List extends Component<ListProps> {
   };
 
   render() {
-    console.log('list');
     const {
       data,
-      onViewableItemsChanged = undefined,
-      viewabilityConfig = undefined,
+      viewabilityConfig,
       keyboardShouldPersistTaps = 'never',
       initialNumToRender = 1,
       maxToRenderPerBatch = 1,
       windowSize = 3,
-      listHeaderComponent = undefined,
+      listHeaderComponent,
       onEndReachedThreshold = 0.5,
-      listFooterComponent = undefined,
+      listFooterComponent,
       refreshing = false,
       listEmptyComponent,
+      extraData,
       renderItem,
       onRefresh,
-      extraData,
-      onEndReached = undefined,
+      onViewableItemsChanged,
+      onEndReached,
     } = this.props;
+
     return (
       <SafeAreaView style={{ height: '100%' }}>
         <FlatList
@@ -120,9 +199,9 @@ export default class List extends Component<ListProps> {
           viewabilityConfig={viewabilityConfig}
           removeClippedSubviews={false}
           onEndReached={
-            onEndReached ? this._onEndReached : this._onEndReachedDuringMomentum
+            onEndReached ? this.onEndReached : this.onEndReachedDuringMomentum
           }
-          onMomentumScrollBegin={this._onMomentumScrollBegin}
+          onMomentumScrollBegin={this.onMomentumScrollBegin}
           onEndReachedThreshold={onEndReachedThreshold}
           ListHeaderComponent={listHeaderComponent}
           ListFooterComponent={listFooterComponent}
@@ -133,7 +212,7 @@ export default class List extends Component<ListProps> {
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={this.refresh}
-                tintColor="#fff"
+                tintColor="white"
               />
             ) : undefined
           }

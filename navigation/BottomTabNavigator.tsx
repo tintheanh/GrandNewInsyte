@@ -44,21 +44,21 @@ class BottomTabNavigator extends Component<any> {
     if (this.props.user !== nextProps.user) {
       return true;
     }
-    if (this.props.createPostLoading !== nextProps.createPostLoading) {
-      return true;
-    }
-    if (this.props.createPostError !== nextProps.createPostError) {
-      return true;
-    }
-    if (this.props.deletePostError !== nextProps.deletePostError) {
-      return true;
-    }
-    if (this.props.likePostError !== nextProps.likePostError) {
-      return true;
-    }
-    if (this.props.unlikePostError !== nextProps.unlikePostError) {
-      return true;
-    }
+    // if (this.props.createPostLoading !== nextProps.createPostLoading) {
+    //   return true;
+    // }
+    // if (this.props.createPostError !== nextProps.createPostError) {
+    //   return true;
+    // }
+    // if (this.props.deletePostError !== nextProps.deletePostError) {
+    //   return true;
+    // }
+    // if (this.props.likePostError !== nextProps.likePostError) {
+    //   return true;
+    // }
+    // if (this.props.unlikePostError !== nextProps.unlikePostError) {
+    //   return true;
+    // }
     return false;
   }
 
@@ -74,30 +74,30 @@ class BottomTabNavigator extends Component<any> {
 
   render() {
     // console.log('bottom', this.props.createPostLoading);
-    if (this.props.createPostError) {
-      alertDialog(
-        this.props.createPostError.message,
-        this.performClearCreatePostError,
-      );
-    }
-    if (this.props.deletePostError) {
-      alertDialog(
-        this.props.deletePostError.message,
-        this.performClearDeletePostError,
-      );
-    }
-    if (this.props.likePostError) {
-      alertDialog(
-        this.props.likePostError.message,
-        this.props.onClearLikePostError,
-      );
-    }
-    if (this.props.unlikePostError) {
-      alertDialog(
-        this.props.unlikePostError.message,
-        this.props.onClearUnlikePostError,
-      );
-    }
+    // if (this.props.createPostError) {
+    //   alertDialog(
+    //     this.props.createPostError.message,
+    //     this.performClearCreatePostError,
+    //   );
+    // }
+    // if (this.props.deletePostError) {
+    //   alertDialog(
+    //     this.props.deletePostError.message,
+    //     this.performClearDeletePostError,
+    //   );
+    // }
+    // if (this.props.likePostError) {
+    //   alertDialog(
+    //     this.props.likePostError.message,
+    //     this.props.onClearLikePostError,
+    //   );
+    // }
+    // if (this.props.unlikePostError) {
+    //   alertDialog(
+    //     this.props.unlikePostError.message,
+    //     this.props.onClearUnlikePostError,
+    //   );
+    // }
     return (
       <BottomTab.Navigator
         initialRouteName="Home"

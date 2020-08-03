@@ -30,7 +30,7 @@ import { User } from '../../models';
 // };
 
 const initialState: AuthState = {
-  user: null,
+  user: undefined,
   loadings: {
     checkAuthLoading: false,
     signinLoading: false,
@@ -45,8 +45,8 @@ const initialState: AuthState = {
   },
 };
 
-const unTouchedState: AuthState = {
-  user: null,
+const untouchedState: AuthState = {
+  user: undefined,
   loadings: {
     checkAuthLoading: false,
     signinLoading: false,
@@ -69,7 +69,6 @@ export default function authReducer(
     case DispatchTypes.CHECK_AUTH_STARTED: {
       const newState = { ...state };
       newState.loadings.checkAuthLoading = true;
-      newState.errors.checkAuthError = null;
       return newState;
     }
     case DispatchTypes.CHECK_AUTH_SUCCESS: {
@@ -111,7 +110,7 @@ export default function authReducer(
       return newState;
     }
     case DispatchTypes.SIGN_OUT_SUCCESS: {
-      return unTouchedState;
+      return untouchedState;
     }
     case DispatchTypes.SIGN_OUT_FAILURE: {
       const newState = { ...state };

@@ -1,93 +1,367 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { View, StyleSheet } from 'react-native';
-import { List, Loading, ErrorView, NothingView } from '../../../../components';
+import { View, StyleSheet, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { HomeStackParamList } from '../../../../stacks/HomeStack';
+import {
+  List,
+  Loading,
+  ErrorView,
+  NothingView,
+  SortPostListHeader,
+  FooterLoading,
+} from '../../../../components';
 import { setCurrentHomeListPostIndex } from '../../../../redux/curentViewableItem/actions';
-import HomePostCard from '../HomePostCardWrapper';
-import HomeFollowingPostListLoading from './HomeFollowingPostListLoading';
-import SortFollowingPostList from './SortFollowingPostList';
+import HomePostCardWrapper from '../HomePostCardWrapper';
 import {
   fetchFollowingNewPosts,
-  fetchFollowingHotPosts,
   pullToFetchFollowingNewPosts,
   pullToFetchFollowingHotPosts,
-  clear,
+  fetchFollowingHotPosts,
+  setFollowingFeedChoice,
+  setFollowingHotTime,
 } from '../../../../redux/posts/actions';
+import { pushCommentsLayer } from '../../../../redux/commentsStack/actions';
+import { pushUsersLayer } from '../../../../redux/usersStack/actions';
 import { checkPostListChanged } from '../../../../utils/functions';
 import { AppState } from '../../../../redux/store';
-import { Colors } from '../../../../constants';
+import {
+  Colors,
+  Layout,
+  oneMonth,
+  oneWeek,
+  oneYear,
+} from '../../../../constants';
 import { Post } from '../../../../models';
 
+type HomeScreenNavigationProp = StackNavigationProp<
+  HomeStackParamList,
+  'HomeScreen'
+>;
+
 interface HomeFollowingPostListProps {
+  navigation: HomeScreenNavigationProp;
+
+  /**
+   * Current user id, undefined when
+   * no user sign in
+   */
+  currentUID: string | undefined;
+
+  /**
+   * Posts fetched from database
+   */
   posts: Array<Post>;
-  onSetCurrentViewableIndex: (index: number) => void;
-  onFetchFollowingNewPosts: () => void;
-  onFetchFollowingHotPosts: () => void;
-  onPullToFetchFollowingNewPosts: () => void;
-  onPullToFetchFollowingHotPosts: () => void;
-  onClear: () => void;
+
+  /**
+   * Boolean loading props when
+   * pull to refresh list
+   */
   pullLoading: boolean;
-  currentTabIndex?: number;
-  loading: boolean;
+
+  /**
+   * Boolean loading props when
+   * first fetch posts
+   */
+  fetchLoading: boolean;
+
   error: Error | null;
-  feedChoice: string;
+
+  /**
+   * Current feed selection, either 'new' or 'hot
+   */
+  feedChoice: 'new' | 'hot';
+
+  /**
+   * Current time selection for hot feed
+   * Either 1 week, 1 month, or 1 year in epoch
+   */
+  hotTime: number;
+
+  /**
+   * Method set current scrolling index
+   * Can't use local state because it'll
+   * affect the list
+   * @param index
+   */
+  onSetCurrentViewableIndex: (index: number) => void;
+
+  /**
+   * Method fetch new posts from database
+   */
+  onFetchFollowingNewPosts: () => void;
+
+  /**
+   * Method fetch hot posts from database
+   */
+  onFetchFollowingHotPosts: () => void;
+
+  /**
+   * Method pull to refresh new post list
+   */
+  onPullToFetchFollowingNewPosts: () => void;
+
+  /**
+   * Method pull to refresh hot post list
+   */
+  onPullToFetchFollowingHotPosts: () => void;
+
+  /**
+   * Method push a new comments layer when
+   * navigate to post screen
+   * @param postID Each comments layer is a post screen
+   * using postID to identify from other layers
+   */
+  onPushCommentsLayer: (postID: string) => void;
+
+  /**
+   * Method push a new users layer when
+   * navigate to user screen
+   * @param user Hard data passed to user screen
+   * so that it doesn't need to refetch them
+   */
+  onPushUsersLayer: (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => void;
+
+  /**
+   * Method set fetching posts by new or hot
+   * @param sortBy Either sort post list by new or hot
+   */
+  onSetFollowingFeedChoice: (sortBy: 'new' | 'hot') => void;
+
+  /**
+   * Method set time for hot feed
+   * @param time Either 1 week, 1 month, or 1 year
+   * in epoch
+   */
+  onSetFollowingHotTime: (time: number) => void;
+
+  /**
+   * Optional props index of current tab
+   * Some lists in certain screens may not have tabs
+   */
+  currentTabIndex?: number;
 }
 
 class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
+  /**
+   * Configuration object for list scrolling
+   */
   private viewabilityConfig: {};
+
   constructor(props: HomeFollowingPostListProps) {
     super(props);
     this.viewabilityConfig = {
-      // waitForInteraction: true,
       minimumViewTime: 0,
       itemVisiblePercentThreshold: 80,
     };
   }
 
   shouldComponentUpdate(nextProps: HomeFollowingPostListProps) {
-    if (this.props.currentTabIndex !== nextProps.currentTabIndex) {
+    const {
+      posts,
+      currentTabIndex,
+      fetchLoading,
+      pullLoading,
+      feedChoice,
+      hotTime,
+      error,
+    } = this.props;
+
+    if (checkPostListChanged(posts, nextProps.posts)) {
       return true;
     }
-    if (
-      (this.props.posts.length === 0 || nextProps.posts.length === 0) &&
-      this.props.loading !== nextProps.loading
-    ) {
+    if (currentTabIndex !== nextProps.currentTabIndex) {
       return true;
     }
-    if (this.props.pullLoading !== nextProps.pullLoading) {
+    if (fetchLoading !== nextProps.fetchLoading) {
       return true;
     }
-    if (checkPostListChanged(this.props.posts, nextProps.posts)) {
+    if (pullLoading !== nextProps.pullLoading) {
       return true;
     }
-    if (this.props.error !== nextProps.error) {
+    if (feedChoice !== nextProps.feedChoice) {
+      return true;
+    }
+    if (hotTime !== nextProps.hotTime) {
+      return true;
+    }
+    if (error !== nextProps.error) {
       return true;
     }
     return false;
   }
 
-  onViewableItemsChanged = ({ viewableItems, _ }: any) => {
+  componentDidMount() {
+    this.props.onFetchFollowingNewPosts();
+  }
+
+  /**
+   * Method navigate to post screen
+   * @param data Post data used to push new
+   * comments layer and pass to post screen
+   */
+  navigateToPostScreen = (data: Post) => () => {
+    const { navigation, onPushCommentsLayer } = this.props;
+    onPushCommentsLayer(data.id);
+    navigation.push('PostScreen', data);
+  };
+
+  /**
+   * Method navigate to user/profile screen
+   * if currentUID equals posted-by id in post,
+   * navigate to profile screen, otherwise
+   * to user screen
+   * @param data Simplied user data used to pass to
+   * user/profile screen
+   */
+  navigateToUserScreen = (data: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => {
+    const { currentUID, navigation, onPushUsersLayer } = this.props;
+    if (currentUID !== data.id) {
+      onPushUsersLayer(data);
+      navigation.push('UserScreen', data);
+    } else {
+      navigation.push('ProfileScreen', data);
+    }
+  };
+
+  /**
+   * Method set current scrolling index
+   * @param viewableItems Array of items thich are
+   * currently visible on the screen
+   */
+  onViewableItemsChanged = ({
+    viewableItems,
+  }: {
+    viewableItems: Array<{
+      index: number;
+      item: Post;
+      key: string;
+    }>;
+  }) => {
     if (viewableItems && viewableItems.length > 0 && viewableItems[0]) {
       this.props.onSetCurrentViewableIndex(viewableItems[0].index);
     }
   };
 
-  componentDidMount() {
-    this.props.onFetchFollowingNewPosts();
-  }
-
-  emptyHandler = () => {
-    // this.props.onClear();
-    this.props.onFetchFollowingNewPosts();
+  /**
+   * Method alert and perform select sorting filter for post list
+   */
+  performSelectPostFilter = () => {
+    const {
+      feedChoice,
+      onSetFollowingFeedChoice,
+      onFetchFollowingNewPosts,
+      onFetchFollowingHotPosts,
+    } = this.props;
+    Alert.alert(
+      '',
+      'Sort posts by',
+      [
+        {
+          text: 'New',
+          onPress: () => {
+            if (feedChoice !== 'new') {
+              onSetFollowingFeedChoice('new');
+              onFetchFollowingNewPosts();
+            }
+          },
+        },
+        {
+          text: 'Hot',
+          onPress: () => {
+            if (feedChoice !== 'hot') {
+              onSetFollowingFeedChoice('hot');
+              onFetchFollowingHotPosts();
+            }
+          },
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true },
+    );
   };
 
+  /**
+   * Method alert and perform select time filter for post list
+   */
+  performSelectTimeFilter = () => {
+    const {
+      hotTime,
+      onSetFollowingHotTime,
+      onFetchFollowingHotPosts,
+    } = this.props;
+    Alert.alert(
+      '',
+      'Sort hot posts by',
+      [
+        {
+          text: 'This week',
+          onPress: () => {
+            if (hotTime !== oneWeek) {
+              onSetFollowingHotTime(oneWeek);
+              onFetchFollowingHotPosts();
+            }
+          },
+        },
+        {
+          text: 'This month',
+          onPress: () => {
+            if (hotTime !== oneMonth) {
+              onSetFollowingHotTime(oneMonth);
+              onFetchFollowingHotPosts();
+            }
+          },
+        },
+        {
+          text: 'This year',
+          onPress: () => {
+            if (hotTime !== oneYear) {
+              onSetFollowingHotTime(oneYear);
+              onFetchFollowingHotPosts();
+            }
+          },
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  /**
+   * Method render list item
+   * @param item
+   * @param index
+   */
   renderItem = ({ item, index }: { item: Post; index: number }) => {
-    const { currentTabIndex } = this.props;
+    const { navigation, currentTabIndex } = this.props;
+    const isTabFocused = currentTabIndex ? currentTabIndex === 0 : true;
     return (
-      <HomePostCard
+      <HomePostCardWrapper
         index={index}
         data={item}
-        isTabFocused={currentTabIndex ? currentTabIndex === 1 : false}
+        addScreenListener={navigation.addListener}
+        isTabFocused={isTabFocused}
+        performLikePost={() => console.log('like')}
+        performUnlikePost={() => console.log('unlike')}
+        navigateWhenPressOnPostOrComment={this.navigateToPostScreen(item)}
+        navigateWhenPressOnUsernameOrAvatar={this.navigateToUserScreen(
+          item.user,
+        )}
       />
     );
   };
@@ -95,43 +369,48 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
   render() {
     const {
       posts,
+      pullLoading,
+      hotTime,
+      currentTabIndex,
+      fetchLoading,
+      feedChoice,
+      error,
       onFetchFollowingNewPosts,
       onFetchFollowingHotPosts,
       onPullToFetchFollowingNewPosts,
       onPullToFetchFollowingHotPosts,
-      pullLoading,
-      currentTabIndex,
-      loading,
-      feedChoice,
-      error,
     } = this.props;
-    // console.log('home list');
 
+    let timeLabel = '';
+    switch (hotTime) {
+      case oneWeek:
+        timeLabel = 'this week';
+        break;
+      case oneMonth:
+        timeLabel = 'this month';
+        break;
+      default:
+        timeLabel = 'this year';
+        break;
+    }
+
+    let emptyListComponent = null;
     if (error) {
-      return (
-        <View style={styles.container}>
-          <SortFollowingPostList />
-          <ErrorView errorText={error.message} handle={this.emptyHandler} />
-        </View>
-      );
+      emptyListComponent = <ErrorView errorText={error.message} />;
+    } else if (fetchLoading && posts.length === 0) {
+      emptyListComponent = <Loading />;
+    } else {
+      emptyListComponent = <NothingView />;
     }
 
-    if (loading && posts.length === 0) {
-      return (
-        <View style={styles.container}>
-          <SortFollowingPostList />
-          <Loading />
-        </View>
-      );
-    }
-    if (posts.length === 0) {
-      return (
-        <View style={styles.container}>
-          <SortFollowingPostList />
-          <NothingView handle={this.emptyHandler} />
-        </View>
-      );
-    }
+    const headerListComponent = (
+      <SortPostListHeader
+        sortBy={feedChoice as 'new' | 'hot'}
+        timeLabel={timeLabel as 'this week' | 'this month' | 'this year'}
+        selectPostFilter={this.performSelectPostFilter}
+        selectTimeFilter={this.performSelectTimeFilter}
+      />
+    );
 
     return (
       <View style={styles.container}>
@@ -141,6 +420,13 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
             renderItem={this.renderItem}
             onViewableItemsChanged={this.onViewableItemsChanged}
             viewabilityConfig={this.viewabilityConfig}
+            refreshing={pullLoading}
+            listEmptyComponent={emptyListComponent}
+            listHeaderComponent={headerListComponent}
+            listFooterComponent={
+              <View style={{ paddingBottom: Layout.window.height / 10 }} />
+            }
+            isFocused={currentTabIndex ? currentTabIndex === 0 : true}
             onEndReached={
               feedChoice === 'new'
                 ? onFetchFollowingNewPosts
@@ -151,27 +437,31 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
                 ? onPullToFetchFollowingNewPosts
                 : onPullToFetchFollowingHotPosts
             }
-            refreshing={pullLoading}
-            listHeaderComponent={<SortFollowingPostList />}
             checkChangesToUpdate={checkPostListChanged}
-            isFocused={currentTabIndex ? currentTabIndex === 1 : false}
+            extraData={fetchLoading}
           />
         </View>
-        <View style={styles.loadingWrapper}>
-          <HomeFollowingPostListLoading />
-        </View>
+        {posts.length > 0 ? (
+          <View style={styles.loadingWrapper}>
+            <FooterLoading loading={fetchLoading} />
+          </View>
+        ) : null}
       </View>
     );
   }
 }
 
-const mapStateToProps = (state: AppState) => ({
-  pullLoading: state.allPosts.following.pullLoading,
-  loading: state.allPosts.following.loading,
-  error: state.allPosts.following.error,
-  posts: state.allPosts.following.posts,
-  feedChoice: state.allPosts.following.feedChoice,
-});
+const mapStateToProps = (state: AppState) => {
+  return {
+    currentUID: state.auth.user?.id,
+    pullLoading: state.allPosts.following.pullLoading,
+    fetchLoading: state.allPosts.following.fetchLoading,
+    error: state.allPosts.following.error,
+    posts: state.allPosts.following.posts,
+    feedChoice: state.allPosts.following.feedChoice,
+    hotTime: state.allPosts.following.hotTime,
+  };
+};
 
 const mapDispatchToProps = {
   onSetCurrentViewableIndex: setCurrentHomeListPostIndex,
@@ -179,7 +469,10 @@ const mapDispatchToProps = {
   onFetchFollowingHotPosts: fetchFollowingHotPosts,
   onPullToFetchFollowingNewPosts: pullToFetchFollowingNewPosts,
   onPullToFetchFollowingHotPosts: pullToFetchFollowingHotPosts,
-  onClear: clear,
+  onPushCommentsLayer: pushCommentsLayer,
+  onPushUsersLayer: pushUsersLayer,
+  onSetFollowingFeedChoice: setFollowingFeedChoice,
+  onSetFollowingHotTime: setFollowingHotTime,
 };
 
 const styles = StyleSheet.create({
@@ -194,12 +487,13 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 14,
-    paddingBottom: 14,
   },
 });
 
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(HomeFollowingPostList);
+)(function (props: any) {
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+  return <HomeFollowingPostList {...props} navigation={navigation} />;
+});

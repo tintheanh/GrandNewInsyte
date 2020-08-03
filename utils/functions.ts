@@ -22,6 +22,17 @@ import {
 } from '../models';
 import { Colors, tokenForTag, separatorForTag } from '../constants';
 
+/**
+ * Method ramdomly throw dummy error for testing
+ */
+const randomlyThrowError = () => {
+  const percentage = Math.round(Math.random() * 99) + 1;
+  console.log(percentage);
+  if (percentage > 50) {
+    throw new Error('Fake error.');
+  }
+};
+
 const alertDialog = (alertText: string, callback?: (args?: any) => void) => {
   Alert.alert(
     '',
@@ -542,16 +553,21 @@ const FSdocsToPostArray = async (
   return newPosts;
 };
 
-const docFBtoPostArray = async (
-  docCollection: Array<string>,
-  currentUser?: {
-    id: string | undefined;
-    username: string | undefined;
-    avatar: string | undefined;
-  },
+/**
+ * Method generate post array from post ids
+ * @param postIDs
+ * @param currentUser
+ */
+const postIDsToPostArray = async (
+  postIDs: Array<string>,
+  currentUser: {
+    id: string;
+    username: string;
+    avatar: string;
+  } | null = null,
 ): Promise<Array<Post>> => {
   const newPosts = [];
-  for (const postID of docCollection) {
+  for (const postID of postIDs) {
     try {
       const postRef = await fsDB.collection('posts').doc(postID).get();
       if (!postRef.exists) {
@@ -817,8 +833,15 @@ const filterImageArray = (arr: any[]) => {
   return filteredArr;
 };
 
+/**
+ * Method to remove duplicates from array by id
+ * @param arr Array to remove duplicates
+ */
 const removeDuplicatesFromArray = (arr: Array<any>) => {
   const filteredArr = arr.reduce((acc: Array<any>, current) => {
+    if (!current.id) {
+      return arr;
+    }
     const x = acc.find((element) => element.id === current.id);
     if (!x) {
       return acc.concat([current]);
@@ -885,6 +908,7 @@ const deleteMedia = async (
 };
 
 export {
+  randomlyThrowError,
   isEmailValid,
   isPasswordValid,
   convertTime,
@@ -899,7 +923,7 @@ export {
   checkPostCommentListChanged,
   checkPostChanged,
   FSdocsToPostArray,
-  docFBtoPostArray,
+  postIDsToPostArray,
   alertDialog,
   filterImageArray,
   uploadMedia,

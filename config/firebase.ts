@@ -3,7 +3,9 @@ import firestore, {
 } from '@react-native-firebase/firestore';
 import storage from '@react-native-firebase/storage';
 import authentication, { FirebaseAuthTypes } from '@react-native-firebase/auth';
-import database from '@react-native-firebase/database';
+import database, {
+  FirebaseDatabaseTypes,
+} from '@react-native-firebase/database';
 import functions from '@react-native-firebase/functions';
 
 export const fsDB = firestore();
@@ -23,4 +25,4 @@ export enum AuthErrorCodes {
   EmailAlreadyExists = 'auth/email-already-in-use',
 }
 
-export { FirebaseFirestoreTypes, FirebaseAuthTypes };
+export { FirebaseFirestoreTypes, FirebaseAuthTypes, FirebaseDatabaseTypes };

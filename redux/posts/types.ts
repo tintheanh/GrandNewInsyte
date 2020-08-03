@@ -111,45 +111,36 @@ export interface PostAction {
 export interface PostState {
   public: {
     posts: Array<Post>;
-    loadings: {
-      fetchLoading: boolean;
-      pullLoading: boolean;
-    };
+    fetchLoading: boolean;
+    pullLoading: boolean;
     lastNewVisible: number;
     lastHotVisible: number;
     hotTime: number;
-    feedChoice: string;
+    feedChoice: 'new' | 'hot';
     error: Error | null;
   };
   following: {
     posts: Array<Post>;
-    loadings: {
-      fetchLoading: boolean;
-      pullLoading: boolean;
-    };
+    fetchLoading: boolean;
+    pullLoading: boolean;
     lastNewVisible: number;
     lastHotVisible: number;
     hotTime: number;
-    feedChoice: string;
+    feedChoice: 'new' | 'hot';
     error: Error | null;
   };
   userPosts: {
     posts: Array<Post>;
-    loadings: {
-      fetchLoading: boolean;
-      pullLoading: boolean;
-    };
+    fetchLoading: boolean;
+    pullLoading: boolean;
     error: Error | null;
     lastVisible: number;
   };
   taggedPosts: {
     posts: Array<Post>;
-    loading: boolean;
+    fetchLoading: boolean;
     pullLoading: boolean;
-    loadings: {
-      fetchLoading: boolean;
-      pullLoading: boolean;
-    };
+    error: Error | null;
     lastVisible: number;
   };
   createPost: {
