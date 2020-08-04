@@ -1,184 +1,280 @@
 import React, { Component } from 'react';
 import { Animated, FlatList, StyleSheet, View } from 'react-native';
 import { connect } from 'react-redux';
-import { setCurrentUserTaggedListPostIndex } from '../../../../redux/curentViewableItem/actions';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { ProfileStackParamList } from '../../../../stacks/ProfileStack';
+import { setCurrentUserListPostIndex } from '../../../../redux/curentViewableItem/actions';
 import {
   fetchTaggedPosts,
   pullToFetchTaggedPosts,
-} from '../../../../redux/posts/actions';
-import UserProfileTaggedPostCard from './UserProfileTaggedPostCard';
+} from '../../../../redux/auth/actions';
 import {
   ErrorView,
   NothingView,
   Loading,
   ProfilePostList,
+  FooterLoading,
 } from '../../../../components';
-import UserProfileTaggedPostListLoading from './UserProfileTaggedPostListLoading';
+import UserProfilePostCardWrapper from '../UserProfilePostCardWrapper';
 import { checkPostListChanged } from '../../../../utils/functions';
 import { Colors, Layout } from '../../../../constants';
 import { AppState } from '../../../../redux/store';
 import { Post } from '../../../../models';
 
-const windowHeight = Layout.window.height;
+type ProfileScreenNavigationProp = StackNavigationProp<
+  ProfileStackParamList,
+  'ProfileScreen'
+>;
 
 interface UserProfileTaggedPostListProps {
-  onGetRef: (ref: FlatList<any>) => void;
-  scrollY: Animated.Value;
-  onMomentumScrollBegin: () => void;
-  onScrollEndDrag: () => void;
-  onMomentumScrollEnd: () => void;
-  onScrollToTop: () => void;
-  headerHeight: number;
-  tabBarHeight: number;
-  onSetCurrentViewableIndex: (index: number) => void;
-  onFetchTaggedPosts: () => void;
-  onPullToFetchTaggedPosts: () => void;
-  currentTabIndex: number;
+  navigation: ProfileScreenNavigationProp;
+
+  /**
+   * Posts fetched from database
+   */
   posts: Array<Post>;
+
+  /**
+   * Current focused tab screen index
+   */
+  currentTabIndex: number;
+
   error: Error | null;
-  loading: boolean;
+
+  /**
+   * Boolean loading props when
+   * first fetch posts
+   */
+  fetchLoading: boolean;
+
+  /**
+   * Boolean loading props when
+   * pull to refresh list
+   */
   pullLoading: boolean;
+
+  /**
+   * Required props value for vertical animation
+   */
+  scrollY: Animated.Value;
+
+  /**
+   * Required props for setting contentContainerStyle
+   */
+  headerHeight: number;
+
+  /**
+   * Required props for setting contentContainerStyle
+   */
+  tabBarHeight: number;
+
+  /**
+   * Required method get reference of the list.
+   * Used in animation
+   */
+  onGetRef: (ref: FlatList<any>) => void;
+
+  /**
+   * Required method detect when the list starting to move.
+   * Used in animation
+   */
+  onMomentumScrollBegin: () => void;
+
+  /**
+   * Required method synchronize list's movement with
+   * the header
+   */
+  onScrollEndDrag: () => void;
+
+  /**
+   * Required method detect when the list stop moving.
+   * Used in animation
+   */
+  onMomentumScrollEnd: () => void;
+
+  /**
+   * Method scroll the list to top with the header
+   */
+  onScrollToTop: () => void;
+
+  /**
+   * Method set current scrolling index
+   * Can't use local state because it'll
+   * affect the list
+   * @param index
+   */
+  onSetCurrentViewableIndex: (index: number) => void;
+
+  /**
+   * Method fetch user posts
+   */
+  onFetchTaggedPosts: () => void;
+
+  /**
+   * Method pull down list to refresh the list
+   */
+  onPullToFetchTaggedPosts: () => void;
 }
 
 class UserProfileTaggedPostList extends Component<
   UserProfileTaggedPostListProps
 > {
+  /**
+   * Configuration object for list scrolling
+   */
   private viewabilityConfig: {};
-  // private onEndReachedCalledDuringMomentum: boolean;
   constructor(props: UserProfileTaggedPostListProps) {
     super(props);
     this.viewabilityConfig = {
-      // waitForInteraction: true,
       minimumViewTime: 0,
       itemVisiblePercentThreshold: 80,
     };
-    // this.onEndReachedCalledDuringMomentum = false;
   }
 
-  shouldComponentUpdate(nextProps: UserProfileTaggedPostListProps, _: any) {
-    if (this.props.headerHeight !== nextProps.headerHeight) {
-      return true;
-    }
-    if (this.props.currentTabIndex !== nextProps.currentTabIndex) {
-      return true;
-    }
+  shouldComponentUpdate(nextProps: UserProfileTaggedPostListProps) {
+    const {
+      posts,
+      currentTabIndex,
+      fetchLoading,
+      pullLoading,
+      error,
+    } = this.props;
 
-    if (
-      (this.props.posts.length === 0 || nextProps.posts.length === 0) &&
-      this.props.loading !== nextProps.loading
-    ) {
+    if (checkPostListChanged(posts, nextProps.posts)) {
       return true;
     }
-    if (this.props.pullLoading !== nextProps.pullLoading) {
+    if (currentTabIndex !== nextProps.currentTabIndex) {
       return true;
     }
-    if (checkPostListChanged(this.props.posts, nextProps.posts)) {
+    if (fetchLoading !== nextProps.fetchLoading) {
       return true;
     }
-    if (this.props.error !== nextProps.error) {
+    if (pullLoading !== nextProps.pullLoading) {
+      return true;
+    }
+    if (error !== nextProps.error) {
       return true;
     }
     return false;
   }
 
-  onViewableItemsChanged = ({ viewableItems, _ }: any) => {
+  componentDidMount() {
+    this.props.onFetchTaggedPosts();
+  }
+
+  /**
+   * Method set current scrolling index
+   * @param viewableItems Array of items thich are
+   * currently visible on the screen
+   */
+  onViewableItemsChanged = ({
+    viewableItems,
+  }: {
+    viewableItems: Array<{
+      index: number;
+      item: Post;
+      key: string;
+    }>;
+  }) => {
     if (viewableItems && viewableItems.length > 0 && viewableItems[0]) {
       this.props.onSetCurrentViewableIndex(viewableItems[0].index);
     }
   };
 
-  componentDidMount() {
-    this.props.onFetchTaggedPosts();
-  }
-
-  emptyHandler = () => {
-    this.props.onFetchTaggedPosts();
+  /**
+   * Method render list item
+   * @param item
+   * @param index
+   */
+  renderItem = ({ item, index }: { item: Post; index: number }) => {
+    const { navigation, currentTabIndex } = this.props;
+    const isTabFocused = currentTabIndex ? currentTabIndex === 1 : true;
+    return (
+      <UserProfilePostCardWrapper
+        index={index}
+        data={item}
+        addScreenListener={navigation.addListener}
+        isTabFocused={isTabFocused}
+        performLikePost={() => console.log('like')}
+        performUnlikePost={() => console.log('unlike')}
+        navigateWhenPressOnPostOrComment={() => console.log('to post screen')}
+      />
+    );
   };
 
   render() {
-    // console.log('user list');
     const {
-      onGetRef,
       scrollY,
-      onMomentumScrollBegin,
-      onScrollEndDrag,
-      onMomentumScrollEnd,
       headerHeight,
       tabBarHeight,
       posts,
-      loading,
+      fetchLoading,
       error,
+      pullLoading,
       currentTabIndex,
+      onGetRef,
+      onMomentumScrollBegin,
+      onScrollEndDrag,
+      onMomentumScrollEnd,
       onFetchTaggedPosts,
       onScrollToTop,
       onPullToFetchTaggedPosts,
-      pullLoading,
     } = this.props;
 
-    // console.log('profile list post', posts);
-
-    if (loading && posts.length === 0) {
-      return (
-        <View
-          style={{
-            paddingTop: headerHeight + tabBarHeight,
-            minHeight: windowHeight - tabBarHeight,
-          }}>
+    let emptyListComponent = null;
+    if (error) {
+      emptyListComponent = (
+        <View style={styles.emptyWrapper}>
+          <ErrorView errorText={error.message} />
+        </View>
+      );
+    } else if (fetchLoading && posts.length === 0) {
+      emptyListComponent = (
+        <View style={styles.emptyWrapper}>
           <Loading />
         </View>
       );
-    }
-
-    if (posts.length === 0) {
-      return (
-        <View
-          style={{
-            paddingTop: headerHeight + tabBarHeight,
-            minHeight: windowHeight - tabBarHeight,
-          }}>
-          <NothingView handle={this.emptyHandler} />
-        </View>
-      );
-    }
-
-    if (error) {
-      return (
-        <View
-          style={{
-            paddingTop: headerHeight + tabBarHeight,
-            minHeight: windowHeight - tabBarHeight,
-          }}>
-          <ErrorView errorText={error.message} handle={this.emptyHandler} />
+    } else {
+      emptyListComponent = (
+        <View style={styles.emptyWrapper}>
+          <NothingView />
         </View>
       );
     }
 
     return (
-      <View style={{ backgroundColor: Colors.brightColor }}>
-        <ProfilePostList
-          onGetRef={onGetRef}
-          scrollY={scrollY}
-          onMomentumScrollBegin={onMomentumScrollBegin}
-          onScrollEndDrag={onScrollEndDrag}
-          onMomentumScrollEnd={onMomentumScrollEnd}
-          headerHeight={headerHeight}
-          tabBarHeight={tabBarHeight}
-          posts={posts}
-          card={UserProfileTaggedPostCard}
-          onScrollToTop={onScrollToTop}
-          onViewableItemsChanged={this.onViewableItemsChanged}
-          viewabilityConfig={this.viewabilityConfig}
-          onEndReached={onFetchTaggedPosts}
-          isTabFocused={currentTabIndex === 1}
-          listFooterComponent={
-            <View style={{ paddingBottom: windowHeight / 10 }} />
-          }
-          refreshing={pullLoading}
-          onRefresh={onPullToFetchTaggedPosts}
-        />
-        <View style={styles.loadingWrapper}>
-          <UserProfileTaggedPostListLoading />
+      <View style={styles.container}>
+        <View style={{ zIndex: 100 }}>
+          <ProfilePostList
+            posts={posts}
+            renderItem={this.renderItem}
+            onGetRef={onGetRef}
+            scrollY={scrollY}
+            listEmptyComponent={emptyListComponent}
+            onMomentumScrollBegin={onMomentumScrollBegin}
+            onScrollEndDrag={onScrollEndDrag}
+            onMomentumScrollEnd={onMomentumScrollEnd}
+            headerHeight={headerHeight}
+            tabBarHeight={tabBarHeight}
+            onScrollToTop={onScrollToTop}
+            onViewableItemsChanged={this.onViewableItemsChanged}
+            viewabilityConfig={this.viewabilityConfig}
+            listFooterComponent={
+              <View style={{ paddingBottom: Layout.window.height / 10 }} />
+            }
+            onEndReached={onFetchTaggedPosts}
+            isTabFocused={currentTabIndex === 0}
+            refreshing={pullLoading}
+            onRefresh={onPullToFetchTaggedPosts}
+            extraData={{ fetchLoading, error }}
+          />
         </View>
+        {posts.length > 0 ? (
+          <View style={styles.loadingWrapper}>
+            <FooterLoading loading={fetchLoading} />
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -186,7 +282,8 @@ class UserProfileTaggedPostList extends Component<
 
 const styles = StyleSheet.create({
   container: {
-    zIndex: 100,
+    backgroundColor: Colors.brightColor,
+    flex: 1,
   },
   loadingWrapper: {
     width: '100%',
@@ -196,17 +293,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  emptyWrapper: {
+    marginTop: 28,
+  },
 });
 
 const mapStateToProps = (state: AppState) => ({
-  posts: state.allPosts.taggedPosts.posts,
-  loading: state.allPosts.taggedPosts.loading,
-  error: state.allPosts.taggedPosts.error,
-  pullLoading: state.allPosts.taggedPosts.pullLoading,
+  posts: state.auth.tagged.posts,
+  fetchLoading: state.auth.tagged.fetchLoading,
+  pullLoading: state.auth.tagged.pullLoading,
+  error: state.auth.tagged.error,
 });
 
 const mapDispatchToProps = {
-  onSetCurrentViewableIndex: setCurrentUserTaggedListPostIndex,
+  onSetCurrentViewableIndex: setCurrentUserListPostIndex,
   onFetchTaggedPosts: fetchTaggedPosts,
   onPullToFetchTaggedPosts: pullToFetchTaggedPosts,
 };
@@ -214,4 +314,7 @@ const mapDispatchToProps = {
 export default connect(
   mapStateToProps,
   mapDispatchToProps,
-)(UserProfileTaggedPostList);
+)(function (props: any) {
+  const navigation = useNavigation<ProfileScreenNavigationProp>();
+  return <UserProfileTaggedPostList {...props} navigation={navigation} />;
+});

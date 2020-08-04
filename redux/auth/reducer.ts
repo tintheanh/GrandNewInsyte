@@ -1,6 +1,6 @@
 import { AuthAction, AuthState, DispatchTypes } from './types';
-import { FirebaseFirestoreTypes } from '../../config';
 import { User, Post } from '../../models';
+import { FirebaseFirestoreTypes } from '../../config';
 
 const initialState: AuthState = {
   user: undefined,
@@ -8,13 +8,15 @@ const initialState: AuthState = {
     posts: [],
     error: null,
     lastVisible: null,
-    loading: false,
+    fetchLoading: false,
+    pullLoading: false,
   },
   tagged: {
     posts: [],
     error: null,
     lastVisible: null,
-    loading: false,
+    fetchLoading: false,
+    pullLoading: false,
   },
   loadings: {
     checkAuthLoading: false,
@@ -31,18 +33,20 @@ const initialState: AuthState = {
 };
 
 const untouchedState: AuthState = {
-  user: undefined,
+  user: null,
   own: {
     posts: [],
     error: null,
     lastVisible: null,
-    loading: false,
+    fetchLoading: false,
+    pullLoading: false,
   },
   tagged: {
     posts: [],
     error: null,
     lastVisible: null,
-    loading: false,
+    fetchLoading: false,
+    pullLoading: false,
   },
   loadings: {
     checkAuthLoading: false,
@@ -69,19 +73,8 @@ export default function authReducer(
       return newState;
     }
     case DispatchTypes.CHECK_AUTH_SUCCESS: {
-      const payload = action.payload as {
-        user: User | null;
-        posts: Array<Post>;
-        taggedPosts: Array<Post>;
-        lastPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
-        lastTaggedPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
-      };
       const newState = { ...state };
-      newState.user = payload.user;
-      newState.own.posts = payload.posts;
-      newState.own.lastVisible = payload.lastPostVisible;
-      newState.tagged.posts = payload.taggedPosts;
-      newState.tagged.lastVisible = payload.lastTaggedPostVisible;
+      newState.user = action.payload as User;
       newState.errors.checkAuthError = null;
       newState.loadings.checkAuthLoading = false;
       return newState;
@@ -89,19 +82,103 @@ export default function authReducer(
     case DispatchTypes.CHECK_AUTH_FAILURE: {
       const newState = { ...state };
       newState.errors.checkAuthError = action.payload as Error;
-      newState.own = {
-        posts: [],
-        error: null,
-        lastVisible: null,
-        loading: false,
-      };
-      newState.tagged = {
-        posts: [],
-        error: null,
-        lastVisible: null,
-        loading: false,
-      };
       newState.loadings.checkAuthLoading = false;
+      return newState;
+    }
+    case DispatchTypes.FETCH_USER_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.own.fetchLoading = true;
+      return newState;
+    }
+    case DispatchTypes.FETCH_USER_POSTS_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      };
+      newState.own.fetchLoading = false;
+      newState.own.posts = state.own.posts.concat(payload.posts);
+      newState.own.lastVisible = payload.lastVisible;
+      newState.own.error = null;
+      return newState;
+    }
+    case DispatchTypes.FETCH_USER_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.own.fetchLoading = false;
+      newState.own.error = action.payload as Error;
+      newState.own.posts = [];
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_USER_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.own.pullLoading = true;
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_USER_POSTS_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      };
+      newState.own.pullLoading = false;
+      newState.own.posts = payload.posts;
+      newState.own.lastVisible = payload.lastVisible;
+      newState.own.error = null;
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_USER_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.own.pullLoading = false;
+      newState.own.error = action.payload as Error;
+      newState.own.posts = [];
+      return newState;
+    }
+    case DispatchTypes.FETCH_USER_TAGGED_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.tagged.fetchLoading = true;
+      return newState;
+    }
+    case DispatchTypes.FETCH_USER_TAGGED_POSTS_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      };
+      newState.tagged.fetchLoading = false;
+      newState.tagged.posts = state.tagged.posts.concat(payload.posts);
+      newState.tagged.lastVisible = payload.lastVisible;
+      newState.tagged.error = null;
+      return newState;
+    }
+    case DispatchTypes.FETCH_USER_TAGGED_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.tagged.fetchLoading = false;
+      newState.tagged.error = action.payload as Error;
+      newState.tagged.posts = [];
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_USER_TAGGED_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.tagged.pullLoading = true;
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_USER_TAGGED_POSTS_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      };
+      newState.tagged.pullLoading = false;
+      newState.tagged.posts = payload.posts;
+      newState.tagged.lastVisible = payload.lastVisible;
+      newState.tagged.error = null;
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_USER_TAGGED_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.tagged.pullLoading = false;
+      newState.tagged.error = action.payload as Error;
+      newState.tagged.posts = [];
       return newState;
     }
     case DispatchTypes.SIGN_IN_STARTED: {

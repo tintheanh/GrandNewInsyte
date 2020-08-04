@@ -6,18 +6,24 @@ import { FontAwesome5, Colors } from '../constants';
 import { ProfileScreen } from '../screens';
 import { AppState } from '../redux/store';
 
-const Stack = createStackNavigator();
+export type ProfileStackParamList = {
+  ProfileScreen: {
+    title: string;
+  };
+};
+
+const Stack = createStackNavigator<ProfileStackParamList>();
 
 function ProfileStack({ username }: { username: string }) {
   return (
     <Stack.Navigator
-      initialRouteName="Profile"
+      initialRouteName="ProfileScreen"
       screenOptions={{
         headerTintColor: 'white',
         headerStyle: { backgroundColor: Colors.darkColor },
       }}>
       <Stack.Screen
-        name="Profile"
+        name="ProfileScreen"
         component={ProfileScreen}
         options={({ navigation }) => ({
           title: username,

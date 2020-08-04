@@ -4,7 +4,7 @@ import { PostCard } from '../../../components';
 import { AppState } from '../../../redux/store';
 import { Post } from '../../../models';
 
-interface HomePostCardWrapperProps {
+interface UserProfilePostCardWrapperProps {
   data: Post;
 
   /**
@@ -65,16 +65,16 @@ interface HomePostCardWrapperProps {
   navigateWhenPressOnUsernameOrAvatar?: () => void;
 }
 
-interface HomePostCardWrapperState {
+interface UserProfilePostCardWrapperState {
   /**
    * Determine if post card should play videos
    */
   shouldPlayMedia: boolean;
 }
 
-class HomePostCardWrapper extends Component<
-  HomePostCardWrapperProps,
-  HomePostCardWrapperState
+class UserProfilePostCardWrapper extends Component<
+  UserProfilePostCardWrapperProps,
+  UserProfilePostCardWrapperState
 > {
   private blurUnsubcriber: () => void = () => {};
   private focusUnsubscriber: () => void = () => {};
@@ -106,7 +106,7 @@ class HomePostCardWrapper extends Component<
 }
 
 const mapStateToProps = (state: AppState) => ({
-  currentViewableIndex: state.postListIndices.currentHomeListPostIndex,
+  currentViewableIndex: state.postListIndices.currentUserListPostIndex,
 });
 
-export default connect(mapStateToProps)(HomePostCardWrapper);
+export default connect(mapStateToProps)(UserProfilePostCardWrapper);

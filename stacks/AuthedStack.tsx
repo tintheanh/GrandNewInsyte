@@ -11,7 +11,7 @@ import { Ionicons, Colors, Layout } from '../constants';
 import { UserSettingScreen } from '../screens';
 import ProfileStack from './ProfileStack';
 import { signout } from '../redux/auth/actions';
-import { clear } from '../redux/posts/actions';
+import { clearAllPosts } from '../redux/posts/actions';
 import { delay } from '../utils/functions';
 
 const Drawer = createDrawerNavigator();
@@ -24,7 +24,6 @@ interface AuthedStackProps {
 const CustomDrawerContent = (props: AuthedStackProps, navigation: any) => {
   const performSignOut = async () => {
     navigation.closeDrawer();
-    // console.log(navigation.dangerouslyGetParent());
     await delay(500);
     navigation.dangerouslyGetParent().dispatch(
       CommonActions.navigate({
@@ -67,7 +66,7 @@ const CustomDrawerContent = (props: AuthedStackProps, navigation: any) => {
 
 const mapDispatchToProps = {
   onSignOut: signout,
-  onClearPosts: clear,
+  onClearPosts: clearAllPosts,
 };
 
 function AuthedStack(props: AuthedStackProps) {

@@ -5,19 +5,6 @@ interface ListProps {
   data: Array<any>;
 
   /**
-   * Method render each item for list
-   */
-  renderItem: ({ item, index }: { item: any; index: number }) => JSX.Element;
-
-  /**
-   * Method check if the list needs to re-render
-   */
-  checkChangesToUpdate: (
-    prevProps: Array<any>,
-    nextProps: Array<any>,
-  ) => boolean;
-
-  /**
    * Optional props configuring current viewable item
    */
   viewabilityConfig?: {
@@ -88,6 +75,19 @@ interface ListProps {
   extraData?: any;
 
   /**
+   * Method render each item for list
+   */
+  renderItem: ({ item, index }: { item: any; index: number }) => JSX.Element;
+
+  /**
+   * Method check if the list needs to re-render
+   */
+  checkChangesToUpdate: (
+    prevProps: Array<any>,
+    nextProps: Array<any>,
+  ) => boolean;
+
+  /**
    * Optional method get curent viewable item
    */
   onViewableItemsChanged?: (info: {
@@ -125,9 +125,15 @@ export default class List extends Component<ListProps> {
   }
 
   shouldComponentUpdate(nextProps: ListProps) {
-    const { data, refreshing, isFocused, extraData } = this.props;
+    const {
+      checkChangesToUpdate,
+      data,
+      refreshing,
+      isFocused,
+      extraData,
+    } = this.props;
 
-    if (this.props.checkChangesToUpdate(data, nextProps.data)) {
+    if (checkChangesToUpdate(data, nextProps.data)) {
       return true;
     }
     if (refreshing !== nextProps.refreshing) {

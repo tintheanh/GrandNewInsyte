@@ -434,7 +434,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
                 : onPullToFetchPublicHotPosts
             }
             checkChangesToUpdate={checkPostListChanged}
-            extraData={fetchLoading}
+            extraData={{ fetchLoading, error }}
           />
         </View>
         {posts.length > 0 ? (

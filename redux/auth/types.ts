@@ -22,6 +22,18 @@ export enum DispatchTypes {
   FETCH_USER_POSTS_SUCCESS = 'FETCH_USER_POSTS_SUCCESS',
   FETCH_USER_POSTS_FAILURE = 'FETCH_USER_POSTS_FAILURE',
 
+  PULL_TO_FETCH_USER_POSTS_STARTED = 'PULL_TO_FETCH_USER_POSTS_STARTED',
+  PULL_TO_FETCH_USER_POSTS_SUCCESS = 'PULL_TO_FETCH_USER_POSTS_SUCCESS',
+  PULL_TO_FETCH_USER_POSTS_FAILURE = 'PULL_TO_FETCH_USER_POSTS_FAILURE',
+
+  FETCH_USER_TAGGED_POSTS_STARTED = 'FETCH_USER_TAGGED_POSTS_STARTED',
+  FETCH_USER_TAGGED_POSTS_SUCCESS = 'FETCH_USER_TAGGED_POSTS_SUCCESS',
+  FETCH_USER_TAGGED_POSTS_FAILURE = 'FETCH_USER_TAGGED_POSTS_FAILURE',
+
+  PULL_TO_FETCH_USER_TAGGED_POSTS_STARTED = 'PULL_TO_FETCH_USER_TAGGED_POSTS_STARTED',
+  PULL_TO_FETCH_USER_TAGGED_POSTS_SUCCESS = 'PULL_TO_FETCH_USER_TAGGED_POSTS_SUCCESS',
+  PULL_TO_FETCH_USER_TAGGED_POSTS_FAILURE = 'PULL_TO_FETCH_USER_TAGGED_POSTS_FAILURE',
+
   EDIT_PROFILE_STARTED = 'EDIT_PROFILE_STARTED',
   EDIT_PROFILE_SUCCESS = 'EDIT_PROFILE_SUCCESS',
   EDIT_PROFILE_FAILURE = 'EDIT_PROFILE_FAILURE',
@@ -48,11 +60,8 @@ export interface AuthAction {
         bio: string;
       }
     | {
-        user: User | null;
         posts: Array<Post>;
-        taggedPosts: Array<Post>;
-        lastPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
-        lastTaggedPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+        lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
       }
     | Array<any>
     | null;
@@ -67,13 +76,15 @@ export interface AuthState {
   own: {
     posts: Array<Post>;
     error: Error | null;
-    loading: boolean;
+    fetchLoading: boolean;
+    pullLoading: boolean;
     lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
   };
   tagged: {
     posts: Array<Post>;
     error: Error | null;
-    loading: boolean;
+    fetchLoading: boolean;
+    pullLoading: boolean;
     lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
   };
   loadings: {

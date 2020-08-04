@@ -24,132 +24,7 @@ import {
 } from './private_components';
 import { AppState } from '../../redux/store';
 
-// const tab1ItemSize = (Layout.window.width - 30) / 2;
-// const tab2ItemSize = (Layout.window.width - 40) / 3;
 const TabBarHeight = 36;
-
-const DATA = [
-  {
-    id: 'bd7acbea-c1b1-46c2-aed5-3ad53abb28ba',
-    user: {
-      username: 'ss1st',
-      avatar:
-        'https://api.time.com/wp-content/uploads/2017/12/terry-crews-person-of-year-2017-time-magazine-2.jpg',
-    },
-    datePosted: 1593110020,
-    caption: 'test capt 1111',
-    privacy: 'public',
-    likes: 23,
-    comments: 54,
-    media: [
-      {
-        id: '1',
-        uri:
-          'https://api.time.com/wp-content/uploads/2017/12/terry-crews-person-of-year-2017-time-magazine-2.jpg',
-        type: 'image',
-      },
-      {
-        id: '2',
-        uri: 'http://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4',
-        type: 'video',
-      },
-      {
-        id: '3',
-        uri: 'http://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4',
-        type: 'video',
-      },
-    ],
-  },
-  {
-    id: '3ac68afc-c605-48d3-a4f8-fbd91aa97f63',
-    user: {
-      username: 'test',
-      avatar:
-        'https://api.time.com/wp-content/uploads/2017/12/terry-crews-person-of-year-2017-time-magazine-2.jpg',
-    },
-    datePosted: 1593113184,
-    caption: 'test caption 2',
-    privacy: 'friends',
-    likes: 23,
-    comments: 54,
-    media: [
-      {
-        id: '1',
-        uri:
-          'https://api.time.com/wp-content/uploads/2017/12/terry-crews-person-of-year-2017-time-magazine-2.jpg',
-        type: 'image',
-      },
-      {
-        id: '2',
-        uri: 'http://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4',
-        type: 'video',
-      },
-    ],
-  },
-  {
-    id: '58694a0f-3da1-471f-bd96-145571e29d72',
-    user: {
-      username: 'test',
-      avatar:
-        'https://api.time.com/wp-content/uploads/2017/12/terry-crews-person-of-year-2017-time-magazine-2.jpg',
-    },
-    datePosted: 1583110020,
-    caption:
-      'test caption at 3 test caption at 3 test caption at 3 test caption at 3 test caption at 3 test caption at 3 test caption at 3',
-    privacy: 'private',
-    likes: 23,
-    comments: 54,
-    media: [],
-  },
-  {
-    id: '3ac68afc-c605-48d3-a4f8-fbd91af63',
-    user: {
-      username: 'test',
-      avatar:
-        'https://api.time.com/wp-content/uploads/2017/12/terry-crews-person-of-year-2017-time-magazine-2.jpg',
-    },
-    datePosted: 1593113184,
-    caption: 'test caption 4',
-    privacy: 'friends',
-    likes: 23,
-    comments: 54,
-    media: [
-      {
-        id: '1',
-        uri:
-          'https://api.time.com/wp-content/uploads/2017/12/terry-crews-person-of-year-2017-time-magazine-2.jpg',
-        type: 'image',
-      },
-      {
-        id: '2',
-        uri: 'http://d23dyxeqlo5psv.cloudfront.net/big_buck_bunny.mp4',
-        type: 'video',
-      },
-    ],
-  },
-];
-
-// for (let i = 0; i < 100; i++) {
-//   DATA.push({
-//     id: '3ac68afc' + i,
-//     user: {
-//       username: faker.internet.userName(),
-//       avatar: faker.image.avatar(),
-//     },
-//     datePosted: parseInt((faker.date.past().getTime() / 1000).toFixed(0)),
-//     caption: faker.lorem.sentence(),
-//     privacy: 'friends',
-//     likes: parseInt(faker.random.number().toFixed(0)),
-//     comments: parseInt(faker.random.number().toFixed(0)),
-//     media: [
-//       {
-//         id: '1',
-//         uri: faker.image.image(),
-//         type: 'image',
-//       },
-//     ],
-//   });
-// }
 
 const ProfileScreen = (props: any) => {
   const [routes] = useState([
@@ -171,7 +46,7 @@ const ProfileScreen = (props: any) => {
     return () => {
       scrollY.removeAllListeners();
     };
-  }, [routes, tabIndex]);
+  }, [routes, tabIndex, scrollY]);
 
   const syncScrollOffset = () => {
     const curRouteKey = routes[tabIndex].key;
@@ -256,40 +131,6 @@ const ProfileScreen = (props: any) => {
     );
   };
 
-  // const renderTab1Item = ({ item, index }: any) => {
-  //   return (
-  //     <View
-  //       style={{
-  //         borderRadius: 16,
-  //         marginLeft: index % 2 === 0 ? 0 : 10,
-  //         width: tab1ItemSize,
-  //         height: tab1ItemSize,
-  //         backgroundColor: '#aaa',
-  //         justifyContent: 'center',
-  //         alignItems: 'center',
-  //       }}>
-  //       <Text>{index}</Text>
-  //     </View>
-  //   );
-  // };
-
-  // const renderTab2Item = ({ item, index }: any) => {
-  //   return (
-  //     <View
-  //       style={{
-  //         marginLeft: index % 3 === 0 ? 0 : 10,
-  //         borderRadius: 16,
-  //         width: tab2ItemSize,
-  //         height: tab2ItemSize,
-  //         backgroundColor: '#aaa',
-  //         justifyContent: 'center',
-  //         alignItems: 'center',
-  //       }}>
-  //       <Text>{index}</Text>
-  //     </View>
-  //   );
-  // };
-
   const renderLabel = ({ route, focused }: any) => {
     return route.key === 'tab1' ? (
       <MaterialCommunityIcons
@@ -309,48 +150,6 @@ const ProfileScreen = (props: any) => {
   };
 
   const renderScene = ({ route }: any) => {
-    // let numCols: number;
-    // let data;
-    // let renderItem;
-    // switch (route.key) {
-    //   case 'tab1':
-    //     numCols = 2;
-    //     data = tab1Data;
-    //     renderItem = renderTab1Item;
-    //     break;
-    //   case 'tab2':
-    //     numCols = 3;
-    //     data = tab2Data;
-    //     renderItem = renderTab2Item;
-    //     break;
-    //   default:
-    //     return null;
-    // }
-    // return (
-    //   <TabScene
-    //     numCols={numCols}
-    //     data={data}
-    //     renderItem={renderItem}
-    //     scrollY={scrollY}
-    //     onMomentumScrollBegin={onMomentumScrollBegin}
-    //     onScrollEndDrag={onScrollEndDrag}
-    //     onMomentumScrollEnd={onMomentumScrollEnd}
-    //     headerHeight={headerHeight}
-    //     onGetRef={(ref: any) => {
-    //       if (ref) {
-    //         const found = listRefArr.current.find(
-    //           (e: any) => e.key === route.key
-    //         );
-    //         if (!found) {
-    //           listRefArr.current.push({
-    //             key: route.key,
-    //             value: ref,
-    //           });
-    //         }
-    //       }
-    //     }}
-    //   />
-    // );
     if (route.key === 'tab1') {
       return (
         <UserProfilePostList
@@ -405,7 +204,7 @@ const ProfileScreen = (props: any) => {
     );
   };
 
-  const renderTabBar = (props: any) => {
+  const renderTabBar = (neededProps: any) => {
     const y = scrollY.interpolate({
       inputRange: [0, headerHeight],
       outputRange: [headerHeight, 0],
@@ -421,7 +220,7 @@ const ProfileScreen = (props: any) => {
           width: '100%',
         }}>
         <TabBar
-          {...props}
+          {...neededProps}
           onTabPress={({ preventDefault }) => {
             if (isListGliding.current) {
               preventDefault();
@@ -452,8 +251,6 @@ const ProfileScreen = (props: any) => {
     );
   };
 
-  // console.log('profile screen');
-  // const data = props.route.params;
   const { avatar, name, bio, postNum, followersNum, followingNum } = props;
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: Colors.darkColor }}>
