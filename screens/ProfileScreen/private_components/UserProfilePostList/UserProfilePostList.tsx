@@ -8,7 +8,7 @@ import { setCurrentUserListPostIndex } from '../../../../redux/curentViewableIte
 import {
   fetchOwnPosts,
   pullToFetchOwnPosts,
-} from '../../../../redux/auth/actions';
+} from '../../../../redux/posts/actions';
 import {
   ErrorView,
   NothingView,
@@ -297,10 +297,10 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: AppState) => ({
-  posts: state.auth.own.posts,
-  fetchLoading: state.auth.own.fetchLoading,
-  pullLoading: state.auth.own.pullLoading,
-  error: state.auth.own.error,
+  posts: state.allPosts.own.posts,
+  fetchLoading: state.allPosts.own.fetchLoading,
+  pullLoading: state.allPosts.own.pullLoading,
+  error: state.allPosts.own.error,
 });
 
 const mapDispatchToProps = {

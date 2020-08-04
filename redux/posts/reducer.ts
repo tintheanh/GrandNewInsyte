@@ -2,6 +2,7 @@ import { DispatchTypes, PostState, PostAction } from './types';
 import { oneWeek, pendingDeletePostFlag, pendingPostID } from '../../constants';
 import { removeDuplicatesFromArray } from '../../utils/functions';
 import { Post } from '../../models';
+import { FirebaseFirestoreTypes } from '../../config';
 
 const initialState: PostState = {
   public: {
@@ -24,19 +25,19 @@ const initialState: PostState = {
     feedChoice: 'new',
     error: null,
   },
-  userPosts: {
+  own: {
     posts: [],
-    lastVisible: 0,
+    error: null,
+    lastVisible: null,
     fetchLoading: false,
     pullLoading: false,
-    error: null,
   },
-  taggedPosts: {
+  tagged: {
     posts: [],
-    lastVisible: 0,
+    error: null,
+    lastVisible: null,
     fetchLoading: false,
     pullLoading: false,
-    error: null,
   },
   createPost: {
     loading: false,
@@ -75,19 +76,19 @@ const untouchedState: PostState = {
     feedChoice: 'new',
     error: null,
   },
-  userPosts: {
+  own: {
     posts: [],
-    lastVisible: 0,
+    error: null,
+    lastVisible: null,
     fetchLoading: false,
     pullLoading: false,
-    error: null,
   },
-  taggedPosts: {
+  tagged: {
     posts: [],
-    lastVisible: 0,
+    error: null,
+    lastVisible: null,
     fetchLoading: false,
     pullLoading: false,
-    error: null,
   },
   createPost: {
     loading: false,
@@ -395,87 +396,106 @@ export default function postsReducer(
       newState.following.pullLoading = false;
       return newState;
     }
+    /* -------------- end following posts cases ------------- */
 
-    // case PULL_TO_FETCH_FOLLOWING_HOTPOSTS_SUCCESS: {
-    //   const payload = action.payload as {
-    //     posts: Array<Post>;
-    //     lastVisible: number;
-    //   };
-    //   const newState = { ...state };
-    //   newState.following.posts = payload.posts;
-    //   newState.following.lastHotVisible = payload.lastVisible;
-    //   newState.following.pullLoading = false;
-    //   return newState;
-    // }
-
-    // /* -------------- end following posts cases ------------- */
-
-    // /* ------------------ user posts cases ------------------ */
-
-    // case FETCH_USER_POSTS_STARTED: {
-    //   const newState = { ...state };
-    //   newState.userPosts.loading = true;
-    //   newState.userPosts.error = null;
-    //   return newState;
-    // }
-    // case FETCH_USER_POSTS_SUCCESS: {
-    //   const payload = action.payload as {
-    //     posts: Array<any>;
-    //     lastVisible: number;
-    //   };
-
-    //   const newState = { ...state };
-    //   const newUserPosts = newState.userPosts.posts.concat(payload.posts);
-    //   const filteredNewUserPosts = newUserPosts.filter(
-    //     (post) =>
-    //       post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
-    //   );
-
-    //   // ensure no duplicates
-    //   const removedDuplicates = removeDuplicatesFromArray(filteredNewUserPosts);
-
-    //   newState.userPosts.posts = removedDuplicates;
-    //   newState.userPosts.lastVisible = payload.lastVisible;
-    //   newState.userPosts.loading = false;
-    //   return newState;
-    // }
-    // case FETCH_USER_POSTS_FAILURE: {
-    //   const newState = { ...state };
-    //   newState.userPosts.error = action.payload as Error;
-    //   newState.userPosts.posts = [];
-    //   newState.userPosts.loading = false;
-    //   return newState;
-    // }
-    // case FETCH_USER_POSTS_END: {
-    //   const newState = { ...state };
-    //   newState.userPosts.loading = false;
-    //   return newState;
-    // }
-    // case PULL_TO_FETCH_USER_POSTS_STARTED: {
-    //   const newState = { ...state };
-    //   newState.userPosts.pullLoading = true;
-    //   return newState;
-    // }
-    // case PULL_TO_FETCH_USER_POSTS_SUCCESS: {
-    //   const payload = action.payload as {
-    //     posts: Array<any>;
-    //     lastVisible: number;
-    //   };
-    //   const newState = { ...state };
-    //   newState.userPosts.posts = payload.posts;
-    //   newState.userPosts.lastVisible = payload.lastVisible;
-    //   newState.userPosts.pullLoading = false;
-    //   return newState;
-    // }
-    // case PULL_TO_FETCH_USER_POSTS_FAILURE: {
-    //   const newState = { ...state };
-    //   newState.userPosts.error = action.payload as Error;
-    //   newState.userPosts.posts = [];
-    //   newState.userPosts.pullLoading = false;
-    //   return newState;
-    // }
-
-    // /* ---------------- end user posts cases ---------------- */
+    /* ------------------ own posts cases ------------------ */
+    case DispatchTypes.FETCH_OWN_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.own.fetchLoading = true;
+      return newState;
+    }
+    case DispatchTypes.FETCH_OWN_POSTS_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      };
+      newState.own.fetchLoading = false;
+      newState.own.posts = state.own.posts.concat(payload.posts);
+      newState.own.lastVisible = payload.lastVisible;
+      newState.own.error = null;
+      return newState;
+    }
+    case DispatchTypes.FETCH_OWN_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.own.fetchLoading = false;
+      newState.own.error = action.payload as Error;
+      newState.own.posts = [];
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_OWN_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.own.pullLoading = true;
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_OWN_POSTS_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      };
+      newState.own.pullLoading = false;
+      newState.own.posts = payload.posts;
+      newState.own.lastVisible = payload.lastVisible;
+      newState.own.error = null;
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_OWN_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.own.pullLoading = false;
+      newState.own.error = action.payload as Error;
+      newState.own.posts = [];
+      return newState;
+    }
+    case DispatchTypes.FETCH_TAGGED_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.tagged.fetchLoading = true;
+      return newState;
+    }
+    case DispatchTypes.FETCH_TAGGED_POSTS_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      };
+      newState.tagged.fetchLoading = false;
+      newState.tagged.posts = state.tagged.posts.concat(payload.posts);
+      newState.tagged.lastVisible = payload.lastVisible;
+      newState.tagged.error = null;
+      return newState;
+    }
+    case DispatchTypes.FETCH_TAGGED_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.tagged.fetchLoading = false;
+      newState.tagged.error = action.payload as Error;
+      newState.tagged.posts = [];
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_TAGGED_POSTS_STARTED: {
+      const newState = { ...state };
+      newState.tagged.pullLoading = true;
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_TAGGED_POSTS_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      };
+      newState.tagged.pullLoading = false;
+      newState.tagged.posts = payload.posts;
+      newState.tagged.lastVisible = payload.lastVisible;
+      newState.tagged.error = null;
+      return newState;
+    }
+    case DispatchTypes.PULL_TO_FETCH_TAGGED_POSTS_FAILURE: {
+      const newState = { ...state };
+      newState.tagged.pullLoading = false;
+      newState.tagged.error = action.payload as Error;
+      newState.tagged.posts = [];
+      return newState;
+    }
+    /* ---------------- end own posts cases ---------------- */
 
     // /* ----------------- tagged posts cases ----------------- */
 

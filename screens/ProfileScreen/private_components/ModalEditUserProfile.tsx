@@ -21,20 +21,33 @@ import { Colors, Layout } from '../../../constants';
 const width = Layout.window.width;
 
 interface ModalEditUserProfileProps {
+  /**
+   * Props received from outside
+   */
   avatar: string;
   name: string;
   bio: string;
+
   loading: boolean;
   error: Error | null;
-  onEditProfile: (
-    avatar: string,
-    name: string,
-    bio: string,
-    callback: () => void,
-  ) => void;
+
+  /**
+   * Method edit profile
+   * @param avatar
+   * @param name
+   * @param bio
+   */
+  onEditProfile: (avatar: string, name: string, bio: string) => void;
+
+  /**
+   * Method close modal when updating is done/cancelled
+   */
   closeModal: () => void;
 }
 
+/**
+ * Local state
+ */
 interface ModalEditUserProfileState {
   avatar: string;
   name: string;
@@ -47,6 +60,7 @@ class ModalEditUserProfile extends Component<
 > {
   constructor(props: ModalEditUserProfileProps) {
     super(props);
+    // use value from props as default
     this.state = {
       avatar: this.props.avatar,
       name: this.props.name,
@@ -54,10 +68,21 @@ class ModalEditUserProfile extends Component<
     };
   }
 
+  /**
+   * Method set new name value
+   * @param name Name value to set
+   */
   onSetName = (name: string) => this.setState({ name });
 
+  /**
+   * Method set new bio value
+   * @param bio Bio value to set
+   */
   onSetBio = (bio: string) => this.setState({ bio });
 
+  /**
+   * Method prompt to close modal
+   */
   onCloseModal = () => {
     Alert.alert(
       '',
@@ -77,6 +102,9 @@ class ModalEditUserProfile extends Component<
     );
   };
 
+  /**
+   * Method open and pick image from the library
+   */
   pickImage = async () => {
     try {
       const result: any = await ImagePicker.openPicker({
@@ -94,11 +122,17 @@ class ModalEditUserProfile extends Component<
     }
   };
 
-  performUpdateProfile = () => {
+  /**
+   * Method perform update profile and close modal when done
+   */
+  performUpdateProfile = async () => {
     const { avatar, name, bio } = this.state;
     Keyboard.dismiss();
 
-    this.props.onEditProfile(avatar, name, bio, this.props.closeModal);
+    await this.props.onEditProfile(avatar, name, bio);
+    if (!this.props.error) {
+      this.props.closeModal();
+    }
   };
 
   render() {
@@ -195,7 +229,6 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: Colors.darkColor,
     alignItems: 'center',
-    // justifyContent: 'center',
     flex: 1,
   },
   btnWrapper: {
@@ -219,8 +252,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   inputbox: {
-    // width: '100%',
-    // height: 40,
     maxWidth: width - 104,
     flexGrow: 1,
     paddingBottom: 12,

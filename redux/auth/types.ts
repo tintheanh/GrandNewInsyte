@@ -18,26 +18,9 @@ export enum DispatchTypes {
   CHECK_AUTH_SUCCESS = 'CHECK_AUTH_SUCCESS',
   CHECK_AUTH_FAILURE = 'CHECK_AUTH_FAILURE',
 
-  FETCH_USER_POSTS_STARTED = 'FETCH_USER_POSTS_STARTED',
-  FETCH_USER_POSTS_SUCCESS = 'FETCH_USER_POSTS_SUCCESS',
-  FETCH_USER_POSTS_FAILURE = 'FETCH_USER_POSTS_FAILURE',
-
-  PULL_TO_FETCH_USER_POSTS_STARTED = 'PULL_TO_FETCH_USER_POSTS_STARTED',
-  PULL_TO_FETCH_USER_POSTS_SUCCESS = 'PULL_TO_FETCH_USER_POSTS_SUCCESS',
-  PULL_TO_FETCH_USER_POSTS_FAILURE = 'PULL_TO_FETCH_USER_POSTS_FAILURE',
-
-  FETCH_USER_TAGGED_POSTS_STARTED = 'FETCH_USER_TAGGED_POSTS_STARTED',
-  FETCH_USER_TAGGED_POSTS_SUCCESS = 'FETCH_USER_TAGGED_POSTS_SUCCESS',
-  FETCH_USER_TAGGED_POSTS_FAILURE = 'FETCH_USER_TAGGED_POSTS_FAILURE',
-
-  PULL_TO_FETCH_USER_TAGGED_POSTS_STARTED = 'PULL_TO_FETCH_USER_TAGGED_POSTS_STARTED',
-  PULL_TO_FETCH_USER_TAGGED_POSTS_SUCCESS = 'PULL_TO_FETCH_USER_TAGGED_POSTS_SUCCESS',
-  PULL_TO_FETCH_USER_TAGGED_POSTS_FAILURE = 'PULL_TO_FETCH_USER_TAGGED_POSTS_FAILURE',
-
   EDIT_PROFILE_STARTED = 'EDIT_PROFILE_STARTED',
   EDIT_PROFILE_SUCCESS = 'EDIT_PROFILE_SUCCESS',
   EDIT_PROFILE_FAILURE = 'EDIT_PROFILE_FAILURE',
-  EDIT_PROFILE_END = 'EDIT_PROFILE_END',
 
   INCREASE_TOTAL_POSTS_BY_ONE = 'INCREASE_TOTAL_POSTS_BY_ONE',
   DECREASE_TOTAL_POSTS_BY_ONE = 'DECREASE_TOTAL_POSTS_BY_ONE',
@@ -73,20 +56,6 @@ export interface AuthState {
    * whether there's a user signed in yet
    */
   user: User | null | undefined;
-  own: {
-    posts: Array<Post>;
-    error: Error | null;
-    fetchLoading: boolean;
-    pullLoading: boolean;
-    lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
-  };
-  tagged: {
-    posts: Array<Post>;
-    error: Error | null;
-    fetchLoading: boolean;
-    pullLoading: boolean;
-    lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
-  };
   loadings: {
     checkAuthLoading: boolean;
     signinLoading: boolean;
@@ -98,6 +67,10 @@ export interface AuthState {
     signinError: Error | null;
     signoutError: Error | null;
     signupError: Error | null;
+  };
+  update: {
+    loading: boolean;
+    error: Error | null;
   };
 }
 

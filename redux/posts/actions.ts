@@ -769,248 +769,261 @@ export const pullToFetchFollowingHotPosts = () => async (
   }
 };
 
-// /* ------------- end following posts methods ------------ */
+/* ------------- end following posts methods ------------ */
 
-// /* ----------------- user posts methods ----------------- */
+/* ----------------- own posts methods ----------------- */
 
-export const fetchUserPosts = () => async (
+/**
+ * Method fetch posts of current user
+ */
+export const fetchOwnPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
-  // TODO check auth
-  dispatch(fetchUserPostsStarted());
+  dispatch(fetchOwnPostsStarted());
   try {
-    // await delay(3000);
     const { user } = getState().auth;
-    const { lastVisible } = getState().allPosts.userPosts;
+    if (!user) {
+      throw new MyError(
+        'Unauthenticated. Please sign in.',
+        MyErrorCodes.NotAuthenticated,
+      );
+    }
 
-    const currentUser = {
-      id: user?.id,
-      avatar: user?.avatar,
-      username: user?.username,
-    };
-
+    const { lastVisible } = getState().allPosts.own;
     let query: FirebaseFirestoreTypes.Query;
-    if (lastVisible === 0) {
+    if (!lastVisible) {
       query = fsDB
         .collection('posts')
-        .where('posted_by', '==', currentUser.id)
+        .where('posted_by', '==', user.id)
         .orderBy('date_posted', 'desc')
         .limit(postsPerBatch);
     } else {
       query = fsDB
         .collection('posts')
-        .where('posted_by', '==', currentUser.id)
-        .where('date_posted', '<', lastVisible)
+        .where('posted_by', '==', user.id)
         .orderBy('date_posted', 'desc')
+        .startAfter(lastVisible)
         .limit(postsPerBatch);
     }
 
     const documentSnapshots = await query.get();
-
     if (documentSnapshots.empty) {
-      return dispatch(fetchUserPostsEnd());
+      return dispatch(fetchOwnPostsSuccess([], lastVisible));
     }
 
+    const preloadUser = {
+      id: user.id,
+      avatar: user.avatar,
+      username: user.username,
+    };
     const newPosts = await FSdocsToPostArray(
       documentSnapshots.docs,
-      currentUser,
+      preloadUser,
     );
 
     if (newPosts.length === 0) {
-      return dispatch(fetchUserPostsEnd());
+      return dispatch(fetchOwnPostsSuccess([], lastVisible));
     }
 
-    // // Ensure no duplicates
-    // const removedDuplicates = removeDuplicatesFromArray(newPosts);
+    const newLastVisible =
+      documentSnapshots.docs[documentSnapshots.docs.length - 1];
 
-    const newLastVisible = newPosts[newPosts.length - 1].datePosted;
-    dispatch(fetchUserPostsSuccess(newPosts, newLastVisible));
+    dispatch(fetchOwnPostsSuccess(newPosts, newLastVisible));
   } catch (err) {
-    console.log('error here', err.message);
-    dispatch(fetchUserPostsFailure(new Error('Internal server error')));
+    switch (err.code) {
+      case MyErrorCodes.NotAuthenticated: {
+        return dispatch(fetchOwnPostsFailure(new Error(err.message)));
+      }
+      default:
+        return dispatch(
+          fetchOwnPostsFailure(new Error('Error occurred. Please try again.')),
+        );
+    }
   }
 };
 
-export const pullToFetchUserPosts = () => async (
+/**
+ * Method refresh own posts when pulling the list down
+ */
+export const pullToFetchOwnPosts = () => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
-  dispatch(pullToFetchUserPostsStarted());
+  dispatch(pullToFetchOwnPostsStarted());
   try {
-    const currentUser = getState().auth.user;
-    const currentPosts = getState().allPosts.userPosts.posts;
-    const createPostLoading = getState().allPosts.createPost.loading;
-    const deletePostLoading = getState().allPosts.deletePost.loading;
+    const { user } = getState().auth;
+    if (!user) {
+      throw new MyError(
+        'Unauthenticated. Please sign in.',
+        MyErrorCodes.NotAuthenticated,
+      );
+    }
 
+    const { lastVisible } = getState().allPosts.own;
     const documentSnapshots = await fsDB
       .collection('posts')
-      .where('posted_by', '==', currentUser!.id)
+      .where('posted_by', '==', user.id)
       .orderBy('date_posted', 'desc')
       .limit(postsPerBatch)
       .get();
-
     if (documentSnapshots.empty) {
-      return dispatch(fetchUserPostsEnd());
+      return dispatch(fetchOwnPostsSuccess([], lastVisible));
     }
 
-    const newPosts = await FSdocsToPostArray(documentSnapshots.docs, {
-      id: currentUser?.id,
-      username: currentUser?.username,
-      avatar: currentUser?.avatar,
-    });
-
-    if (newPosts.length === 0) {
-      return dispatch(fetchUserPostsEnd());
-    }
-
-    // Keep pending-delete and pending posts
-    const pendingPosts = currentPosts.filter(
-      (post) =>
-        post.id === pendingPostID || post.id.includes(pendingDeletePostFlag),
+    const preloadUser = {
+      id: user.id,
+      avatar: user.avatar,
+      username: user.username,
+    };
+    const newPosts = await FSdocsToPostArray(
+      documentSnapshots.docs,
+      preloadUser,
     );
 
-    let allPosts = [];
-    if (pendingPosts.length > 0) {
-      // Because pending-delete posts might be still in the post list, newly fetched
-      // posts might be duplicates with pending-delete posts and appear twice
-      // in the post list
-      // Solution: get all pending-delete post ids then filter the newly fetched
-      // posts from them to get new posts with no duplicates
-      const pendingDeletePostIDs = pendingPosts
-        .filter((post) => post.id.includes(pendingDeletePostFlag))
-        .map((post) => {
-          const splited = post.id.split(pendingDeletePostFlag);
-          return splited[0];
-        });
-      const mergedPosts = newPosts.concat(pendingPosts);
-      const postsWithNoDuplicateWithPendingDeletePosts = mergedPosts.filter(
-        (post) => !pendingDeletePostIDs.includes(post.id),
-      );
-      const sortedByDate = postsWithNoDuplicateWithPendingDeletePosts.sort(
-        (a, b) => b.datePosted - a.datePosted,
-      );
-      allPosts = sortedByDate;
-    } else {
-      allPosts = newPosts;
+    if (newPosts.length === 0) {
+      return dispatch(fetchOwnPostsSuccess([], lastVisible));
     }
 
-    // While absolutely no post is being created or deleted,
-    // wipe out all remaining pending posts
-    if (createPostLoading === false && deletePostLoading === false) {
-      const noPending = allPosts.filter(
-        (post) =>
-          post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
-      );
-      allPosts = noPending;
-    }
+    const newLastVisible =
+      documentSnapshots.docs[documentSnapshots.docs.length - 1];
 
-    const newLastVisible = allPosts[allPosts.length - 1].datePosted;
-    dispatch(pullToFetchUserPostsSuccess(allPosts, newLastVisible));
+    dispatch(pullToFetchOwnPostsSuccess(newPosts, newLastVisible));
   } catch (err) {
-    console.log(err.message);
-    dispatch(pullToFetchUserPostsFailure(new Error('Internal server error')));
+    switch (err.code) {
+      case MyErrorCodes.NotAuthenticated: {
+        return dispatch(pullToFetchOwnPostsFailure(new Error(err.message)));
+      }
+      default:
+        return dispatch(
+          pullToFetchOwnPostsFailure(
+            new Error('Error occurred. Please try again.'),
+          ),
+        );
+    }
   }
 };
 
-// /* --------------- end user posts methods --------------- */
+/* --------------- end own posts methods --------------- */
 
-// /* ---------------- tagged posts methods ---------------- */
+/* ---------------- tagged posts methods ---------------- */
 
-// export const fetchTaggedPosts = () => async (
-//   dispatch: (action: PostAction) => void,
-//   getState: () => AppState,
-// ) => {
-//   // TODO check auth
-//   dispatch(fetchTaggedPostsStarted());
-//   try {
-//     const { user } = getState().auth;
-//     const currentUser = {
-//       id: user?.id,
-//       avatar: user?.avatar,
-//       username: user?.username,
-//     };
-//     const { lastVisible } = getState().allPosts.taggedPosts;
+/**
+ * Method fetch tagged posts of current user
+ */
+export const fetchTaggedPosts = () => async (
+  dispatch: (action: PostAction) => void,
+  getState: () => AppState,
+) => {
+  dispatch(fetchTaggedPostsStarted());
+  try {
+    const { user } = getState().auth;
+    if (!user) {
+      throw new MyError(
+        'Unauthenticated. Please sign in.',
+        MyErrorCodes.NotAuthenticated,
+      );
+    }
 
-//     let query: FirebaseFirestoreTypes.Query;
-//     if (lastVisible === 0) {
-//       query = fsDB
-//         .collection('posts')
-//         .where('tagged_users', 'array-contains', currentUser.id)
-//         .orderBy('date_posted', 'desc')
-//         .limit(postsPerBatch);
-//     } else {
-//       query = fsDB
-//         .collection('posts')
-//         .where('tagged_users', 'array-contains', currentUser.id)
-//         .where('date_posted', '<', lastVisible)
-//         .orderBy('date_posted', 'desc')
-//         .limit(postsPerBatch);
-//     }
+    const { lastVisible } = getState().allPosts.tagged;
+    let query: FirebaseFirestoreTypes.Query;
+    if (!lastVisible) {
+      query = fsDB
+        .collection('posts')
+        .where('tagged_users', 'array-contains', user.id)
+        .orderBy('date_posted', 'desc')
+        .limit(postsPerBatch);
+    } else {
+      query = fsDB
+        .collection('posts')
+        .where('tagged_users', 'array-contains', user.id)
+        .orderBy('date_posted', 'desc')
+        .startAfter(lastVisible)
+        .limit(postsPerBatch);
+    }
 
-//     const documentSnapshots = await query.get();
+    const documentSnapshots = await query.get();
+    if (documentSnapshots.empty) {
+      return dispatch(fetchTaggedPostsSuccess([], lastVisible));
+    }
 
-//     if (documentSnapshots.empty) {
-//       return dispatch(fetchTaggedPostsEnd());
-//     }
+    const newPosts = await FSdocsToPostArray(documentSnapshots.docs);
 
-//     const newPosts = await FSdocsToPostArray(
-//       documentSnapshots.docs,
-//       currentUser,
-//     );
+    if (newPosts.length === 0) {
+      return dispatch(fetchTaggedPostsSuccess([], lastVisible));
+    }
 
-//     if (newPosts.length === 0) {
-//       return dispatch(fetchTaggedPostsEnd());
-//     }
+    const newLastVisible =
+      documentSnapshots.docs[documentSnapshots.docs.length - 1];
 
-//     const newLastVisible = newPosts[newPosts.length - 1].datePosted;
-//     dispatch(fetchTaggedPostsSuccess(newPosts, newLastVisible));
-//   } catch (err) {
-//     // console.log(err.message);
-//     dispatch(fetchTaggedPostsFailure(err));
-//   }
-// };
+    dispatch(fetchTaggedPostsSuccess(newPosts, newLastVisible));
+  } catch (err) {
+    switch (err.code) {
+      case MyErrorCodes.NotAuthenticated: {
+        return dispatch(fetchTaggedPostsFailure(new Error(err.message)));
+      }
+      default:
+        return dispatch(
+          fetchTaggedPostsFailure(
+            new Error('Error occurred. Please try again.'),
+          ),
+        );
+    }
+  }
+};
 
-// export const pullToFetchTaggedPosts = () => async (
-//   dispatch: (action: PostAction) => void,
-//   getState: () => AppState,
-// ) => {
-//   dispatch(pullToFetchTaggedPostsStarted());
-//   try {
-//     const { user } = getState().auth;
-//     const currentUser = {
-//       id: user?.id,
-//       avatar: user?.avatar,
-//       username: user?.username,
-//     };
+/**
+ * Method refresh tagged posts when pulling the list down
+ */
+export const pullToFetchTaggedPosts = () => async (
+  dispatch: (action: PostAction) => void,
+  getState: () => AppState,
+) => {
+  dispatch(pullToFetchTaggedPostsStarted());
+  try {
+    const { user } = getState().auth;
+    if (!user) {
+      throw new MyError(
+        'Unauthenticated. Please sign in.',
+        MyErrorCodes.NotAuthenticated,
+      );
+    }
 
-//     const documentSnapshots = await fsDB
-//       .collection('posts')
-//       .where('tagged_users', 'array-contains', currentUser.id)
-//       .orderBy('date_posted', 'desc')
-//       .limit(postsPerBatch)
-//       .get();
+    const { lastVisible } = getState().allPosts.tagged;
+    const documentSnapshots = await fsDB
+      .collection('posts')
+      .where('tagged_users', 'array-contains', user.id)
+      .orderBy('date_posted', 'desc')
+      .limit(postsPerBatch)
+      .get();
+    if (documentSnapshots.empty) {
+      return dispatch(fetchTaggedPostsSuccess([], lastVisible));
+    }
 
-//     if (documentSnapshots.empty) {
-//       return dispatch(fetchTaggedPostsEnd());
-//     }
+    const newPosts = await FSdocsToPostArray(documentSnapshots.docs);
 
-//     const newPosts = await FSdocsToPostArray(
-//       documentSnapshots.docs,
-//       currentUser,
-//     );
+    if (newPosts.length === 0) {
+      return dispatch(fetchTaggedPostsSuccess([], lastVisible));
+    }
 
-//     if (newPosts.length === 0) {
-//       return dispatch(fetchTaggedPostsEnd());
-//     }
+    const newLastVisible =
+      documentSnapshots.docs[documentSnapshots.docs.length - 1];
 
-//     const newLastVisible = newPosts[newPosts.length - 1].datePosted;
-//     dispatch(pullToFetchTaggedPostsSuccess(newPosts, newLastVisible));
-//   } catch (err) {
-//     console.log(err.message);
-//     dispatch(pullToFetchTaggedPostsFailure(new Error('Internal server error')));
-//   }
-// };
+    dispatch(pullToFetchTaggedPostsSuccess(newPosts, newLastVisible));
+  } catch (err) {
+    switch (err.code) {
+      case MyErrorCodes.NotAuthenticated: {
+        return dispatch(pullToFetchTaggedPostsFailure(new Error(err.message)));
+      }
+      default:
+        return dispatch(
+          pullToFetchTaggedPostsFailure(
+            new Error('Error occurred. Please try again.'),
+          ),
+        );
+    }
+  }
+};
 
 /* -------------- end tagged posts methods -------------- */
 
@@ -1070,34 +1083,38 @@ export const setFollowingFeedChoice = (choice: 'new' | 'hot') => async (
   });
 };
 
-// TODO refactor this function
-export const createPost = (
-  {
-    privacy,
-    caption,
-    media,
-    taggedUsers,
-  }: {
-    privacy: 'public' | 'followers' | 'private';
-    caption: string;
-    media: Array<{
-      uri: string;
-      mime: string;
-      size: number;
-      width: number;
-      height: number;
-    }>;
-    taggedUsers: Array<{ id: string; username: string }>;
-  },
-  callback: () => void,
-) => async (
+/**
+ * Method create new Post
+ * @param tempPost
+ */
+export const createPost = ({
+  privacy,
+  caption,
+  media,
+  taggedUsers,
+}: {
+  privacy: 'public' | 'followers' | 'private';
+  caption: string;
+  media: Array<{
+    uri: string;
+    mime: string;
+    size: number;
+    width: number;
+    height: number;
+  }>;
+  taggedUsers: Array<{ id: string; username: string }>;
+}) => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
   const { user } = getState().auth;
   if (!user) {
-    return dispatch(createPostError(new Error('Please sign in first.')));
+    return dispatch(
+      createPostError(new Error('Unauthenticated. Please sign in.')),
+    );
   }
+
+  // create temporary post
   const taggedIDs = taggedUsers.map((u) => u.id);
   const currentDatePosted = getCurrentUnixTime();
   const tempPost = {
@@ -1127,46 +1144,31 @@ export const createPost = (
   };
   dispatch(createPostStarted(tempPost));
   try {
-    callback();
-    // await delay(5000);
-    // throw new Error('Failed');
+    // upload media first
     const uid = user.id;
     const uploadedMedia = await uploadMedia(uid, media);
 
-    let captionWithTags = caption;
-    if (taggedIDs.length > 0) {
-      const regex = new RegExp(
-        `@([^${tokenForTag}][^\n| ]*)${tokenForTag}`,
-        'g',
-      );
+    try {
+      let captionWithTags = caption;
+      if (taggedIDs.length > 0) {
+        const regex = new RegExp(
+          `@([^${tokenForTag}][^\n| ]*)${tokenForTag}`,
+          'g',
+        );
 
-      const matches = caption.match(regex);
-      if (matches) {
-        for (const m of matches) {
-          const index = taggedUsers.findIndex((u) => u.username.includes(m));
-          if (index !== -1) {
-            captionWithTags = captionWithTags.replace(
-              m,
-              `@${taggedUsers[index].id}${tokenForTag}`,
-            );
+        const matches = caption.match(regex);
+        if (matches) {
+          for (const m of matches) {
+            const index = taggedUsers.findIndex((u) => u.username.includes(m));
+            if (index !== -1) {
+              captionWithTags = captionWithTags.replace(
+                m,
+                `@${taggedUsers[index].id}${tokenForTag}`,
+              );
+            }
           }
         }
       }
-    }
-
-    try {
-      // throw new Error('Failed');
-      // const postRef = await fsDB.collection('posts').add({
-      //   caption: captionWithTags,
-      //   privacy,
-      //   media: uploadedMedia,
-      //   comments: 0,
-      //   likes: 0,
-      //   posted_by: uid as string,
-      //   tagged_users: taggedIDs,
-      //   date_posted: currentDatePosted,
-      // });
-
       const newPost = {
         id: '',
         caption: '',
@@ -1180,16 +1182,19 @@ export const createPost = (
         taggedUsers: taggedIDs,
         user: {
           id: user.id,
-          avatar: user?.avatar as string,
-          username: user?.username as string,
+          avatar: user.avatar,
+          username: user.username,
         },
       };
 
       const userRef = fsDB.collection('users').doc(uid);
       await fsDB.runTransaction(async (trans) => {
+        // update total_posts of user
         const doc = await trans.get(userRef);
         const newTotalPosts = doc.data()!.total_posts + 1;
         trans.update(userRef, { total_posts: newTotalPosts });
+
+        // add new post to database
         const postRef = fsDB.collection('posts').doc();
         trans.set(postRef, {
           caption: captionWithTags,
@@ -1201,7 +1206,8 @@ export const createPost = (
           tagged_users: taggedIDs,
           date_posted: currentDatePosted,
         });
-        // throw new Error('lala');
+
+        // get newly set post id
         newPost.id = postRef.id;
       });
 
@@ -1210,7 +1216,7 @@ export const createPost = (
         const taggedUsersWithToken = taggedUsers.map((u) => {
           const pureUsername = u.username
             .replace('@', '')
-            .replace('\u01AA', '');
+            .replace(tokenForTag, '');
           return {
             id: u.id,
             idWithToken: `@${u.id}${tokenForTag}`,
@@ -1239,50 +1245,14 @@ export const createPost = (
 
       newPost.caption = captionWithTagsDone;
 
-      // const newPost = {
-      //   id: postRef.id,
-      //   caption: captionWithTagsDone,
-      //   privacy,
-      //   media: uploadedMedia,
-      //   datePosted: currentDatePosted,
-      //   timeLabel: convertTime(currentDatePosted),
-      //   likes: 0,
-      //   isLiked: false,
-      //   comments: 0,
-      //   taggedUsers: taggedIDs,
-      //   user: {
-      //     id: user.id,
-      //     avatar: user?.avatar as string,
-      //     username: user?.username as string,
-      //   },
-      // };
-
-      // if (user.followers > 0 && newPost.privacy !== 'private') {
-      //   const handleCreatePostForFollowers = fireFuncs.httpsCallable(
-      //     'handleCreatePostForFollowers',
-      //   );
-      //   await handleCreatePostForFollowers({
-      //     uid: user!.id,
-      //     postID: newPost.id,
-      //     date_posted: newPost.datePosted,
-      //   });
-      // }
-
-      // if (newPost.privacy !== 'private') {
-      //   await fbDB
-      //     .ref(`users/${user!.id}/following_posts`)
-      //     .child(newPost.id)
-      //     .set({ date_posted: newPost.datePosted });
-      // }
-
       dispatch(createPostSuccess(newPost));
     } catch (err) {
-      await deleteMedia(uid as string, uploadedMedia);
+      // delete uploaded media in case adding post failed
+      await deleteMedia(uid, uploadedMedia);
       throw err;
     }
   } catch (err) {
-    console.log(err.message);
-    dispatch(createPostError(err));
+    dispatch(createPostError(new Error('Error occurred. Please try again.')));
   }
 };
 
@@ -1653,85 +1623,75 @@ const pullToFetchFollowingHotPostsFailure = (error: Error): PostAction => ({
   payload: error,
 });
 
-const fetchUserPostsStarted = (): PostAction => ({
-  type: FETCH_USER_POSTS_STARTED,
+const fetchOwnPostsStarted = (): PostAction => ({
+  type: DispatchTypes.FETCH_OWN_POSTS_STARTED,
   payload: null,
 });
 
-const fetchUserPostsSuccess = (
-  posts: Array<any>,
-  lastVisible: number,
+const fetchOwnPostsSuccess = (
+  posts: Array<Post>,
+  lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null,
 ): PostAction => ({
-  type: FETCH_USER_POSTS_SUCCESS,
+  type: DispatchTypes.FETCH_OWN_POSTS_SUCCESS,
   payload: { posts, lastVisible },
 });
 
-const fetchUserPostsFailure = (error: Error): PostAction => ({
-  type: FETCH_USER_POSTS_FAILURE,
+const fetchOwnPostsFailure = (error: Error): PostAction => ({
+  type: DispatchTypes.FETCH_OWN_POSTS_FAILURE,
   payload: error,
 });
 
-const fetchUserPostsEnd = (): PostAction => ({
-  type: FETCH_USER_POSTS_END,
+const pullToFetchOwnPostsStarted = (): PostAction => ({
+  type: DispatchTypes.PULL_TO_FETCH_OWN_POSTS_STARTED,
   payload: null,
 });
 
-const pullToFetchUserPostsStarted = (): PostAction => ({
-  type: PULL_TO_FETCH_USER_POSTS_STARTED,
-  payload: null,
-});
-
-const pullToFetchUserPostsSuccess = (
-  posts: Array<any>,
-  lastVisible: number,
+const pullToFetchOwnPostsSuccess = (
+  posts: Array<Post>,
+  lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null,
 ): PostAction => ({
-  type: PULL_TO_FETCH_USER_POSTS_SUCCESS,
+  type: DispatchTypes.PULL_TO_FETCH_OWN_POSTS_SUCCESS,
   payload: { posts, lastVisible },
 });
 
-const pullToFetchUserPostsFailure = (error: Error): PostAction => ({
-  type: PULL_TO_FETCH_USER_POSTS_FAILURE,
+const pullToFetchOwnPostsFailure = (error: Error): PostAction => ({
+  type: DispatchTypes.PULL_TO_FETCH_OWN_POSTS_FAILURE,
   payload: error,
 });
 
 const fetchTaggedPostsStarted = (): PostAction => ({
-  type: FETCH_TAGGED_POSTS_STARTED,
+  type: DispatchTypes.FETCH_TAGGED_POSTS_STARTED,
   payload: null,
 });
 
 const fetchTaggedPostsSuccess = (
-  posts: Array<any>,
-  lastVisible: number,
+  posts: Array<Post>,
+  lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null,
 ): PostAction => ({
-  type: FETCH_TAGGED_POSTS_SUCCESS,
+  type: DispatchTypes.FETCH_TAGGED_POSTS_SUCCESS,
   payload: { posts, lastVisible },
 });
 
 const fetchTaggedPostsFailure = (error: Error): PostAction => ({
-  type: FETCH_TAGGED_POSTS_FAILURE,
+  type: DispatchTypes.FETCH_TAGGED_POSTS_FAILURE,
   payload: error,
 });
 
-const fetchTaggedPostsEnd = (): PostAction => ({
-  type: FETCH_TAGGED_POSTS_END,
-  payload: null,
-});
-
 const pullToFetchTaggedPostsStarted = (): PostAction => ({
-  type: PULL_TO_FETCH_TAGGED_POSTS_STARTED,
+  type: DispatchTypes.PULL_TO_FETCH_TAGGED_POSTS_STARTED,
   payload: null,
 });
 
 const pullToFetchTaggedPostsSuccess = (
-  posts: Array<any>,
-  lastVisible: number,
+  posts: Array<Post>,
+  lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null,
 ): PostAction => ({
-  type: PULL_TO_FETCH_TAGGED_POSTS_SUCCESS,
+  type: DispatchTypes.PULL_TO_FETCH_TAGGED_POSTS_SUCCESS,
   payload: { posts, lastVisible },
 });
 
 const pullToFetchTaggedPostsFailure = (error: Error): PostAction => ({
-  type: PULL_TO_FETCH_TAGGED_POSTS_FAILURE,
+  type: DispatchTypes.PULL_TO_FETCH_TAGGED_POSTS_FAILURE,
   payload: error,
 });
 
@@ -1740,17 +1700,17 @@ const pullToFetchTaggedPostsFailure = (error: Error): PostAction => ({
 /* ----------------- create post actions ---------------- */
 
 const createPostStarted = (tempPost: Post): PostAction => ({
-  type: CREATE_POST_STARTED,
+  type: DispatchTypes.CREATE_POST_STARTED,
   payload: tempPost,
 });
 
 const createPostSuccess = (newPost: Post): PostAction => ({
-  type: CREATE_POST_SUCCESS,
+  type: DispatchTypes.CREATE_POST_SUCCESS,
   payload: newPost,
 });
 
 const createPostError = (error: Error): PostAction => ({
-  type: CREATE_POST_FAILURE,
+  type: DispatchTypes.CREATE_POST_FAILURE,
   payload: error,
 });
 

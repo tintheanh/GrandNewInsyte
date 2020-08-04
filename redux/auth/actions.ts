@@ -189,254 +189,6 @@ export const checkAuth = () => async (
 };
 
 /**
- * Method fetch posts of current user
- */
-export const fetchOwnPosts = () => async (
-  dispatch: (action: AuthAction) => void,
-  getState: () => AppState,
-) => {
-  dispatch(fetchOwnPostsStarted());
-  try {
-    const { user } = getState().auth;
-    if (!user) {
-      throw new MyError(
-        'Unauthenticated. Please sign in.',
-        MyErrorCodes.NotAuthenticated,
-      );
-    }
-
-    const { lastVisible } = getState().auth.own;
-    let query: FirebaseFirestoreTypes.Query;
-    if (!lastVisible) {
-      query = fsDB
-        .collection('posts')
-        .where('posted_by', '==', user.id)
-        .orderBy('date_posted', 'desc')
-        .limit(postsPerBatch);
-    } else {
-      query = fsDB
-        .collection('posts')
-        .where('posted_by', '==', user.id)
-        .orderBy('date_posted', 'desc')
-        .startAfter(lastVisible)
-        .limit(postsPerBatch);
-    }
-
-    const documentSnapshots = await query.get();
-    if (documentSnapshots.empty) {
-      return dispatch(fetchOwnPostsSuccess([], lastVisible));
-    }
-
-    const preloadUser = {
-      id: user.id,
-      avatar: user.avatar,
-      username: user.username,
-    };
-    const newPosts = await FSdocsToPostArray(
-      documentSnapshots.docs,
-      preloadUser,
-    );
-
-    if (newPosts.length === 0) {
-      return dispatch(fetchOwnPostsSuccess([], lastVisible));
-    }
-
-    const newLastVisible =
-      documentSnapshots.docs[documentSnapshots.docs.length - 1];
-
-    dispatch(fetchOwnPostsSuccess(newPosts, newLastVisible));
-  } catch (err) {
-    switch (err.code) {
-      case MyErrorCodes.NotAuthenticated: {
-        return dispatch(fetchOwnPostsFailure(new Error(err.message)));
-      }
-      default:
-        return dispatch(
-          fetchOwnPostsFailure(new Error('Error occurred. Please try again.')),
-        );
-    }
-  }
-};
-
-/**
- * Method refresh own posts when pulling the list down
- */
-export const pullToFetchOwnPosts = () => async (
-  dispatch: (action: AuthAction) => void,
-  getState: () => AppState,
-) => {
-  dispatch(pullToFetchOwnPostsStarted());
-  try {
-    const { user } = getState().auth;
-    if (!user) {
-      throw new MyError(
-        'Unauthenticated. Please sign in.',
-        MyErrorCodes.NotAuthenticated,
-      );
-    }
-
-    const { lastVisible } = getState().auth.own;
-    const documentSnapshots = await fsDB
-      .collection('posts')
-      .where('posted_by', '==', user.id)
-      .orderBy('date_posted', 'desc')
-      .limit(postsPerBatch)
-      .get();
-    if (documentSnapshots.empty) {
-      return dispatch(fetchOwnPostsSuccess([], lastVisible));
-    }
-
-    const preloadUser = {
-      id: user.id,
-      avatar: user.avatar,
-      username: user.username,
-    };
-    const newPosts = await FSdocsToPostArray(
-      documentSnapshots.docs,
-      preloadUser,
-    );
-
-    if (newPosts.length === 0) {
-      return dispatch(fetchOwnPostsSuccess([], lastVisible));
-    }
-
-    const newLastVisible =
-      documentSnapshots.docs[documentSnapshots.docs.length - 1];
-
-    dispatch(pullToFetchOwnPostsSuccess(newPosts, newLastVisible));
-  } catch (err) {
-    switch (err.code) {
-      case MyErrorCodes.NotAuthenticated: {
-        return dispatch(pullToFetchOwnPostsFailure(new Error(err.message)));
-      }
-      default:
-        return dispatch(
-          pullToFetchOwnPostsFailure(
-            new Error('Error occurred. Please try again.'),
-          ),
-        );
-    }
-  }
-};
-
-/**
- * Method fetch tagged posts of current user
- */
-export const fetchTaggedPosts = () => async (
-  dispatch: (action: AuthAction) => void,
-  getState: () => AppState,
-) => {
-  dispatch(fetchTaggedPostsStarted());
-  try {
-    const { user } = getState().auth;
-    if (!user) {
-      throw new MyError(
-        'Unauthenticated. Please sign in.',
-        MyErrorCodes.NotAuthenticated,
-      );
-    }
-
-    const { lastVisible } = getState().auth.tagged;
-    let query: FirebaseFirestoreTypes.Query;
-    if (!lastVisible) {
-      query = fsDB
-        .collection('posts')
-        .where('tagged_users', 'array-contains', user.id)
-        .orderBy('date_posted', 'desc')
-        .limit(postsPerBatch);
-    } else {
-      query = fsDB
-        .collection('posts')
-        .where('tagged_users', 'array-contains', user.id)
-        .orderBy('date_posted', 'desc')
-        .startAfter(lastVisible)
-        .limit(postsPerBatch);
-    }
-
-    const documentSnapshots = await query.get();
-    if (documentSnapshots.empty) {
-      return dispatch(fetchTaggedPostsSuccess([], lastVisible));
-    }
-
-    const newPosts = await FSdocsToPostArray(documentSnapshots.docs);
-
-    if (newPosts.length === 0) {
-      return dispatch(fetchTaggedPostsSuccess([], lastVisible));
-    }
-
-    const newLastVisible =
-      documentSnapshots.docs[documentSnapshots.docs.length - 1];
-
-    dispatch(fetchTaggedPostsSuccess(newPosts, newLastVisible));
-  } catch (err) {
-    switch (err.code) {
-      case MyErrorCodes.NotAuthenticated: {
-        return dispatch(fetchTaggedPostsFailure(new Error(err.message)));
-      }
-      default:
-        return dispatch(
-          fetchTaggedPostsFailure(
-            new Error('Error occurred. Please try again.'),
-          ),
-        );
-    }
-  }
-};
-
-/**
- * Method refresh tagged posts when pulling the list down
- */
-export const pullToFetchTaggedPosts = () => async (
-  dispatch: (action: AuthAction) => void,
-  getState: () => AppState,
-) => {
-  dispatch(pullToFetchTaggedPostsStarted());
-  try {
-    const { user } = getState().auth;
-    if (!user) {
-      throw new MyError(
-        'Unauthenticated. Please sign in.',
-        MyErrorCodes.NotAuthenticated,
-      );
-    }
-
-    const { lastVisible } = getState().auth.tagged;
-    const documentSnapshots = await fsDB
-      .collection('posts')
-      .where('tagged_users', 'array-contains', user.id)
-      .orderBy('date_posted', 'desc')
-      .limit(postsPerBatch)
-      .get();
-    if (documentSnapshots.empty) {
-      return dispatch(fetchTaggedPostsSuccess([], lastVisible));
-    }
-
-    const newPosts = await FSdocsToPostArray(documentSnapshots.docs);
-
-    if (newPosts.length === 0) {
-      return dispatch(fetchTaggedPostsSuccess([], lastVisible));
-    }
-
-    const newLastVisible =
-      documentSnapshots.docs[documentSnapshots.docs.length - 1];
-
-    dispatch(pullToFetchTaggedPostsSuccess(newPosts, newLastVisible));
-  } catch (err) {
-    switch (err.code) {
-      case MyErrorCodes.NotAuthenticated: {
-        return dispatch(pullToFetchTaggedPostsFailure(new Error(err.message)));
-      }
-      default:
-        return dispatch(
-          pullToFetchTaggedPostsFailure(
-            new Error('Error occurred. Please try again.'),
-          ),
-        );
-    }
-  }
-};
-
-/**
  * Method sign out
  */
 export const signout = () => async (dispatch: (action: AuthAction) => void) => {
@@ -449,56 +201,61 @@ export const signout = () => async (dispatch: (action: AuthAction) => void) => {
   }
 };
 
+/**
+ * Method edit user's profile
+ * @param avatar
+ * @param name
+ * @param bio
+ */
 export const editProfile = (
   avatar: string,
   name: string,
   bio: string,
-  callback: () => void,
 ) => async (
   dispatch: (action: AuthAction) => void,
   getState: () => AppState,
 ) => {
+  const { user } = getState().auth;
+  if (!user) {
+    return dispatch(
+      editProfileFailure(new Error('Unauthenticated. Please sign in.')),
+    );
+  }
+
+  const currentAvatar = getState().auth.user?.avatar;
+  const currentName = getState().auth.user?.name;
+  const currentBio = getState().auth.user?.bio;
+
+  if (avatar === currentAvatar && name === currentName && bio === currentBio) {
+    // do nothing if there's no changes in profile
+    return;
+  }
   dispatch(editProfileStarted());
   try {
-    // await delay(1000);
-    const currentAvatar = getState().auth.user?.avatar;
-    const currentName = getState().auth.user?.name;
-    const currentBio = getState().auth.user?.bio;
-
-    if (
-      avatar === currentAvatar &&
-      name === currentName &&
-      bio === currentBio
-    ) {
-      callback();
-      return dispatch(editProfileEnd());
-    }
-
-    const uid = getState().auth.user?.id;
-
     if (avatar !== currentAvatar) {
-      const imageRef = fireStorage.ref(`users/${uid}/avatar`);
-
+      // upload new avatar picture
+      const imageRef = fireStorage.ref(`users/${user.id}/avatar`);
       await imageRef.putFile(avatar);
 
+      // update new avatar to database
       const newAvatar = await imageRef.getDownloadURL();
-      await fsDB.collection('users').doc(uid).update({
+      await fsDB.collection('users').doc(user.id).update({
         avatar: newAvatar,
         name,
         bio,
       });
       dispatch(editProfileSuccess({ avatar: newAvatar, name, bio }));
     } else {
-      await fsDB.collection('users').doc(uid).update({
+      await fsDB.collection('users').doc(user.id).update({
         name,
         bio,
       });
       dispatch(editProfileSuccess({ avatar, name, bio }));
     }
-    callback();
   } catch (err) {
-    console.log(err.message);
-    dispatch(editProfileFailure(new Error('Error occured. Please try again!')));
+    dispatch(
+      editProfileFailure(new Error('Error occurred. Please try again.')),
+    );
   }
 };
 
@@ -600,78 +357,6 @@ const checkAuthFailure = (error: Error): AuthAction => ({
   payload: error,
 });
 
-const fetchOwnPostsStarted = (): AuthAction => ({
-  type: DispatchTypes.FETCH_USER_POSTS_STARTED,
-  payload: null,
-});
-
-const fetchOwnPostsSuccess = (
-  posts: Array<Post>,
-  lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null,
-): AuthAction => ({
-  type: DispatchTypes.FETCH_USER_POSTS_SUCCESS,
-  payload: { posts, lastVisible },
-});
-
-const fetchOwnPostsFailure = (error: Error): AuthAction => ({
-  type: DispatchTypes.FETCH_USER_POSTS_FAILURE,
-  payload: error,
-});
-
-const pullToFetchOwnPostsStarted = (): AuthAction => ({
-  type: DispatchTypes.PULL_TO_FETCH_USER_POSTS_STARTED,
-  payload: null,
-});
-
-const pullToFetchOwnPostsSuccess = (
-  posts: Array<Post>,
-  lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null,
-): AuthAction => ({
-  type: DispatchTypes.PULL_TO_FETCH_USER_POSTS_SUCCESS,
-  payload: { posts, lastVisible },
-});
-
-const pullToFetchOwnPostsFailure = (error: Error): AuthAction => ({
-  type: DispatchTypes.PULL_TO_FETCH_USER_POSTS_FAILURE,
-  payload: error,
-});
-
-const fetchTaggedPostsStarted = (): AuthAction => ({
-  type: DispatchTypes.FETCH_USER_TAGGED_POSTS_STARTED,
-  payload: null,
-});
-
-const fetchTaggedPostsSuccess = (
-  posts: Array<Post>,
-  lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null,
-): AuthAction => ({
-  type: DispatchTypes.FETCH_USER_TAGGED_POSTS_SUCCESS,
-  payload: { posts, lastVisible },
-});
-
-const fetchTaggedPostsFailure = (error: Error): AuthAction => ({
-  type: DispatchTypes.FETCH_USER_TAGGED_POSTS_FAILURE,
-  payload: error,
-});
-
-const pullToFetchTaggedPostsStarted = (): AuthAction => ({
-  type: DispatchTypes.PULL_TO_FETCH_USER_TAGGED_POSTS_STARTED,
-  payload: null,
-});
-
-const pullToFetchTaggedPostsSuccess = (
-  posts: Array<Post>,
-  lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null,
-): AuthAction => ({
-  type: DispatchTypes.PULL_TO_FETCH_USER_TAGGED_POSTS_SUCCESS,
-  payload: { posts, lastVisible },
-});
-
-const pullToFetchTaggedPostsFailure = (error: Error): AuthAction => ({
-  type: DispatchTypes.PULL_TO_FETCH_USER_TAGGED_POSTS_FAILURE,
-  payload: error,
-});
-
 const editProfileStarted = (): AuthAction => ({
   type: DispatchTypes.EDIT_PROFILE_STARTED,
   payload: null,
@@ -697,11 +382,6 @@ const editProfileSuccess = ({
 const editProfileFailure = (error: Error): AuthAction => ({
   type: DispatchTypes.EDIT_PROFILE_FAILURE,
   payload: error,
-});
-
-const editProfileEnd = (): AuthAction => ({
-  type: DispatchTypes.EDIT_PROFILE_END,
-  payload: null,
 });
 
 /* ---------------- end action dispatches --------------- */

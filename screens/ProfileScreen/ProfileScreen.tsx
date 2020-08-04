@@ -246,7 +246,6 @@ const ProfileScreen = (props: any) => {
           height: 0,
           width: Layout.window.width,
         }}
-        lazy
       />
     );
   };
