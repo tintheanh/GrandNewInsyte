@@ -1,4 +1,5 @@
-import { User } from '../../models';
+import { User, Post } from '../../models';
+import { FirebaseFirestoreTypes } from '../../config';
 
 export enum DispatchTypes {
   SIGN_IN_STARTED = 'SIGN_IN_STARTED',
@@ -16,6 +17,10 @@ export enum DispatchTypes {
   CHECK_AUTH_STARTED = 'CHECK_AUTH_STARTED',
   CHECK_AUTH_SUCCESS = 'CHECK_AUTH_SUCCESS',
   CHECK_AUTH_FAILURE = 'CHECK_AUTH_FAILURE',
+
+  FETCH_USER_POSTS_STARTED = 'FETCH_USER_POSTS_STARTED',
+  FETCH_USER_POSTS_SUCCESS = 'FETCH_USER_POSTS_SUCCESS',
+  FETCH_USER_POSTS_FAILURE = 'FETCH_USER_POSTS_FAILURE',
 
   EDIT_PROFILE_STARTED = 'EDIT_PROFILE_STARTED',
   EDIT_PROFILE_SUCCESS = 'EDIT_PROFILE_SUCCESS',
@@ -42,6 +47,13 @@ export interface AuthAction {
         name: string;
         bio: string;
       }
+    | {
+        user: User | null;
+        posts: Array<Post>;
+        taggedPosts: Array<Post>;
+        lastPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+        lastTaggedPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      }
     | Array<any>
     | null;
 }
@@ -52,6 +64,18 @@ export interface AuthState {
    * whether there's a user signed in yet
    */
   user: User | null | undefined;
+  own: {
+    posts: Array<Post>;
+    error: Error | null;
+    loading: boolean;
+    lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+  };
+  tagged: {
+    posts: Array<Post>;
+    error: Error | null;
+    loading: boolean;
+    lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+  };
   loadings: {
     checkAuthLoading: boolean;
     signinLoading: boolean;

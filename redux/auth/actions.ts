@@ -5,9 +5,11 @@ import {
   fireStorage,
   HttpsCallableMethods,
   AuthErrorCodes,
+  postsPerBatch,
+  FirebaseFirestoreTypes,
 } from '../../config';
 import { DispatchTypes, AuthAction } from './types';
-import { User, MyError, MyErrorCodes } from '../../models';
+import { User, MyError, MyErrorCodes, Post } from '../../models';
 import {
   isEmailValid,
   isPasswordValid,
@@ -15,7 +17,7 @@ import {
   fetchMyself,
   delay,
   getCurrentUser,
-  generateSubstringForUsername,
+  FSdocsToPostArray,
 } from '../../utils/functions';
 import { AppState } from '../store';
 
@@ -164,20 +166,94 @@ export const checkAuth = () => async (
   try {
     const currentUser = await getCurrentUser();
     if (currentUser === null) {
-      return dispatch(checkAuthSuccess(null));
+      return dispatch(
+        checkAuthSuccess({
+          user: null,
+          posts: [],
+          taggedPosts: [],
+          lastPostVisible: null,
+          lastTaggedPostVisible: null,
+        }),
+      );
     }
 
     const { uid, email } = currentUser;
     const user = await fetchMyself(uid);
     user.email = email as string;
-    dispatch(checkAuthSuccess(user));
-  } catch (err) {
-    if (err.code === MyErrorCodes.DataNotFound) {
-      // sign out when detect signed in user but couldn't fetch user data
-      await auth.signOut();
-      return dispatch(checkAuthFailure(new Error(err.message)));
+
+    const postQuery = fsDB
+      .collection('posts')
+      .where('posted_by', '==', uid)
+      .orderBy('date_posted', 'desc')
+      .limit(postsPerBatch);
+
+    const taggedPostQuery = fsDB
+      .collection('posts')
+      .where('tagged_users', 'array-contains', uid)
+      .orderBy('date_posted', 'desc')
+      .limit(postsPerBatch);
+
+    try {
+      const [postSnapshots, taggedPostSnapshots] = await Promise.all([
+        postQuery.get(),
+        taggedPostQuery.get(),
+      ]);
+
+      let newLastPostVisible = null;
+      let newLastTaggedPostVisible = null;
+
+      if (postSnapshots.empty === false) {
+        newLastPostVisible = postSnapshots.docs[postSnapshots.docs.length - 1];
+      }
+
+      if (taggedPostSnapshots.empty === false) {
+        newLastTaggedPostVisible =
+          taggedPostSnapshots.docs[taggedPostSnapshots.docs.length - 1];
+      }
+
+      const preloadUser = {
+        id: uid,
+        username: user.username,
+        avatar: user.avatar,
+      };
+      const [newPosts, newTaggedPosts] = await Promise.all([
+        FSdocsToPostArray(postSnapshots.docs, preloadUser),
+        FSdocsToPostArray(taggedPostSnapshots.docs, preloadUser),
+      ]);
+
+      dispatch(
+        checkAuthSuccess({
+          user,
+          posts: newPosts,
+          taggedPosts: newTaggedPosts,
+          lastPostVisible: newLastPostVisible,
+          lastTaggedPostVisible: newLastTaggedPostVisible,
+        }),
+      );
+    } catch (err) {
+      // successfully checking and getting user data but failed to fetch posts
+      return dispatch(
+        checkAuthSuccess({
+          user,
+          posts: [],
+          taggedPosts: [],
+          lastPostVisible: null,
+          lastTaggedPostVisible: null,
+        }),
+      );
     }
-    dispatch(checkAuthFailure(new Error('Error occurred. Please try again.')));
+  } catch (err) {
+    switch (err.code) {
+      case MyErrorCodes.DataNotFound: {
+        // sign out when detect signed in user but couldn't fetch user data
+        await auth.signOut();
+        return dispatch(checkAuthFailure(new Error(err.message)));
+      }
+      default:
+        return dispatch(
+          checkAuthFailure(new Error('Error occurred. Please try again.')),
+        );
+    }
   }
 };
 
@@ -335,9 +411,21 @@ const checkAuthStarted = (): AuthAction => ({
   payload: null,
 });
 
-const checkAuthSuccess = (user: User | null): AuthAction => ({
+const checkAuthSuccess = ({
+  user,
+  posts,
+  taggedPosts,
+  lastPostVisible,
+  lastTaggedPostVisible,
+}: {
+  user: User | null;
+  posts: Array<Post>;
+  taggedPosts: Array<Post>;
+  lastPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+  lastTaggedPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+}): AuthAction => ({
   type: DispatchTypes.CHECK_AUTH_SUCCESS,
-  payload: user,
+  payload: { user, posts, taggedPosts, lastPostVisible, lastTaggedPostVisible },
 });
 
 const checkAuthFailure = (error: Error): AuthAction => ({

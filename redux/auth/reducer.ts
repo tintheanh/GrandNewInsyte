@@ -1,36 +1,21 @@
 import { AuthAction, AuthState, DispatchTypes } from './types';
-import { User } from '../../models';
-
-// const initialState: AuthState = {
-//   signin: {
-//     loading: false,
-//     email: '',
-//     password: '',
-//     error: null,
-//   },
-//   signup: {
-//     loading: false,
-//     username: '',
-//     email: '',
-//     password: '',
-//     retypePassword: '',
-//     error: null,
-//   },
-//   signout: {
-//     loading: false,
-//     error: null,
-//   },
-//   loading: false,
-//   update: {
-//     loading: false,
-//     error: null,
-//   },
-//   user: null,
-//   error: null,
-// };
+import { FirebaseFirestoreTypes } from '../../config';
+import { User, Post } from '../../models';
 
 const initialState: AuthState = {
   user: undefined,
+  own: {
+    posts: [],
+    error: null,
+    lastVisible: null,
+    loading: false,
+  },
+  tagged: {
+    posts: [],
+    error: null,
+    lastVisible: null,
+    loading: false,
+  },
   loadings: {
     checkAuthLoading: false,
     signinLoading: false,
@@ -47,6 +32,18 @@ const initialState: AuthState = {
 
 const untouchedState: AuthState = {
   user: undefined,
+  own: {
+    posts: [],
+    error: null,
+    lastVisible: null,
+    loading: false,
+  },
+  tagged: {
+    posts: [],
+    error: null,
+    lastVisible: null,
+    loading: false,
+  },
   loadings: {
     checkAuthLoading: false,
     signinLoading: false,
@@ -72,8 +69,19 @@ export default function authReducer(
       return newState;
     }
     case DispatchTypes.CHECK_AUTH_SUCCESS: {
+      const payload = action.payload as {
+        user: User | null;
+        posts: Array<Post>;
+        taggedPosts: Array<Post>;
+        lastPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+        lastTaggedPostVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
+      };
       const newState = { ...state };
-      newState.user = action.payload as User;
+      newState.user = payload.user;
+      newState.own.posts = payload.posts;
+      newState.own.lastVisible = payload.lastPostVisible;
+      newState.tagged.posts = payload.taggedPosts;
+      newState.tagged.lastVisible = payload.lastTaggedPostVisible;
       newState.errors.checkAuthError = null;
       newState.loadings.checkAuthLoading = false;
       return newState;
@@ -81,6 +89,18 @@ export default function authReducer(
     case DispatchTypes.CHECK_AUTH_FAILURE: {
       const newState = { ...state };
       newState.errors.checkAuthError = action.payload as Error;
+      newState.own = {
+        posts: [],
+        error: null,
+        lastVisible: null,
+        loading: false,
+      };
+      newState.tagged = {
+        posts: [],
+        error: null,
+        lastVisible: null,
+        loading: false,
+      };
       newState.loadings.checkAuthLoading = false;
       return newState;
     }
