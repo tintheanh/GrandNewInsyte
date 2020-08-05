@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { connect } from 'react-redux';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { HomeStackParamList } from '../../../../stacks/HomeStack';
 import { Layout, Colors, MaterialIcons } from '../../constants';
 import { CommentCard, List, Loading, ErrorView } from '../../components';
 import {
@@ -38,16 +40,14 @@ import { pushUsersLayer } from '../../redux/usersStack/actions';
 import { AppState } from '../../redux/store';
 import { Post, Comment } from '../../models';
 
+type PostScreenNavigationProp = StackNavigationProp<
+  HomeStackParamList,
+  'HomeScreen'
+>;
+
 interface PostScreenProps {
-  navigation: {
-    push: (screen: string, options: any) => void;
-    setParams: (params: any) => void;
-    goBack: () => void;
-    addListener: (
-      type: 'focus' | 'blur' | 'beforeRemove' | 'state',
-      callback: () => void,
-    ) => any;
-  };
+  navigation: PostScreenNavigationProp;
+
   route: {
     params: {
       data: Post;

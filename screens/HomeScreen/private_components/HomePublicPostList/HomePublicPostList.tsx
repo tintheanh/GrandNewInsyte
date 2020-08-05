@@ -157,11 +157,6 @@ interface HomePublicPostListProps {
   onDecreaseTotalPostsByOne: () => void;
 
   /**
-   * Optional props index of current tab
-   * Some lists in certain screens may not have tabs
-   */
-
-  /**
    * Method like a post
    * @param postID Post's ID to like
    */
@@ -173,6 +168,10 @@ interface HomePublicPostListProps {
    */
   onUnlikePost: (postID: string) => void;
 
+  /**
+   * Optional props index of current tab
+   * Some lists in certain screens may not have tabs
+   */
   currentTabIndex?: number;
 }
 

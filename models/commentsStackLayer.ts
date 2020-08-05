@@ -3,12 +3,17 @@ import { FirebaseFirestoreTypes } from '../config';
 
 export default interface CommentsStackLayer {
   postID: string;
-  loading: boolean;
-  error: Error | null;
-  createCommentLoading: boolean;
-  createCommentError: Error | null;
-  deleteCommentError: Error | null;
-  interactCommentError: Error | null;
+  errors: {
+    fetchError: Error | null;
+    createCommentError: Error | null;
+    deleteCommentError: Error | null;
+    likeCommentError: Error | null;
+    unlikeCommentError: Error | null;
+  };
+  loadings: {
+    fetchLoading: boolean;
+    createCommentLoading: boolean;
+  };
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
   type: 'all' | 'top';
   commentList: Array<Comment>;

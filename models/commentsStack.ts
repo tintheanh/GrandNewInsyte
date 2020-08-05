@@ -1,13 +1,21 @@
 import CommentsStackLayer from './commentsStackLayer';
 
+/**
+ * Stack for post screen navigation.
+ * Each post screen has a comment layer
+ */
 export default class CommentsStack {
   private stack: Array<CommentsStackLayer>;
   constructor() {
     this.stack = [];
   }
 
-  push = (postLayer: CommentsStackLayer) => {
-    this.stack.push(postLayer);
+  /**
+   * Method push a new layer when navigating
+   * @param commentLayer New
+   */
+  push = (commentLayer: CommentsStackLayer) => {
+    this.stack.push(commentLayer);
   };
 
   pop = () => {

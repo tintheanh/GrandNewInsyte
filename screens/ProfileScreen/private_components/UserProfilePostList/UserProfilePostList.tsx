@@ -9,6 +9,8 @@ import {
   fetchOwnPosts,
   pullToFetchOwnPosts,
   deletePost,
+  likePost,
+  unlikePost,
 } from '../../../../redux/posts/actions';
 import {
   ErrorView,
@@ -129,6 +131,18 @@ interface UserProfilePostListProps {
    * when successfully delete a post
    */
   onDecreaseTotalPostsByOne: () => void;
+
+  /**
+   * Method like a post
+   * @param postID Post's ID to like
+   */
+  onLikePost: (postID: string) => void;
+
+  /**
+   * Method like a post
+   * @param postID Post's ID to like
+   */
+  onUnlikePost: (postID: string) => void;
 }
 
 class UserProfilePostList extends Component<UserProfilePostListProps> {
@@ -226,6 +240,22 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
   };
 
   /**
+   * Method perform like post
+   * @param postID post's ID to like
+   */
+  performLikePost = (postID: string) => () => {
+    this.props.onLikePost(postID);
+  };
+
+  /**
+   * Method perform unlike post
+   * @param postID post's ID to unlike
+   */
+  performUnlikePost = (postID: string) => () => {
+    this.props.onUnlikePost(postID);
+  };
+
+  /**
    * Method render list item
    * @param item
    * @param index
@@ -240,8 +270,8 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
         data={item}
         addScreenListener={navigation.addListener}
         isTabFocused={isTabFocused}
-        performLikePost={() => console.log('like')}
-        performUnlikePost={() => console.log('unlike')}
+        performLikePost={this.performLikePost(item.id)}
+        performUnlikePost={this.performUnlikePost(item.id)}
         navigateWhenPressOnPostOrComment={() => console.log('to post screen')}
         userPostControl={this.userControl(item.id)}
       />
@@ -356,6 +386,8 @@ const mapDispatchToProps = {
   onPullToFetchOwnPosts: pullToFetchOwnPosts,
   onDeletePost: deletePost,
   onDecreaseTotalPostsByOne: decreaseTotalPostsByOne,
+  onLikePost: likePost,
+  onUnlikePost: unlikePost,
 };
 
 export default connect(

@@ -22,6 +22,8 @@ import {
   setFollowingFeedChoice,
   setFollowingHotTime,
   deletePost,
+  likePost,
+  unlikePost,
 } from '../../../../redux/posts/actions';
 import { decreaseTotalPostsByOne } from '../../../../redux/auth/actions';
 import { pushCommentsLayer } from '../../../../redux/commentsStack/actions';
@@ -153,6 +155,18 @@ interface HomeFollowingPostListProps {
    * when successfully delete a post
    */
   onDecreaseTotalPostsByOne: () => void;
+
+  /**
+   * Method like a post
+   * @param postID Post's ID to like
+   */
+  onLikePost: (postID: string) => void;
+
+  /**
+   * Method like a post
+   * @param postID Post's ID to like
+   */
+  onUnlikePost: (postID: string) => void;
 
   /**
    * Optional props index of current tab
@@ -387,6 +401,22 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
   };
 
   /**
+   * Method perform like post
+   * @param postID post's ID to like
+   */
+  performLikePost = (postID: string) => () => {
+    this.props.onLikePost(postID);
+  };
+
+  /**
+   * Method perform unlike post
+   * @param postID post's ID to unlike
+   */
+  performUnlikePost = (postID: string) => () => {
+    this.props.onUnlikePost(postID);
+  };
+
+  /**
    * Method render list item
    * @param item
    * @param index
@@ -401,8 +431,8 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
         data={item}
         addScreenListener={navigation.addListener}
         isTabFocused={isTabFocused}
-        performLikePost={() => console.log('like')}
-        performUnlikePost={() => console.log('unlike')}
+        performLikePost={this.performLikePost(item.id)}
+        performUnlikePost={this.performUnlikePost(item.id)}
         navigateWhenPressOnPostOrComment={this.navigateToPostScreen(item)}
         navigateWhenPressOnUsernameOrAvatar={this.navigateToUserScreen(
           item.user,
@@ -525,6 +555,8 @@ const mapDispatchToProps = {
   onSetFollowingHotTime: setFollowingHotTime,
   onDeletePost: deletePost,
   onDecreaseTotalPostsByOne: decreaseTotalPostsByOne,
+  onLikePost: likePost,
+  onUnlikePost: unlikePost,
 };
 
 const styles = StyleSheet.create({
