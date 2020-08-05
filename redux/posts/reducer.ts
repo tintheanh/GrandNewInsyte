@@ -750,7 +750,7 @@ export default function postsReducer(
       const followingPostIndex = followingPosts.findIndex(
         (post) => post.id === postIDPlusPendingDeleteFlag,
       );
-      const userPostIndex = ownPosts.findIndex(
+      const ownPostIndex = ownPosts.findIndex(
         (post) => post.id === postIDPlusPendingDeleteFlag,
       );
 
@@ -764,10 +764,10 @@ export default function postsReducer(
         post.id = payload.postID;
         followingPosts[followingPostIndex] = post;
       }
-      if (userPostIndex !== -1) {
-        const post = { ...ownPosts[userPostIndex] };
+      if (ownPostIndex !== -1) {
+        const post = { ...ownPosts[ownPostIndex] };
         post.id = payload.postID;
-        ownPosts[userPostIndex] = post;
+        ownPosts[ownPostIndex] = post;
       }
 
       newState.public.posts = publicPosts;
@@ -777,6 +777,236 @@ export default function postsReducer(
     }
 
     /* ---------------- end delete post cases --------------- */
+
+    /* ------------------- like post cases ------------------ */
+
+    case DispatchTypes.LIKE_POST_STARTED: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const ownPosts = [...state.own.posts];
+      const taggedPosts = [...state.tagged.posts];
+      const postID = action.payload as string;
+      newState.likePost.error = null;
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const ownPostIndex = ownPosts.findIndex((post) => post.id === postID);
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (ownPostIndex !== -1) {
+        const post = { ...ownPosts[ownPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        ownPosts[ownPostIndex] = post;
+      }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        taggedPosts[taggedPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.own.posts = ownPosts;
+      newState.tagged.posts = taggedPosts;
+      return newState;
+    }
+    case DispatchTypes.LIKE_POST_SUCCESS: {
+      return state;
+    }
+    case DispatchTypes.LIKE_POST_FAILURE: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const ownPosts = [...state.own.posts];
+      const taggedPosts = [...state.tagged.posts];
+      const payload = action.payload as { error: Error | null; postID: string };
+
+      newState.likePost.error = payload.error;
+      if (payload.postID === '') {
+        return newState;
+      }
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const ownPostIndex = ownPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (ownPostIndex !== -1) {
+        const post = { ...ownPosts[ownPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        ownPosts[ownPostIndex] = post;
+      }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        taggedPosts[taggedPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.own.posts = ownPosts;
+      newState.tagged.posts = taggedPosts;
+      return newState;
+    }
+
+    /* ----------------- end like post cases ---------------- */
+
+    /* ------------------ unlike post cases ----------------- */
+    case DispatchTypes.UNLIKE_POST_STARTED: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const ownPosts = [...state.own.posts];
+      const taggedPosts = [...state.tagged.posts];
+      const postID = action.payload as string;
+      newState.unlikePost.error = null;
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const ownPostIndex = ownPosts.findIndex((post) => post.id === postID);
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (ownPostIndex !== -1) {
+        const post = { ...ownPosts[ownPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        ownPosts[ownPostIndex] = post;
+      }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.likes -= 1;
+        post.isLiked = false;
+        taggedPosts[taggedPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.own.posts = ownPosts;
+      newState.tagged.posts = taggedPosts;
+      return newState;
+    }
+    case DispatchTypes.UNLIKE_POST_SUCCESS: {
+      return state;
+    }
+    case DispatchTypes.UNLIKE_POST_FAILURE: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const ownPosts = [...state.own.posts];
+      const taggedPosts = [...state.tagged.posts];
+      const payload = action.payload as { error: Error | null; postID: string };
+
+      newState.unlikePost.error = payload.error;
+      if (payload.postID === '') {
+        return newState;
+      }
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const ownPostIndex = ownPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (ownPostIndex !== -1) {
+        const post = { ...ownPosts[ownPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        ownPosts[ownPostIndex] = post;
+      }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.likes += 1;
+        post.isLiked = true;
+        taggedPosts[taggedPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.own.posts = ownPosts;
+      newState.tagged.posts = taggedPosts;
+      return newState;
+    }
+    /* ---------------- end unlike post cases --------------- */
 
     /* --------------------- clear cases -------------------- */
 
@@ -790,233 +1020,18 @@ export default function postsReducer(
       newState.deletePost.error = null;
       return newState;
     }
+    case DispatchTypes.CLEAR_LIKE_POST_ERROR: {
+      const newState = { ...state };
+      newState.likePost.error = null;
+      return newState;
+    }
+    case DispatchTypes.CLEAR_UNLIKE_POST_ERROR: {
+      const newState = { ...state };
+      newState.unlikePost.error = null;
+      return newState;
+    }
 
     /* ------------------- end clear cases ------------------ */
-
-    // /* ------------------- like post cases ------------------ */
-
-    // case LIKE_POST_STARTED: {
-    //   const newState = { ...state };
-    //   const publicPosts = [...state.public.posts];
-    //   const followingPosts = [...state.following.posts];
-    //   const userPosts = [...state.userPosts.posts];
-    //   const taggedPosts = [...state.taggedPosts.posts];
-    //   const postID = action.payload as string;
-    //   newState.likePost.error = null;
-
-    //   const publicPostIndex = publicPosts.findIndex(
-    //     (post) => post.id === postID,
-    //   );
-    //   const followingPostIndex = followingPosts.findIndex(
-    //     (post) => post.id === postID,
-    //   );
-    //   const userPostIndex = userPosts.findIndex((post) => post.id === postID);
-    //   const taggedPostIndex = taggedPosts.findIndex(
-    //     (post) => post.id === postID,
-    //   );
-
-    //   if (publicPostIndex !== -1) {
-    //     const post = { ...publicPosts[publicPostIndex] };
-    //     post.likes += 1;
-    //     post.isLiked = true;
-    //     publicPosts[publicPostIndex] = post;
-    //   }
-    //   if (followingPostIndex !== -1) {
-    //     const post = { ...followingPosts[followingPostIndex] };
-    //     post.likes += 1;
-    //     post.isLiked = true;
-    //     followingPosts[followingPostIndex] = post;
-    //   }
-    //   if (userPostIndex !== -1) {
-    //     const post = { ...userPosts[userPostIndex] };
-    //     post.likes += 1;
-    //     post.isLiked = true;
-    //     userPosts[userPostIndex] = post;
-    //   }
-    //   if (taggedPostIndex !== -1) {
-    //     const post = { ...taggedPosts[taggedPostIndex] };
-    //     post.likes += 1;
-    //     post.isLiked = true;
-    //     taggedPosts[taggedPostIndex] = post;
-    //   }
-
-    //   newState.public.posts = publicPosts;
-    //   newState.following.posts = followingPosts;
-    //   newState.userPosts.posts = userPosts;
-    //   newState.taggedPosts.posts = taggedPosts;
-    //   return newState;
-    // }
-    // case LIKE_POST_SUCCESS: {
-    //   return state;
-    // }
-    // case LIKE_POST_FAILURE: {
-    //   const newState = { ...state };
-    //   const publicPosts = [...state.public.posts];
-    //   const followingPosts = [...state.following.posts];
-    //   const userPosts = [...state.userPosts.posts];
-    //   const taggedPosts = [...state.taggedPosts.posts];
-    //   const payload = action.payload as { error: Error | null; postID: string };
-
-    //   newState.likePost.error = payload.error;
-    //   if (payload.postID === '') {
-    //     return newState;
-    //   }
-
-    //   const publicPostIndex = publicPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const followingPostIndex = followingPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const userPostIndex = userPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const taggedPostIndex = taggedPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-
-    //   if (publicPostIndex !== -1) {
-    //     const post = { ...publicPosts[publicPostIndex] };
-    //     post.likes -= 1;
-    //     post.isLiked = false;
-    //     publicPosts[publicPostIndex] = post;
-    //   }
-    //   if (followingPostIndex !== -1) {
-    //     const post = { ...followingPosts[followingPostIndex] };
-    //     post.likes -= 1;
-    //     post.isLiked = false;
-    //     followingPosts[followingPostIndex] = post;
-    //   }
-    //   if (userPostIndex !== -1) {
-    //     const post = { ...userPosts[userPostIndex] };
-    //     post.likes -= 1;
-    //     post.isLiked = false;
-    //     userPosts[userPostIndex] = post;
-    //   }
-    //   if (taggedPostIndex !== -1) {
-    //     const post = { ...taggedPosts[taggedPostIndex] };
-    //     post.likes -= 1;
-    //     post.isLiked = false;
-    //     taggedPosts[taggedPostIndex] = post;
-    //   }
-
-    //   newState.public.posts = publicPosts;
-    //   newState.following.posts = followingPosts;
-    //   newState.userPosts.posts = userPosts;
-    //   newState.taggedPosts.posts = taggedPosts;
-    //   return newState;
-    // }
-    // case UNLIKE_POST_STARTED: {
-    //   const newState = { ...state };
-    //   const publicPosts = [...state.public.posts];
-    //   const followingPosts = [...state.following.posts];
-    //   const userPosts = [...state.userPosts.posts];
-    //   const taggedPosts = [...state.taggedPosts.posts];
-    //   const postID = action.payload as string;
-    //   newState.unlikePost.error = null;
-
-    //   const publicPostIndex = publicPosts.findIndex(
-    //     (post) => post.id === postID,
-    //   );
-    //   const followingPostIndex = followingPosts.findIndex(
-    //     (post) => post.id === postID,
-    //   );
-    //   const userPostIndex = userPosts.findIndex((post) => post.id === postID);
-    //   const taggedPostIndex = taggedPosts.findIndex(
-    //     (post) => post.id === postID,
-    //   );
-
-    //   if (publicPostIndex !== -1) {
-    //     const post = { ...publicPosts[publicPostIndex] };
-    //     post.likes -= 1;
-    //     post.isLiked = false;
-    //     publicPosts[publicPostIndex] = post;
-    //   }
-    //   if (followingPostIndex !== -1) {
-    //     const post = { ...followingPosts[followingPostIndex] };
-    //     post.likes -= 1;
-    //     post.isLiked = false;
-    //     followingPosts[followingPostIndex] = post;
-    //   }
-    //   if (userPostIndex !== -1) {
-    //     const post = { ...userPosts[userPostIndex] };
-    //     post.likes -= 1;
-    //     post.isLiked = false;
-    //     userPosts[userPostIndex] = post;
-    //   }
-    //   if (taggedPostIndex !== -1) {
-    //     const post = { ...taggedPosts[taggedPostIndex] };
-    //     post.likes -= 1;
-    //     post.isLiked = false;
-    //     taggedPosts[taggedPostIndex] = post;
-    //   }
-
-    //   newState.public.posts = publicPosts;
-    //   newState.following.posts = followingPosts;
-    //   newState.userPosts.posts = userPosts;
-    //   newState.taggedPosts.posts = taggedPosts;
-    //   return newState;
-    // }
-    // case UNLIKE_POST_SUCCESS: {
-    //   return state;
-    // }
-    // case UNLIKE_POST_FAILURE: {
-    //   const newState = { ...state };
-    //   const publicPosts = [...state.public.posts];
-    //   const followingPosts = [...state.following.posts];
-    //   const userPosts = [...state.userPosts.posts];
-    //   const taggedPosts = [...state.taggedPosts.posts];
-    //   const payload = action.payload as { error: Error | null; postID: string };
-
-    //   newState.unlikePost.error = payload.error;
-    //   if (payload.postID === '') {
-    //     return newState;
-    //   }
-
-    //   const publicPostIndex = publicPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const followingPostIndex = followingPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const userPostIndex = userPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const taggedPostIndex = taggedPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-
-    //   if (publicPostIndex !== -1) {
-    //     const post = { ...publicPosts[publicPostIndex] };
-    //     post.likes += 1;
-    //     post.isLiked = true;
-    //     publicPosts[publicPostIndex] = post;
-    //   }
-    //   if (followingPostIndex !== -1) {
-    //     const post = { ...followingPosts[followingPostIndex] };
-    //     post.likes += 1;
-    //     post.isLiked = true;
-    //     followingPosts[followingPostIndex] = post;
-    //   }
-    //   if (userPostIndex !== -1) {
-    //     const post = { ...userPosts[userPostIndex] };
-    //     post.likes += 1;
-    //     post.isLiked = true;
-    //     userPosts[userPostIndex] = post;
-    //   }
-    //   if (taggedPostIndex !== -1) {
-    //     const post = { ...taggedPosts[taggedPostIndex] };
-    //     post.likes += 1;
-    //     post.isLiked = true;
-    //     taggedPosts[taggedPostIndex] = post;
-    //   }
-
-    //   newState.public.posts = publicPosts;
-    //   newState.following.posts = followingPosts;
-    //   newState.userPosts.posts = userPosts;
-    //   newState.taggedPosts.posts = taggedPosts;
-    //   return newState;
-    // }
 
     // /* ----------------- end like post cases ---------------- */
 

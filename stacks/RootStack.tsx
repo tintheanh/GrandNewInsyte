@@ -8,6 +8,8 @@ import { AppState } from '../redux/store';
 import {
   clearCreatePostError,
   clearDeletePostError,
+  clearLikePostError,
+  clearUnlikePostError,
 } from '../redux/posts/actions';
 import {
   decreaseTotalPostsByOne,
@@ -32,6 +34,16 @@ interface RootStackProps {
    * Error from deleting post
    */
   deletePostError: Error | null;
+
+  /**
+   * Error from liking a post
+   */
+  likePostError: Error | null;
+
+  /**
+   * Error from unliking a post
+   */
+  unlikePostError: Error | null;
 
   /**
    * Method check if user signed in
@@ -61,6 +73,16 @@ interface RootStackProps {
    * Method clear delete post error
    */
   onClearDeletePostError: () => void;
+
+  /**
+   * Method clear like post error
+   */
+  onClearLikePostError: () => void;
+
+  /**
+   * Method clear unlike post error
+   */
+  onClearUnlikePostError: () => void;
 }
 
 class RootStack extends Component<RootStackProps> {
@@ -87,7 +109,14 @@ class RootStack extends Component<RootStackProps> {
   };
 
   render() {
-    const { createPostError, deletePostError } = this.props;
+    const {
+      createPostError,
+      deletePostError,
+      likePostError,
+      unlikePostError,
+      onClearLikePostError,
+      onClearUnlikePostError,
+    } = this.props;
 
     if (createPostError) {
       alertDialog(createPostError.message, this.performClearCreatePostError);
@@ -95,6 +124,14 @@ class RootStack extends Component<RootStackProps> {
 
     if (deletePostError) {
       alertDialog(deletePostError.message, this.performClearDeletePostError);
+    }
+
+    if (likePostError) {
+      alertDialog(likePostError.message, onClearLikePostError);
+    }
+
+    if (unlikePostError) {
+      alertDialog(unlikePostError.message, onClearUnlikePostError);
     }
 
     if (this.props.user === undefined) {
@@ -115,6 +152,8 @@ const mapStateToProps = (state: AppState) => ({
   user: state.auth.user,
   createPostError: state.allPosts.createPost.error,
   deletePostError: state.allPosts.deletePost.error,
+  likePostError: state.allPosts.likePost.error,
+  unlikePostError: state.allPosts.unlikePost.error,
 });
 
 const mapDispatchToProps = {
@@ -123,6 +162,8 @@ const mapDispatchToProps = {
   onIncreaseTotalPostsByOne: increaseTotalPostsByOne,
   onClearCreatePostError: clearCreatePostError,
   onClearDeletePostError: clearDeletePostError,
+  onClearLikePostError: clearLikePostError,
+  onClearUnlikePostError: clearUnlikePostError,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(RootStack);
