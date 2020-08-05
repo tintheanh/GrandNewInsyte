@@ -259,6 +259,9 @@ export const editProfile = (
   }
 };
 
+/**
+ * Method increase total posts when done creating a new post
+ */
 export const increaseTotalPostsByOne = () => (
   dispatch: (action: AuthAction) => void,
 ) => {

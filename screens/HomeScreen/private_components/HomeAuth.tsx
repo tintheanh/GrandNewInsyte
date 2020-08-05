@@ -53,7 +53,6 @@ export default function HomeAuth() {
     );
   };
 
-  // console.log('home auth');
   return (
     <TabView
       navigationState={{ index: tabIndex, routes }}

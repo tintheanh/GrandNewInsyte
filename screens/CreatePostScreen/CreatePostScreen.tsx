@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Alert,
   Keyboard,
+  EmitterSubscription,
 } from 'react-native';
 import { connect } from 'react-redux';
 import { filterImageArray, alertDialog } from '../../utils/functions';
@@ -29,6 +30,9 @@ import {
 import { Colors, tokenForTag } from '../../constants';
 
 interface CreatePostScreenState {
+  /**
+   * Post state
+   */
   post: {
     privacy: 'public' | 'followers' | 'private';
     caption: string;
@@ -41,56 +45,83 @@ interface CreatePostScreenState {
     }>;
     taggedUsers: Array<{ id: string; username: string }>;
   };
+
+  /**
+   * State used for detect cursor position and newly typed character
+   */
   currentTextInputSelection: { start: number; end: number } | null;
+
+  /**
+   * Cursor position
+   */
   cursorPositionWhenTagIsActivated: number;
+
+  /**
+   * Keyboard top y coordinate. Used for
+   * setting user result list height
+   */
   keyboardOffset: number;
+
+  /**
+   * Y position of user result list when rendered
+   */
   userResultListYCoordinate: number;
+
   searchQuery: string;
 }
 
 class CreatePostScreen extends Component<any, CreatePostScreenState> {
-  private keyboardDidShowListener: any;
-  private keyboardDidHideListener: any;
+  /**
+   * @var keyboardDidShowListener used for detect keyboard is on
+   * @var keyboardDidHideListener used for detect keyboard is off
+   */
+  private keyboardDidShowListener: EmitterSubscription | null;
+  private keyboardDidHideListener: EmitterSubscription | null;
 
-  state: CreatePostScreenState = {
-    post: {
-      privacy: 'public' as 'public',
-      caption: '',
-      media: [],
-      taggedUsers: [],
-    },
-    currentTextInputSelection: null,
-    cursorPositionWhenTagIsActivated: -1,
-    keyboardOffset: 0,
-    userResultListYCoordinate: 0,
-    searchQuery: '',
-  };
+  constructor(props: any) {
+    super(props);
+    this.state = {
+      post: {
+        privacy: 'public' as 'public',
+        caption: '',
+        media: [],
+        taggedUsers: [],
+      },
+      currentTextInputSelection: null,
+      cursorPositionWhenTagIsActivated: -1,
+      keyboardOffset: 0,
+      userResultListYCoordinate: 0,
+      searchQuery: '',
+    };
+    this.keyboardDidShowListener = null;
+    this.keyboardDidHideListener = null;
+  }
 
   /* ------------- get keyboard position stuff ------------ */
 
   componentDidMount() {
     this.keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
-      this._keyboardDidShow,
+      this.keyboardDidShow,
     );
     this.keyboardDidHideListener = Keyboard.addListener(
       'keyboardDidHide',
-      this._keyboardDidHide,
+      this.keyboardDidHide,
     );
   }
 
   componentWillUnmount() {
-    this.keyboardDidShowListener.remove();
-    this.keyboardDidHideListener.remove();
+    this.keyboardDidShowListener!.remove();
+    this.keyboardDidHideListener!.remove();
   }
 
-  _keyboardDidShow = (event: any) => {
+  keyboardDidShow = (event: any) => {
     this.setState({
       keyboardOffset: event.endCoordinates.screenY,
     });
   };
 
-  _keyboardDidHide = () => {
+  keyboardDidHide = () => {
     this.setState({
       keyboardOffset: 0,
       cursorPositionWhenTagIsActivated: -1,
@@ -99,7 +130,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
 
   /* ----------- end get keyboard position stuff ---------- */
 
-  /* ---------------- TextInput helps stuff --------------- */
+  /* ---------------- TextInput helpers stuff --------------- */
 
   handleCaptionSelectionChange = ({ nativeEvent }: any) => {
     const newState = { ...this.state };
@@ -118,7 +149,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     return start === end ? caption[start - 1] : caption[caption.length - 1];
   };
 
-  /* -------------- end TextInput helps stuff ------------- */
+  /* -------------- end TextInput helpers stuff ------------- */
 
   setPrivacy = () => {
     Alert.alert(
@@ -301,7 +332,6 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
       }));
 
       const newState = { ...this.state };
-
       const currentMedia = [...this.state.post.media];
 
       const newMedia = currentMedia.concat(mediaItems);
@@ -378,12 +408,19 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
     if (post.caption === '' && post.media.length === 0) {
       return alertDialog('Your post cannot be empty.');
     }
-    this.props.onCreatePost(post, this.goBackAndClear);
+    this.props.onCreatePost(post);
+    this.goBackAndClear();
     this.props.onIncreaseTotalPostsByOne();
   };
 
   render() {
-    const { post } = this.state;
+    const {
+      post,
+      searchQuery,
+      cursorPositionWhenTagIsActivated,
+      keyboardOffset,
+      userResultListYCoordinate,
+    } = this.state;
     return (
       <View style={styles.container}>
         <View style={styles.wrapper}>
@@ -422,12 +459,10 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
             onDeleteHandle={this.onDeleteTaggedUser}
             onSelectionChange={this.handleCaptionSelectionChange}
           />
-          {this.state.cursorPositionWhenTagIsActivated !== -1 ? (
+          {cursorPositionWhenTagIsActivated !== -1 ? (
             <View
               style={{
-                height:
-                  this.state.keyboardOffset -
-                  this.state.userResultListYCoordinate,
+                height: keyboardOffset - userResultListYCoordinate,
                 marginTop: 10,
               }}
               onLayout={({ nativeEvent }) =>
@@ -436,7 +471,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
                 })
               }>
               <CreatePostUserResultList
-                searchQuery={this.state.searchQuery}
+                searchQuery={searchQuery}
                 onSelectUserResult={this.tagUser}
               />
             </View>

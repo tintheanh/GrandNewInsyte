@@ -189,7 +189,7 @@ class UserProfileTaggedPostList extends Component<
    */
   renderItem = ({ item, index }: { item: Post; index: number }) => {
     const { navigation, currentTabIndex } = this.props;
-    const isTabFocused = currentTabIndex ? currentTabIndex === 1 : true;
+    const isTabFocused = currentTabIndex === 1;
     return (
       <UserProfilePostCardWrapper
         index={index}
@@ -264,7 +264,7 @@ class UserProfileTaggedPostList extends Component<
               <View style={{ paddingBottom: Layout.window.height / 10 }} />
             }
             onEndReached={onFetchTaggedPosts}
-            isTabFocused={currentTabIndex === 0}
+            isTabFocused={currentTabIndex === 1}
             refreshing={pullLoading}
             onRefresh={onPullToFetchTaggedPosts}
             extraData={{ fetchLoading, error }}

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Animated, FlatList, StyleSheet, View } from 'react-native';
+import { Animated, FlatList, Alert, StyleSheet, View } from 'react-native';
 import { connect } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -8,6 +8,7 @@ import { setCurrentUserListPostIndex } from '../../../../redux/curentViewableIte
 import {
   fetchOwnPosts,
   pullToFetchOwnPosts,
+  deletePost,
 } from '../../../../redux/posts/actions';
 import {
   ErrorView,
@@ -16,6 +17,7 @@ import {
   ProfilePostList,
   FooterLoading,
 } from '../../../../components';
+import { decreaseTotalPostsByOne } from '../../../../redux/auth/actions';
 import UserProfilePostCardWrapper from '../UserProfilePostCardWrapper';
 import { checkPostListChanged } from '../../../../utils/functions';
 import { Colors, Layout } from '../../../../constants';
@@ -115,6 +117,18 @@ interface UserProfilePostListProps {
    * Method pull down list to refresh the list
    */
   onPullToFetchOwnPosts: () => void;
+
+  /**
+   * Method delete a post
+   * @param postID Post's ID to delete
+   */
+  onDeletePost: (postID: string) => void;
+
+  /**
+   * Method decrease total posts of current user
+   * when successfully delete a post
+   */
+  onDecreaseTotalPostsByOne: () => void;
 }
 
 class UserProfilePostList extends Component<UserProfilePostListProps> {
@@ -181,13 +195,45 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
   };
 
   /**
+   * Method perform delete post
+   */
+  performDeletePost = (postID: string) => () => {
+    const { onDecreaseTotalPostsByOne, onDeletePost } = this.props;
+    onDeletePost(postID);
+    onDecreaseTotalPostsByOne();
+  };
+
+  /**
+   * Method prompt to delete post
+   */
+  userControl = (postID: string) => () => {
+    console.log('click');
+    Alert.alert(
+      '',
+      'Do you want to delete this post?',
+      [
+        {
+          text: 'Delete',
+          onPress: this.performDeletePost(postID),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  /**
    * Method render list item
    * @param item
    * @param index
    */
   renderItem = ({ item, index }: { item: Post; index: number }) => {
     const { navigation, currentTabIndex } = this.props;
-    const isTabFocused = currentTabIndex ? currentTabIndex === 0 : true;
+    const isTabFocused = currentTabIndex === 0;
+
     return (
       <UserProfilePostCardWrapper
         index={index}
@@ -197,6 +243,7 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
         performLikePost={() => console.log('like')}
         performUnlikePost={() => console.log('unlike')}
         navigateWhenPressOnPostOrComment={() => console.log('to post screen')}
+        userPostControl={this.userControl(item.id)}
       />
     );
   };
@@ -307,6 +354,8 @@ const mapDispatchToProps = {
   onSetCurrentViewableIndex: setCurrentUserListPostIndex,
   onFetchOwnPosts: fetchOwnPosts,
   onPullToFetchOwnPosts: pullToFetchOwnPosts,
+  onDeletePost: deletePost,
+  onDecreaseTotalPostsByOne: decreaseTotalPostsByOne,
 };
 
 export default connect(

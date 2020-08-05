@@ -62,42 +62,42 @@ exports.checkUsername = functions.https.onCall((data, context) => {
 //     });
 // });
 
-// exports.handleCreatePostForFollowers = functions.firestore
-//   .document('posts/{postId}')
-//   .onCreate((snapshot, context) => {
-//     const newPost = snapshot.data();
-//     const postID = context.params.postId;
-//     const privacy = newPost.privacy;
-//     const date_posted = newPost.date_posted;
-//     const uid = newPost.posted_by;
+exports.handleCreatePostForFollowers = functions.firestore
+  .document('posts/{postId}')
+  .onCreate((snapshot, context) => {
+    const newPost = snapshot.data();
+    const postID = context.params.postId;
+    const privacy = newPost.privacy;
+    const date_posted = newPost.date_posted;
+    const uid = newPost.posted_by;
 
-//     if (privacy !== 'private') {
-//       return admin
-//         .database()
-//         .ref(`users/${uid}/following_posts`)
-//         .child(postID)
-//         .set({ date_posted, posted_by: uid })
-//         .then(() =>
-//           admin
-//             .database()
-//             .ref(`users/${uid}/follower_list`)
-//             .once('value')
-//             .then((followerListSnapshot) => {
-//               followerListSnapshot.forEach((doc) => {
-//                 const followerID = doc.key;
-//                 admin
-//                   .database()
-//                   .ref(`users/${followerID}/following_posts`)
-//                   .child(postID)
-//                   .set({ date_posted, posted_by: uid })
-//                   .catch((err) => {});
-//               });
-//             })
-//             .catch((err) => console.log(err.code, err.message)),
-//         );
-//     }
-//     return Promise.resolve();
-//   });
+    if (privacy !== 'private') {
+      return admin
+        .database()
+        .ref(`users/${uid}/following_posts`)
+        .child(postID)
+        .set({ date_posted, posted_by: uid })
+        .then(() =>
+          admin
+            .database()
+            .ref(`users/${uid}/follower_list`)
+            .once('value')
+            .then((followerListSnapshot) => {
+              followerListSnapshot.forEach((doc) => {
+                const followerID = doc.key;
+                admin
+                  .database()
+                  .ref(`users/${followerID}/following_posts`)
+                  .child(postID)
+                  .set({ date_posted, posted_by: uid })
+                  .catch((err) => {});
+              });
+            })
+            .catch((err) => console.log(err.code, err.message)),
+        );
+    }
+    return Promise.resolve();
+  });
 
 exports.handleUserSignUp = functions.auth.user().onCreate((user) => {
   return admin

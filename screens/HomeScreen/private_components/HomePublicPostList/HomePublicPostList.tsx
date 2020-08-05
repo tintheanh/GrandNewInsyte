@@ -21,7 +21,9 @@ import {
   fetchPublicHotPosts,
   setPublicFeedChoice,
   setPublicHotTime,
+  deletePost,
 } from '../../../../redux/posts/actions';
+import { decreaseTotalPostsByOne } from '../../../../redux/auth/actions';
 import { pushCommentsLayer } from '../../../../redux/commentsStack/actions';
 import { pushUsersLayer } from '../../../../redux/usersStack/actions';
 import { checkPostListChanged } from '../../../../utils/functions';
@@ -139,6 +141,18 @@ interface HomePublicPostListProps {
    * in epoch
    */
   onSetPublicHotTime: (time: number) => void;
+
+  /**
+   * Method delete a post
+   * @param postID Post's ID to delete
+   */
+  onDeletePost: (postID: string) => void;
+
+  /**
+   * Method decrease total posts of current user
+   * when successfully delete a post
+   */
+  onDecreaseTotalPostsByOne: () => void;
 
   /**
    * Optional props index of current tab
@@ -294,6 +308,36 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
   };
 
   /**
+   * Method perform delete post
+   */
+  performDeletePost = (postID: string) => () => {
+    const { onDecreaseTotalPostsByOne, onDeletePost } = this.props;
+    onDeletePost(postID);
+    onDecreaseTotalPostsByOne();
+  };
+
+  /**
+   * Method prompt to delete post
+   */
+  userControl = (postID: string) => () => {
+    Alert.alert(
+      '',
+      'Do you want to delete this post?',
+      [
+        {
+          text: 'Delete',
+          onPress: this.performDeletePost(postID),
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
+  /**
    * Method alert and perform select time filter for post list
    */
   performSelectTimeFilter = () => {
@@ -344,8 +388,9 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
    * @param index
    */
   renderItem = ({ item, index }: { item: Post; index: number }) => {
-    const { navigation, currentTabIndex } = this.props;
-    const isTabFocused = currentTabIndex ? currentTabIndex === 0 : true;
+    const { navigation, currentTabIndex, currentUID } = this.props;
+    const isTabFocused =
+      currentTabIndex !== undefined ? currentTabIndex === 0 : true;
     return (
       <HomePostCardWrapper
         index={index}
@@ -358,6 +403,9 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
         navigateWhenPressOnUsernameOrAvatar={this.navigateToUserScreen(
           item.user,
         )}
+        userPostControl={
+          currentUID === item.user.id ? this.userControl(item.id) : undefined
+        }
       />
     );
   };
@@ -422,7 +470,9 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
             listFooterComponent={
               <View style={{ paddingBottom: Layout.window.height / 10 }} />
             }
-            isFocused={currentTabIndex ? currentTabIndex === 0 : true}
+            isFocused={
+              currentTabIndex !== undefined ? currentTabIndex === 0 : true
+            }
             onEndReached={
               feedChoice === 'new'
                 ? onFetchPublicNewPosts
@@ -469,6 +519,8 @@ const mapDispatchToProps = {
   onPushUsersLayer: pushUsersLayer,
   onSetPublicFeedChoice: setPublicFeedChoice,
   onSetPublicHotTime: setPublicHotTime,
+  onDeletePost: deletePost,
+  onDecreaseTotalPostsByOne: decreaseTotalPostsByOne,
 };
 
 const styles = StyleSheet.create({

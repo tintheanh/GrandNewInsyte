@@ -162,8 +162,10 @@ export default function postsReducer(
 
       // ensure no duplicates
       newState.public.posts = removeDuplicatesFromArray(newPublicNewPosts);
+
       newState.public.lastNewVisible = payload.lastVisible;
       newState.public.fetchLoading = false;
+      newState.public.pullLoading = false;
       newState.public.error = null;
       return newState;
     }
@@ -230,6 +232,7 @@ export default function postsReducer(
       newState.public.posts = removeDuplicatesFromArray(newPublicHotPosts);
       newState.public.lastHotVisible = payload.lastVisible;
       newState.public.fetchLoading = false;
+      newState.public.pullLoading = false;
       newState.public.error = null;
       return newState;
     }
@@ -311,6 +314,7 @@ export default function postsReducer(
 
       newState.following.lastNewVisible = payload.lastVisible;
       newState.following.fetchLoading = false;
+      newState.following.pullLoading = false;
       newState.following.error = null;
       return newState;
     }
@@ -374,6 +378,7 @@ export default function postsReducer(
       newState.following.posts = removeDuplicatesFromArray(newFollowingPosts);
       newState.following.lastHotVisible = payload.lastVisible;
       newState.following.fetchLoading = false;
+      newState.following.pullLoading = false;
       newState.following.error = null;
       return newState;
     }
@@ -410,9 +415,14 @@ export default function postsReducer(
         posts: Array<Post>;
         lastVisible: FirebaseFirestoreTypes.DocumentSnapshot | null;
       };
-      newState.own.fetchLoading = false;
-      newState.own.posts = state.own.posts.concat(payload.posts);
+      const newOwnPosts = state.own.posts.concat(payload.posts);
+
+      // ensure no duplicates
+      newState.own.posts = removeDuplicatesFromArray(newOwnPosts);
+
       newState.own.lastVisible = payload.lastVisible;
+      newState.own.fetchLoading = false;
+      newState.own.pullLoading = false;
       newState.own.error = null;
       return newState;
     }
@@ -447,6 +457,10 @@ export default function postsReducer(
       newState.own.posts = [];
       return newState;
     }
+    /* ---------------- end own posts cases ---------------- */
+
+    /* ----------------- tagged posts cases ----------------- */
+
     case DispatchTypes.FETCH_TAGGED_POSTS_STARTED: {
       const newState = { ...state };
       newState.tagged.fetchLoading = true;
@@ -461,6 +475,7 @@ export default function postsReducer(
       newState.tagged.fetchLoading = false;
       newState.tagged.posts = state.tagged.posts.concat(payload.posts);
       newState.tagged.lastVisible = payload.lastVisible;
+      newState.tagged.pullLoading = false;
       newState.tagged.error = null;
       return newState;
     }
@@ -495,346 +510,288 @@ export default function postsReducer(
       newState.tagged.posts = [];
       return newState;
     }
-    /* ---------------- end own posts cases ---------------- */
 
-    // /* ----------------- tagged posts cases ----------------- */
+    /* --------------- end tagged posts cases --------------- */
 
-    // case FETCH_TAGGED_POSTS_STARTED: {
-    //   const newState = { ...state };
-    //   newState.taggedPosts.loading = true;
-    //   newState.taggedPosts.error = null;
-    //   return newState;
-    // }
-    // case FETCH_TAGGED_POSTS_SUCCESS: {
-    //   const payload = action.payload as {
-    //     posts: Array<any>;
-    //     lastVisible: number;
-    //   };
+    /* ------------------ create post cases ----------------- */
 
-    //   const newState = { ...state };
-    //   const newTaggedPosts = newState.taggedPosts.posts.concat(payload.posts);
-    //   const filteredNewTaggedPosts = newTaggedPosts.filter(
-    //     (post) =>
-    //       post.id !== pendingPostID && !post.id.includes(pendingDeletePostFlag),
-    //   );
+    case DispatchTypes.CREATE_POST_STARTED: {
+      const newState = { ...state };
+      const pendingPost = action.payload as Post;
+      const publicPosts = [...state.public.posts];
+      const ownPosts = [...state.own.posts];
+      const followingPosts = [...state.following.posts];
 
-    //   // ensure no duplicates
-    //   const removedDuplicates = removeDuplicatesFromArray(
-    //     filteredNewTaggedPosts,
-    //   );
+      // ensure no pending post
+      const filteredPendingPublicPosts = publicPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingFollowingPosts = followingPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingOwnPosts = ownPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
 
-    //   newState.taggedPosts.posts = removedDuplicates;
-    //   newState.taggedPosts.lastVisible = payload.lastVisible;
-    //   newState.taggedPosts.loading = false;
-    //   return newState;
-    // }
-    // case FETCH_TAGGED_POSTS_FAILURE: {
-    //   const newState = { ...state };
-    //   newState.taggedPosts.error = action.payload as Error;
-    //   newState.taggedPosts.posts = [];
-    //   newState.taggedPosts.loading = false;
-    //   return newState;
-    // }
-    // case FETCH_TAGGED_POSTS_END: {
-    //   const newState = { ...state };
-    //   newState.taggedPosts.loading = false;
-    //   return newState;
-    // }
-    // case PULL_TO_FETCH_TAGGED_POSTS_STARTED: {
-    //   const newState = { ...state };
-    //   newState.taggedPosts.pullLoading = true;
-    //   return newState;
-    // }
-    // case PULL_TO_FETCH_TAGGED_POSTS_SUCCESS: {
-    //   const payload = action.payload as {
-    //     posts: Array<any>;
-    //     lastVisible: number;
-    //   };
-    //   const newState = { ...state };
-    //   newState.taggedPosts.posts = payload.posts;
-    //   newState.taggedPosts.lastVisible = payload.lastVisible;
-    //   newState.taggedPosts.pullLoading = false;
-    //   return newState;
-    // }
-    // case PULL_TO_FETCH_TAGGED_POSTS_FAILURE: {
-    //   const newState = { ...state };
-    //   newState.taggedPosts.error = action.payload as Error;
-    //   newState.taggedPosts.posts = [];
-    //   newState.taggedPosts.pullLoading = false;
-    //   return newState;
-    // }
+      // add pending post to front of list
+      filteredPendingPublicPosts.unshift(pendingPost);
+      filteredPendingFollowingPosts.unshift(pendingPost);
+      filteredPendingOwnPosts.unshift(pendingPost);
 
-    // /* --------------- end tagged posts cases --------------- */
+      switch (pendingPost.privacy) {
+        case 'public': {
+          newState.public.posts = filteredPendingPublicPosts;
+          newState.following.posts = filteredPendingFollowingPosts;
+          newState.own.posts = filteredPendingOwnPosts;
+          break;
+        }
+        case 'followers': {
+          newState.following.posts = filteredPendingFollowingPosts;
+          newState.own.posts = filteredPendingOwnPosts;
+          break;
+        }
+        default: {
+          newState.own.posts = filteredPendingOwnPosts;
+          break;
+        }
+      }
 
-    // /* ------------------ create post cases ----------------- */
+      newState.createPost.loading = true;
+      return newState;
+    }
+    case DispatchTypes.CREATE_POST_SUCCESS: {
+      const newState = { ...state };
+      const newPost = action.payload as Post;
+      const publicPosts = [...state.public.posts];
+      const ownPosts = [...state.own.posts];
+      const followingPosts = [...state.following.posts];
 
-    // case CREATE_POST_STARTED: {
-    //   const newState = { ...state };
-    //   const pendingPost = action.payload as Post;
-    //   const publicPosts = [...state.public.posts];
-    //   const userPosts = [...state.userPosts.posts];
-    //   const followingPosts = [...state.following.posts];
+      const publicPendingPostIndex = publicPosts.findIndex(
+        (post) => post.id === pendingPostID,
+      );
+      const followingPendingPostIndex = followingPosts.findIndex(
+        (post) => post.id === pendingPostID,
+      );
+      const ownPendingPostIndex = ownPosts.findIndex(
+        (post) => post.id === pendingPostID,
+      );
 
-    //   // ensure no pending post
-    //   const filteredPendingPublicPosts = publicPosts.filter(
-    //     (post) => post.id !== pendingPostID,
-    //   );
-    //   const filteredPendingFollowingPosts = followingPosts.filter(
-    //     (post) => post.id !== pendingPostID,
-    //   );
-    //   const filteredPendingUserPosts = userPosts.filter(
-    //     (post) => post.id !== pendingPostID,
-    //   );
+      if (publicPendingPostIndex !== -1) {
+        publicPosts[publicPendingPostIndex] = newPost;
+      } else {
+        publicPosts.unshift(newPost);
+      }
+      if (followingPendingPostIndex !== -1) {
+        followingPosts[followingPendingPostIndex] = newPost;
+      } else {
+        followingPosts.unshift(newPost);
+      }
+      if (ownPendingPostIndex !== -1) {
+        ownPosts[ownPendingPostIndex] = newPost;
+      } else {
+        ownPosts.unshift(newPost);
+      }
 
-    //   filteredPendingPublicPosts.unshift(pendingPost);
-    //   filteredPendingFollowingPosts.unshift(pendingPost);
-    //   filteredPendingUserPosts.unshift(pendingPost);
+      // ensure no pending post
+      const filteredPendingPulicPosts = publicPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingFollowingPosts = followingPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingOwnPosts = ownPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
 
-    //   switch (pendingPost.privacy) {
-    //     case 'public': {
-    //       newState.public.posts = filteredPendingPublicPosts;
-    //       newState.following.posts = filteredPendingFollowingPosts;
-    //       newState.userPosts.posts = filteredPendingUserPosts;
-    //       break;
-    //     }
-    //     case 'followers': {
-    //       newState.following.posts = filteredPendingFollowingPosts;
-    //       newState.userPosts.posts = filteredPendingUserPosts;
-    //       break;
-    //     }
-    //     default: {
-    //       newState.userPosts.posts = filteredPendingUserPosts;
-    //       break;
-    //     }
-    //   }
+      // ensure no duplicates
+      const removedDuplicatesFromPublicPosts = removeDuplicatesFromArray(
+        filteredPendingPulicPosts,
+      );
+      const removedDuplicatesFromFollowingPosts = removeDuplicatesFromArray(
+        filteredPendingFollowingPosts,
+      );
+      const removedDuplicatesFromOwnPosts = removeDuplicatesFromArray(
+        filteredPendingOwnPosts,
+      );
 
-    //   newState.createPost.error = null;
-    //   newState.createPost.loading = true;
+      switch (newPost.privacy) {
+        case 'public': {
+          newState.public.posts = removedDuplicatesFromPublicPosts;
+          newState.following.posts = removedDuplicatesFromFollowingPosts;
+          newState.own.posts = removedDuplicatesFromOwnPosts;
+          break;
+        }
+        case 'followers': {
+          newState.following.posts = removedDuplicatesFromFollowingPosts;
+          newState.own.posts = removedDuplicatesFromOwnPosts;
+          break;
+        }
+        default: {
+          newState.own.posts = removedDuplicatesFromOwnPosts;
+          break;
+        }
+      }
 
-    //   return newState;
-    // }
-    // case CREATE_POST_SUCCESS: {
-    //   const newState = { ...state };
-    //   const pendingPost = action.payload as Post;
-    //   const publicPosts = [...state.public.posts];
-    //   const userPosts = [...state.userPosts.posts];
-    //   const followingPosts = [...state.following.posts];
+      newState.createPost.loading = false;
+      newState.createPost.error = null;
+      return newState;
+    }
+    case DispatchTypes.CREATE_POST_FAILURE: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const ownPosts = [...state.own.posts];
+      const followingPosts = [...state.following.posts];
 
-    //   const publicPendingPostIndex = publicPosts.findIndex(
-    //     (post) => post.id === pendingPostID,
-    //   );
-    //   const followingPendingPostIndex = followingPosts.findIndex(
-    //     (post) => post.id === pendingPostID,
-    //   );
-    //   const userPendingPostIndex = userPosts.findIndex(
-    //     (post) => post.id === pendingPostID,
-    //   );
+      const filteredPendingPublicPosts = publicPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingFollowingPosts = followingPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      const filteredPendingOwnPosts = ownPosts.filter(
+        (post) => post.id !== pendingPostID,
+      );
+      newState.public.posts = filteredPendingPublicPosts;
+      newState.following.posts = filteredPendingFollowingPosts;
+      newState.own.posts = filteredPendingOwnPosts;
+      newState.createPost.error = action.payload as Error;
+      newState.createPost.loading = false;
+      return newState;
+    }
 
-    //   if (publicPendingPostIndex !== -1) {
-    //     publicPosts[publicPendingPostIndex] = pendingPost;
-    //   } else {
-    //     publicPosts.unshift(pendingPost);
-    //   }
-    //   if (followingPendingPostIndex !== -1) {
-    //     followingPosts[followingPendingPostIndex] = pendingPost;
-    //   } else {
-    //     followingPosts.unshift(pendingPost);
-    //   }
-    //   if (userPendingPostIndex !== -1) {
-    //     userPosts[userPendingPostIndex] = pendingPost;
-    //   } else {
-    //     userPosts.unshift(pendingPost);
-    //   }
+    /* ---------------- end create post cases --------------- */
 
-    //   // ensure no pending post
-    //   const filteredPendingPulicPosts = publicPosts.filter(
-    //     (post) => post.id !== pendingPostID,
-    //   );
-    //   const filteredPendingFollowingPosts = followingPosts.filter(
-    //     (post) => post.id !== pendingPostID,
-    //   );
-    //   const filteredPendingUserPosts = userPosts.filter(
-    //     (post) => post.id !== pendingPostID,
-    //   );
+    /* ------------------ delete post cases ----------------- */
 
-    //   // ensure no duplicates
-    //   const removedDuplicatesFromPublicPosts = removeDuplicatesFromArray(
-    //     filteredPendingPulicPosts,
-    //   );
-    //   const removedDuplicatesFromFollowingPosts = removeDuplicatesFromArray(
-    //     filteredPendingFollowingPosts,
-    //   );
-    //   const removedDuplicatesFromUserPosts = removeDuplicatesFromArray(
-    //     filteredPendingUserPosts,
-    //   );
+    case DispatchTypes.DELETE_POST_STARTED: {
+      const newState = { ...state };
+      const postID = action.payload as string;
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const ownPosts = [...state.own.posts];
 
-    //   switch (pendingPost.privacy) {
-    //     case 'public': {
-    //       newState.public.posts = removedDuplicatesFromPublicPosts;
-    //       newState.following.posts = removedDuplicatesFromFollowingPosts;
-    //       newState.userPosts.posts = removedDuplicatesFromUserPosts;
-    //       break;
-    //     }
-    //     case 'followers': {
-    //       newState.following.posts = removedDuplicatesFromFollowingPosts;
-    //       newState.userPosts.posts = removedDuplicatesFromUserPosts;
-    //       break;
-    //     }
-    //     default: {
-    //       newState.userPosts.posts = removedDuplicatesFromUserPosts;
-    //       break;
-    //     }
-    //   }
+      const publicIndex = publicPosts.findIndex((post) => post.id === postID);
+      const followingIndex = followingPosts.findIndex(
+        (post) => post.id === postID,
+      );
+      const ownPostIndex = ownPosts.findIndex((post) => post.id === postID);
 
-    //   newState.createPost.loading = false;
-    //   newState.createPost.error = null;
-    //   return newState;
-    // }
-    // case CREATE_POST_FAILURE: {
-    //   const newState = { ...state };
-    //   const publicPosts = [...state.public.posts];
-    //   const userPosts = [...state.userPosts.posts];
-    //   const followingPosts = [...state.following.posts];
+      if (publicIndex !== -1) {
+        const post = { ...publicPosts[publicIndex] };
+        post.id += pendingDeletePostFlag;
+        publicPosts[publicIndex] = post;
+      }
+      if (followingIndex !== -1) {
+        const post = { ...followingPosts[followingIndex] };
+        post.id += pendingDeletePostFlag;
+        followingPosts[followingIndex] = post;
+      }
+      if (ownPostIndex !== -1) {
+        const post = { ...ownPosts[ownPostIndex] };
+        post.id += pendingDeletePostFlag;
+        ownPosts[ownPostIndex] = post;
+      }
+      newState.deletePost.loading = true;
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.own.posts = ownPosts;
+      return newState;
+    }
+    case DispatchTypes.DELETE_POST_SUCCESS: {
+      const newState = { ...state };
+      const postID = action.payload as string;
+      const postIDPlusPendingDeleteFlag = postID + pendingDeletePostFlag;
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const ownPosts = [...state.own.posts];
 
-    //   const filteredPendingPublicPosts = publicPosts.filter(
-    //     (post) => post.id !== pendingPostID,
-    //   );
-    //   const filteredPendingFollowingPosts = followingPosts.filter(
-    //     (post) => post.id !== pendingPostID,
-    //   );
-    //   const filteredPendingUserPosts = userPosts.filter(
-    //     (post) => post.id !== pendingPostID,
-    //   );
-    //   newState.public.posts = filteredPendingPublicPosts;
-    //   newState.following.posts = filteredPendingFollowingPosts;
-    //   newState.userPosts.posts = filteredPendingUserPosts;
-    //   newState.createPost.error = action.payload as Error;
-    //   newState.createPost.loading = false;
-    //   return newState;
-    // }
+      const publicIndex = publicPosts.findIndex(
+        (post) => post.id === postID || post.id === postIDPlusPendingDeleteFlag,
+      );
+      const followingIndex = followingPosts.findIndex(
+        (post) => post.id === postID || post.id === postIDPlusPendingDeleteFlag,
+      );
+      const ownPostIndex = ownPosts.findIndex(
+        (post) => post.id === postID || post.id === postIDPlusPendingDeleteFlag,
+      );
+      if (publicIndex !== -1) {
+        publicPosts.splice(publicIndex, 1);
+      }
+      if (followingIndex !== -1) {
+        followingPosts.splice(followingIndex, 1);
+      }
+      if (ownPostIndex !== -1) {
+        ownPosts.splice(ownPostIndex, 1);
+      }
 
-    // /* ---------------- end create post cases --------------- */
+      newState.deletePost.loading = false;
+      newState.deletePost.error = null;
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.own.posts = ownPosts;
+      return newState;
+    }
+    case DispatchTypes.DELETE_POST_FAILURE: {
+      const newState = { ...state };
+      const payload = action.payload as { error: Error; postID: string };
+      newState.deletePost.loading = false;
+      newState.deletePost.error = payload.error;
 
-    // /* ------------------ delete post cases ----------------- */
+      const postIDPlusPendingDeleteFlag =
+        payload.postID + pendingDeletePostFlag;
 
-    // case DELETE_POST_STARTED: {
-    //   const newState = { ...state };
-    //   const postID = action.payload as string;
-    //   const publicPosts = [...state.public.posts];
-    //   const followingPosts = [...state.following.posts];
-    //   const userPosts = [...state.userPosts.posts];
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const ownPosts = [...state.own.posts];
 
-    //   const publicIndex = publicPosts.findIndex((post) => post.id === postID);
-    //   const followingIndex = followingPosts.findIndex(
-    //     (post) => post.id === postID,
-    //   );
-    //   const userPostIndex = userPosts.findIndex((post) => post.id === postID);
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === postIDPlusPendingDeleteFlag,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === postIDPlusPendingDeleteFlag,
+      );
+      const userPostIndex = ownPosts.findIndex(
+        (post) => post.id === postIDPlusPendingDeleteFlag,
+      );
 
-    //   if (publicIndex !== -1) {
-    //     const post = { ...publicPosts[publicIndex] };
-    //     post.id += pendingDeletePostFlag;
-    //     publicPosts[publicIndex] = post;
-    //   }
-    //   if (followingIndex !== -1) {
-    //     const post = { ...followingPosts[followingIndex] };
-    //     post.id += pendingDeletePostFlag;
-    //     followingPosts[followingIndex] = post;
-    //   }
-    //   if (userPostIndex !== -1) {
-    //     const post = { ...userPosts[userPostIndex] };
-    //     post.id += pendingDeletePostFlag;
-    //     userPosts[userPostIndex] = post;
-    //   }
-    //   newState.deletePost.loading = true;
-    //   newState.deletePost.error = null;
-    //   newState.public.posts = publicPosts;
-    //   newState.following.posts = followingPosts;
-    //   newState.userPosts.posts = userPosts;
-    //   return newState;
-    // }
-    // case DELETE_POST_SUCCESS: {
-    //   const newState = { ...state };
-    //   const postID = action.payload as string;
-    //   const postIDPlusPendingDeleteFlag = postID + pendingDeletePostFlag;
-    //   const publicPosts = [...state.public.posts];
-    //   const followingPosts = [...state.following.posts];
-    //   const userPosts = [...state.userPosts.posts];
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.id = payload.postID;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.id = payload.postID;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...ownPosts[userPostIndex] };
+        post.id = payload.postID;
+        ownPosts[userPostIndex] = post;
+      }
 
-    //   const publicIndex = publicPosts.findIndex(
-    //     (post) => post.id === postID || post.id === postIDPlusPendingDeleteFlag,
-    //   );
-    //   const followingIndex = followingPosts.findIndex(
-    //     (post) => post.id === postID || post.id === postIDPlusPendingDeleteFlag,
-    //   );
-    //   const userPostIndex = userPosts.findIndex(
-    //     (post) => post.id === postID || post.id === postIDPlusPendingDeleteFlag,
-    //   );
-    //   if (publicIndex !== -1) {
-    //     publicPosts.splice(publicIndex, 1);
-    //   }
-    //   if (followingIndex !== -1) {
-    //     followingPosts.splice(followingIndex, 1);
-    //   }
-    //   if (userPostIndex !== -1) {
-    //     userPosts.splice(userPostIndex, 1);
-    //   }
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.own.posts = ownPosts;
+      return newState;
+    }
 
-    //   newState.deletePost.loading = false;
-    //   newState.deletePost.error = null;
-    //   newState.public.posts = publicPosts;
-    //   newState.following.posts = followingPosts;
-    //   newState.userPosts.posts = userPosts;
-    //   return newState;
-    // }
-    // case DELETE_POST_FAILURE: {
-    //   const newState = { ...state };
-    //   const payload = action.payload as { error: Error | null; postID: string };
-    //   newState.deletePost.loading = false;
-    //   newState.deletePost.error = payload.error;
-    //   if (payload.postID === '') {
-    //     return newState;
-    //   }
+    /* ---------------- end delete post cases --------------- */
 
-    //   const postIDPlusPendingDeleteFlag =
-    //     payload.postID + pendingDeletePostFlag;
+    /* --------------------- clear cases -------------------- */
 
-    //   const publicPosts = [...state.public.posts];
-    //   const followingPosts = [...state.following.posts];
-    //   const userPosts = [...state.userPosts.posts];
+    case DispatchTypes.CLEAR_CREATE_POST_ERROR: {
+      const newState = { ...state };
+      newState.createPost.error = null;
+      return newState;
+    }
+    case DispatchTypes.CLEAR_DELETE_POST_ERROR: {
+      const newState = { ...state };
+      newState.deletePost.error = null;
+      return newState;
+    }
 
-    //   const publicPostIndex = publicPosts.findIndex(
-    //     (post) => post.id === postIDPlusPendingDeleteFlag,
-    //   );
-    //   const followingPostIndex = followingPosts.findIndex(
-    //     (post) => post.id === postIDPlusPendingDeleteFlag,
-    //   );
-    //   const userPostIndex = userPosts.findIndex(
-    //     (post) => post.id === postIDPlusPendingDeleteFlag,
-    //   );
-
-    //   if (publicPostIndex !== -1) {
-    //     const post = { ...publicPosts[publicPostIndex] };
-    //     post.id = payload.postID;
-    //     publicPosts[publicPostIndex] = post;
-    //   }
-    //   if (followingPostIndex !== -1) {
-    //     const post = { ...followingPosts[followingPostIndex] };
-    //     post.id = payload.postID;
-    //     followingPosts[followingPostIndex] = post;
-    //   }
-    //   if (userPostIndex !== -1) {
-    //     const post = { ...userPosts[userPostIndex] };
-    //     post.id = payload.postID;
-    //     userPosts[userPostIndex] = post;
-    //   }
-
-    //   newState.public.posts = publicPosts;
-    //   newState.following.posts = followingPosts;
-    //   newState.userPosts.posts = userPosts;
-    //   return newState;
-    // }
-
-    // /* ---------------- end delete post cases --------------- */
+    /* ------------------- end clear cases ------------------ */
 
     // /* ------------------- like post cases ------------------ */
 

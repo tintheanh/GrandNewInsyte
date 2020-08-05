@@ -81,7 +81,7 @@ class CreatePostUserResultList extends Component<
   };
 
   render() {
-    const { loading, userTags, searchQuery, onSelectUserResult } = this.props;
+    const { loading, userTags, searchQuery } = this.props;
     // console.log(userTags);
     if (loading && userTags.length === 0) {
       return (
@@ -111,7 +111,6 @@ class CreatePostUserResultList extends Component<
         maxToRenderPerBatch={undefined}
         windowSize={undefined}
         keyboardShouldPersistTaps="always"
-        onSelectCard={onSelectUserResult}
       />
     );
   }

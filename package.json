@@ -10,7 +10,8 @@
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "cache-clean": "watchman watch-del-all && rm -rf $TMPDIR/react-* && rm -rf node_modules/ && rm package-lock.json && npm cache clean --force && cd ios/ && rm Podfile.lock && cd ..",
     "initial": "npm i && cd ios/ && pod install && cd ..",
-    "deploy-rules": "firebase deploy --only firestore:rules"
+    "deploy-rules": "firebase deploy --only firestore:rules",
+    "deploy-functions": "firebase deploy --only functions"
   },
   "dependencies": {
     "@react-native-community/masked-view": "0.1.10",

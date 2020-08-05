@@ -1256,73 +1256,50 @@ export const createPost = ({
   }
 };
 
+/**
+ * Method delete a post
+ * @param postID Post's ID to delete
+ */
 export const deletePost = (postID: string) => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
-  const { user } = getState().auth;
-  if (!user) {
-    return dispatch(
-      deletePostFailure(new Error('Unauthorized. Please sign in.'), ''),
-    );
-  }
-  // console.log(postID);
   dispatch(deletePostStarted(postID));
   try {
-    // await delay(3000);
-
-    // const percent = Math.floor(Math.random() * 100);
-    // console.log(percent);
-    // if (percent > 50) throw new Error('dummy error');
-    // throw new Error('dummy error');
-
-    // const postIDPlusPendingDeleteFlag = postID + pendingDeletePostFlag;
-    // const userPosts = getState().allPosts.userPosts.posts;
-    // const publicPosts = getState().allPosts.public.posts;
-    // const followingPosts = getState().allPosts.following.posts;
-
-    // desire post can be in any post list
-    // const desirePostInUser = userPosts.find(
-    //   (post) => post.id === postIDPlusPendingDeleteFlag,
-    // );
-    // const desirePostInPublic = publicPosts.find(
-    //   (post) => post.id === postIDPlusPendingDeleteFlag,
-    // );
-    // const desirePostInFollowing = followingPosts.find(
-    //   (post) => post.id === postIDPlusPendingDeleteFlag,
-    // );
-    // if (!desirePostInUser && !desirePostInPublic && !desirePostInFollowing) {
-    //   throw new Error('Error occured. Post not found');
-    // }
-
-    // const desirePost = [
-    //   desirePostInUser,
-    //   desirePostInFollowing,
-    //   desirePostInPublic,
-    // ].find((post) => post !== undefined) as Post;
+    const { user } = getState().auth;
+    if (!user) {
+      throw new MyError(
+        'Unauthorized. Please sign in.',
+        MyErrorCodes.NotAuthenticated,
+      );
+    }
 
     const userRef = fsDB.collection('users').doc(user.id);
     await fsDB.runTransaction(async (trans) => {
+      // decrease total posts of user
       const doc = await trans.get(userRef);
       const newTotalPosts = doc.data()!.total_posts - 1;
       trans.update(userRef, { total_posts: newTotalPosts });
+
+      // delete post
       const postRef = fsDB.collection('posts').doc(postID);
-      // throw new Error('test');
       trans.delete(postRef);
     });
-    // await deleteMedia(user!.id, desirePost.media);
-
-    // if (user.followers > 0 && desirePost.privacy !== 'private') {
-    //   const handleDeletePostForFollowers = fireFuncs.httpsCallable(
-    //     'handleDeletePostForFollowers',
-    //   );
-    //   await handleDeletePostForFollowers({ postID });
-    // }
 
     dispatch(deletePostSuccess(postID));
   } catch (err) {
-    console.log(err.message);
-    dispatch(deletePostFailure(err, postID));
+    switch (err.code) {
+      case MyErrorCodes.NotAuthenticated: {
+        return dispatch(deletePostFailure(new Error(err.message), postID));
+      }
+      default:
+        return dispatch(
+          deletePostFailure(
+            new Error('Error occurred. Please try again.'),
+            postID,
+          ),
+        );
+    }
   }
 };
 
@@ -1330,21 +1307,21 @@ export const likePost = (postID: string) => async (
   dispatch: (action: PostAction) => void,
   getState: () => AppState,
 ) => {
-  const { user } = getState().auth;
-  if (!user) {
-    return dispatch(
-      likePostFailure(new Error('Unauthorized. Please sign in.'), ''),
-    );
-  }
   dispatch(likePostStarted(postID));
   try {
-    // throw new Error('dummy error');
+    const { user } = getState().auth;
+    if (!user) {
+      throw new MyError(
+        'Unauthorized. Please sign in.',
+        MyErrorCodes.NotAuthenticated,
+      );
+    }
+
     const postRef = fsDB.collection('posts').doc(postID);
     await fsDB.runTransaction(async (trans) => {
       const doc = await trans.get(postRef);
       const newLikes = doc.data()!.likes + 1;
       trans.update(postRef, { likes: newLikes });
-      // throw new Error('error when like');
       const likeRef = fsDB
         .collection('posts')
         .doc(postID)
@@ -1427,7 +1404,7 @@ export const clearCreatePostError = () => (
   dispatch: (action: PostAction) => void,
 ) => {
   dispatch({
-    type: CLEAR_CREATE_POST_ERROR,
+    type: DispatchTypes.CLEAR_CREATE_POST_ERROR,
     payload: null,
   });
 };
@@ -1436,7 +1413,7 @@ export const clearDeletePostError = () => (
   dispatch: (action: PostAction) => void,
 ) => {
   dispatch({
-    type: CLEAR_DELETE_POST_ERROR,
+    type: DispatchTypes.CLEAR_DELETE_POST_ERROR,
     payload: null,
   });
 };
@@ -1719,17 +1696,17 @@ const createPostError = (error: Error): PostAction => ({
 /* ----------------- delete post actions ---------------- */
 
 const deletePostStarted = (postID: string): PostAction => ({
-  type: DELETE_POST_STARTED,
+  type: DispatchTypes.DELETE_POST_STARTED,
   payload: postID,
 });
 
 const deletePostSuccess = (postID: string): PostAction => ({
-  type: DELETE_POST_SUCCESS,
+  type: DispatchTypes.DELETE_POST_SUCCESS,
   payload: postID,
 });
 
 const deletePostFailure = (error: Error, postID: string): PostAction => ({
-  type: DELETE_POST_FAILURE,
+  type: DispatchTypes.DELETE_POST_FAILURE,
   payload: {
     error,
     postID,

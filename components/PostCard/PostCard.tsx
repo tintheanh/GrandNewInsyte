@@ -101,11 +101,13 @@ export default class PostCard extends Component<PostCardProps> {
       currentViewableIndex === index ||
       nextProps.currentViewableIndex === index
     ) {
-      if (data.media.length > 1) {
-        return true;
-      }
-      if (data.media.length === 1 && data.media[0].type === 'video') {
-        return true;
+      if (currentViewableIndex !== nextProps.currentViewableIndex) {
+        if (data.media.length > 1) {
+          return true;
+        }
+        if (data.media.length === 1 && data.media[0].type === 'video') {
+          return true;
+        }
       }
     }
 
@@ -125,6 +127,8 @@ export default class PostCard extends Component<PostCardProps> {
       navigateWhenPressOnPostOrComment,
       navigateWhenPressOnUsernameOrAvatar,
     } = this.props;
+
+    // console.log('post card', index);
 
     let iconPrivacy = '';
     switch (data.privacy) {

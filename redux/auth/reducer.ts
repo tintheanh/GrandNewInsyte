@@ -142,6 +142,16 @@ export default function authReducer(
       newState.update.error = action.payload as Error;
       return newState;
     }
+    case DispatchTypes.INCREASE_TOTAL_POSTS_BY_ONE: {
+      const newState = { ...state };
+      newState.user!.totalPosts += 1;
+      return newState;
+    }
+    case DispatchTypes.DECREASE_TOTAL_POSTS_BY_ONE: {
+      const newState = { ...state };
+      newState.user!.totalPosts -= 1;
+      return newState;
+    }
     case DispatchTypes.CLEAR_SIGNUP_ERROR: {
       const newState = { ...state };
       newState.errors.signupError = null;
