@@ -1,21 +1,13 @@
 import React from 'react';
-import {
-  View,
-  Image,
-  Text,
-  TouchableWithoutFeedback,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, TouchableWithoutFeedback, StyleSheet } from 'react-native';
 import {
   Colors,
   AntDesign,
   MaterialIcons,
-  Feather,
   MaterialCommunityIcons,
   FontAwesome5,
 } from '../../../constants';
 import { Carousel, Avatar } from '../../../components';
-import SortComments from './SortComments';
 import {
   convertNumber,
   generateCaptionWithTagsAndUrls,
@@ -26,9 +18,19 @@ import { Post } from '../../../models';
 interface PostSectionProps {
   post: Post;
   shouldPlayMedia: boolean;
-  navigateWhenPressOnUsernameOrAvatar?: () => void;
+
+  /**
+   * Method navigate to user screen
+   */
+  navigateWhenPressOnUsernameOrAvatar: () => void;
+
   likePost: () => void;
   unLikePost: () => void;
+
+  /**
+   * Method perform delete post, only posts that belong to the current
+   * user can be deleted
+   */
   userControl?: () => void;
 }
 
@@ -36,13 +38,12 @@ export default React.memo(
   function PostSection({
     post,
     shouldPlayMedia,
-    navigateWhenPressOnUsernameOrAvatar = undefined,
+    navigateWhenPressOnUsernameOrAvatar,
     userControl = undefined,
     likePost,
     unLikePost,
   }: PostSectionProps) {
     const {
-      id,
       user,
       timeLabel,
       privacy,
@@ -66,11 +67,11 @@ export default React.memo(
     }
 
     return (
-      <View style={{ backgroundColor: Colors.darkColor }}>
+      <View style={{ backgroundColor: Colors.darkColor, paddingBottom: 12 }}>
         <View style={styles.userWrapper}>
           <Avatar
             avatar={user.avatar}
-            onPress={navigateWhenPressOnUsernameOrAvatar!}
+            onPress={navigateWhenPressOnUsernameOrAvatar}
           />
           <View style={styles.usernameAndTimeWrapper}>
             <TouchableWithoutFeedback
@@ -160,7 +161,6 @@ export default React.memo(
             </View>
           </View>
         </View>
-        <SortComments postID={id} />
       </View>
     );
   },

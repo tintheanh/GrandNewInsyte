@@ -10,8 +10,10 @@ import RepliesStackLayer from './repliesStackLayer';
 import UsersStack from './usersStack';
 import UsersStackLayer from './usersStackLayer';
 import MyError, { MyErrorCodes } from './my_error';
+import { CurrentTabScreen } from './currentTabScreen';
 
 export {
+  CurrentTabScreen,
   Post,
   User,
   UserResult,

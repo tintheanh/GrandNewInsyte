@@ -18,24 +18,58 @@ import { createComment } from '../../../redux/commentsStack/actions';
 import { AppState } from '../../../redux/store';
 import { alertDialog } from '../../../utils/functions';
 
-interface CommentInputState {
-  text: string;
-  textInputHeight: number;
-}
-
 interface CommentInputProps {
-  loading: boolean;
+  /**
+   * Parent post's ID for the new comment to add into
+   */
   postID: string;
-  error: Error | null;
-  onCreateComment: (content: string) => void;
+
+  /**
+   * Loading when create comment.
+   * Used for disabling submit button when creating comment
+   */
+  loading: boolean;
+
+  /**
+   * Method create new comment
+   * @param postID Parent post's ID for the new comment to add into
+   * @param content
+   */
+  onCreateComment: (postID: string, content: string) => void;
+
+  /**
+   * Method increase comment number on post screen
+   */
   increaseCommentsForPostScreenBy: (by: number) => void;
+
+  /**
+   * Method increase comment number for each post card on home screen
+   */
   increaseCommentsForHomeScreen: (
     postID: string,
     numberOfReplies: number,
   ) => void;
 }
 
+/**
+ * Local state
+ */
+interface CommentInputState {
+  text: string;
+
+  /**
+   * State to keep track of height of TextInput.
+   * Used in expanding TextInput as its content grows
+   */
+  textInputHeight: number;
+}
+
 class CommentInput extends Component<CommentInputProps, CommentInputState> {
+  /**
+   * @var keyboardWillShowListener detect when keyboard is on
+   * @var keyboardWillHideListener detect when keyboard is off
+   * @var moveAnimation animation value for moving keyboard vertically
+   */
   private keyboardWillShowListener: EmitterSubscription | null = null;
   private keyboardWillHideListener: EmitterSubscription | null = null;
   private moveAnimation: Animated.Value;
@@ -52,11 +86,11 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
   componentDidMount() {
     this.keyboardWillShowListener = Keyboard.addListener(
       'keyboardWillShow',
-      this._keyboardWillShow,
+      this.keyboardWillShow,
     );
     this.keyboardWillHideListener = Keyboard.addListener(
       'keyboardWillHide',
-      this._keyboardWillHide,
+      this.keyboardWillHide,
     );
   }
 
@@ -65,15 +99,20 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
     this.keyboardWillHideListener!.remove();
   }
 
-  _keyboardWillShow = (event: any) => {
-    this._move(-event.endCoordinates.height + bottomTabHeight, 270);
+  keyboardWillShow = (event: any) => {
+    this.move(-event.endCoordinates.height + bottomTabHeight, 270);
   };
 
-  _keyboardWillHide = () => {
-    this._move(0, 100);
+  keyboardWillHide = () => {
+    this.move(0, 100);
   };
 
-  _move = (value: number, duration: number) => {
+  /**
+   * Method move vertically
+   * @param value Move to value
+   * @param duration Duration in milliseconds
+   */
+  move = (value: number, duration: number) => {
     Animated.timing(this.moveAnimation, {
       toValue: value,
       duration,
@@ -81,6 +120,10 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
     }).start();
   };
 
+  /**
+   * Method set content for comment
+   * @param text New content to set
+   */
   setCommentContent = (text: string) => this.setState({ text });
 
   performSubmitComment = () => {
@@ -94,10 +137,17 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
       onCreateComment,
       increaseCommentsForPostScreenBy,
     } = this.props;
+
+    // increase number of comments for post and home screen
     increaseCommentsForPostScreenBy(1);
     increaseCommentsForHomeScreen(postID, 1);
+
     Keyboard.dismiss();
-    onCreateComment(text);
+
+    // submit comment
+    onCreateComment(postID, text);
+
+    // create old text for the next comment
     this.setState({ text: '' });
   };
 
@@ -194,9 +244,8 @@ const mapStateToProps = (state: AppState) => {
   const { currentTab } = state.commentsStack;
   return {
     loading:
-      state.commentsStack[currentTab].top()?.createCommentLoading ?? false,
-    error: state.commentsStack[currentTab].top()?.createCommentError ?? null,
-    postID: state.commentsStack[currentTab].top()?.postID ?? '',
+      state.commentsStack[currentTab].top()?.loadings.createCommentLoading ??
+      false,
   };
 };
 

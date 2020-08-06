@@ -236,7 +236,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
   navigateToPostScreen = (data: Post) => () => {
     const { navigation, onPushCommentsLayer } = this.props;
     onPushCommentsLayer(data.id);
-    navigation.push('PostScreen', data);
+    navigation.push('PostScreen', { post: data });
   };
 
   /**

@@ -1390,6 +1390,7 @@ export const unlikePost = (postID: string) => async (
         .doc(postID)
         .collection('like_list')
         .doc(user.id);
+
       trans.delete(likeRef);
     });
     dispatch(unlikePostSuccess());
@@ -1419,21 +1420,23 @@ export const clearAllPosts = () => (dispatch: (action: PostAction) => void) => {
   });
 };
 
-export const increaseCommentsBy = (postID: string, by: number) => (
-  dispatch: (action: PostAction) => void,
-) => {
+export const increaseCommentsBy = (
+  postID: string,
+  numberOfComments: number,
+) => (dispatch: (action: PostAction) => void) => {
   dispatch({
-    type: INCREASE_COMMENTS_BY_NUMBER,
-    payload: { postID, by },
+    type: DispatchTypes.INCREASE_COMMENTS_BY_NUMBER,
+    payload: { postID, numberOfComments },
   });
 };
 
-export const decreaseCommentsBy = (postID: string, by: number) => (
-  dispatch: (action: PostAction) => void,
-) => {
+export const decreaseCommentsBy = (
+  postID: string,
+  numberOfComments: number,
+) => (dispatch: (action: PostAction) => void) => {
   dispatch({
-    type: DECREASE_COMMENTS_BY_NUMBER,
-    payload: { postID, by },
+    type: DispatchTypes.DECREASE_COMMENTS_BY_NUMBER,
+    payload: { postID, numberOfComments },
   });
 };
 

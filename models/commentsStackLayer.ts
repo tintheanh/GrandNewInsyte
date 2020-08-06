@@ -15,6 +15,5 @@ export default interface CommentsStackLayer {
     createCommentLoading: boolean;
   };
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
-  type: 'all' | 'top';
   commentList: Array<Comment>;
 }

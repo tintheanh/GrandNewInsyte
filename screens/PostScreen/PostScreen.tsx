@@ -1,16 +1,16 @@
 import React, { Component } from 'react';
-import {
-  View,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Alert } from 'react-native';
 import { connect } from 'react-redux';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { HomeStackParamList } from '../../../../stacks/HomeStack';
-import { Layout, Colors, MaterialIcons } from '../../constants';
-import { CommentCard, List, Loading, ErrorView } from '../../components';
+import { HomeStackParamList } from '../../stacks/HomeStack';
+import { Layout, Colors } from '../../constants';
+import {
+  CommentCard,
+  List,
+  Loading,
+  ErrorView,
+  FooterLoading,
+} from '../../components';
 import {
   delay,
   checkPostCommentListChanged,
@@ -20,13 +20,13 @@ import {
 import { PostSection, CommentInput } from './private_components';
 import {
   fetchNewComments,
-  fetchTopComments,
   popCommentsLayer,
   likeComment,
   unlikeComment,
   clearCreateCommentError,
   clearDeleteCommentError,
-  clearInteractCommentError,
+  clearLikeCommentError,
+  clearUnlikeCommentError,
   deleteComment,
 } from '../../redux/commentsStack/actions';
 import {
@@ -38,7 +38,7 @@ import {
 } from '../../redux/posts/actions';
 import { pushUsersLayer } from '../../redux/usersStack/actions';
 import { AppState } from '../../redux/store';
-import { Post, Comment } from '../../models';
+import { Post, Comment, CurrentTabScreen } from '../../models';
 
 type PostScreenNavigationProp = StackNavigationProp<
   HomeStackParamList,
@@ -46,39 +46,82 @@ type PostScreenNavigationProp = StackNavigationProp<
 >;
 
 interface PostScreenProps {
-  navigation: PostScreenNavigationProp;
+  navigation: any;
 
+  /**
+   * Post data receive after navigating
+   */
   route: {
-    params: {
-      data: Post;
-    };
+    params: { post: Post; currentTabScreen: CurrentTabScreen };
   };
 
-  // redux states
+  /**
+   * Current user's id
+   */
   currentUID: string | undefined;
+
+  /**
+   * Comment list fetched from database
+   */
   comments: Array<Comment>;
-  sortCommentsBy: 'all' | 'top';
+
+  /**
+   * Loading from fetching comments
+   */
   loading: boolean;
-  error: Error | null;
-  createCommentError: Error | null;
-  deleteCommentError: Error | null;
-  interactCommentError: Error | null;
+
+  /**
+   * Error from fetching comments failure
+   */
+  fetchError: Error | null;
+
+  /**
+   * Error from like post failure
+   */
   likePostError: Error | null;
+
+  /**
+   * Error from unlike post failure
+   */
   unlikePostError: Error | null;
+
+  /**
+   * Error from create comment failure
+   */
+  createCommentError: Error | null;
+
+  /**
+   * Error from delete comment failure
+   */
+  deleteCommentError: Error | null;
+
+  /**
+   * Error from like comment failure
+   */
+  likeCommentError: Error | null;
+
+  /**
+   * Error from unlike comment failure
+   */
+  unlikeCommentError: Error | null;
 
   // redux dispatches
   onFetchNewComments: (postID: string) => void;
-  onFetchTopComments: (postID: string) => void;
-  onLikeComment: (commentID: string) => void;
-  onUnlikeComment: (commentID: string) => void;
+  onLikeComment: (postID: string, commentID: string) => void;
+  onUnlikeComment: (postID: string, commentID: string) => void;
   onLikePost: (postID: string) => void;
   onUnlikePost: (postID: string) => void;
   onDeletePost: (postID: string) => void;
-  onDeleteComment: (commentID: string, numberOfReplies: number) => void;
+  onDeleteComment: (
+    postID: string,
+    commentID: string,
+    numberOfReplies: number,
+  ) => void;
   onPopCommentsLayer: () => void;
   onClearCreateCommentError: () => void;
   onClearDeleteCommentError: () => void;
-  onClearInteractCommentError: () => void;
+  onClearLikeCommentError: () => void;
+  onClearUnlikeCommentError: () => void;
   onDecreaseCommentsForHomeScreenBy: (
     postID: string,
     numberOfReplies: number,
@@ -98,20 +141,38 @@ interface PostScreenProps {
   }) => void;
 }
 
+/**
+ * Local state
+ */
 interface PostScreenState {
+  /**
+   * State mapped from post props data passed by navigation.
+   * Used in changing number of likes and comments of post screen
+   */
   post: Post;
+
+  /**
+   * State to keep track of numbers of replies + the parent comment
+   * to recover when delete comment fails
+   */
   numberOfRepliesAndCommentDeleted: number;
+
+  /**
+   * State to check when the video should play
+   * when screen is focused or not focused
+   */
   shouldPlayMedia: boolean;
 }
 
 class PostScreen extends Component<PostScreenProps, PostScreenState> {
-  private unsubscribeDetectScreenGoBack: any;
-  private onBlur: () => void = () => {};
-  private onFocus: () => void = () => {};
+  private detectScreenGoBackUnsubscriber: () => void = () => {};
+  private blurUnsubcriber: () => void = () => {};
+  private focusUnsubcriber: () => void = () => {};
+
   constructor(props: PostScreenProps) {
     super(props);
     this.state = {
-      post: this.props.route.params,
+      post: this.props.route.params.post,
       numberOfRepliesAndCommentDeleted: 0,
       shouldPlayMedia: true,
     };
@@ -121,42 +182,15 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     nextProps: PostScreenProps,
     nextState: PostScreenState,
   ) {
-    const {
-      comments,
-      sortCommentsBy,
-      loading,
-      error,
-      createCommentError,
-      deleteCommentError,
-      interactCommentError,
-      likePostError,
-      unlikePostError,
-    } = this.props;
+    const { comments, loading, fetchError } = this.props;
+
     if (this.state.shouldPlayMedia !== nextState.shouldPlayMedia) {
       return true;
     }
     if (loading !== nextProps.loading) {
       return true;
     }
-    if (sortCommentsBy !== nextProps.sortCommentsBy) {
-      return true;
-    }
-    if (error !== nextProps.error) {
-      return true;
-    }
-    if (createCommentError !== nextProps.createCommentError) {
-      return true;
-    }
-    if (deleteCommentError !== nextProps.deleteCommentError) {
-      return true;
-    }
-    if (interactCommentError !== nextProps.interactCommentError) {
-      return true;
-    }
-    if (likePostError !== nextProps.likePostError) {
-      return true;
-    }
-    if (unlikePostError !== nextProps.unlikePostError) {
+    if (fetchError !== nextProps.fetchError) {
       return true;
     }
     if (checkPostChanged(this.state.post, nextState.post)) {
@@ -177,27 +211,28 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
 
   async componentDidMount() {
     const { navigation, onFetchNewComments, onPopCommentsLayer } = this.props;
-    this.unsubscribeDetectScreenGoBack = navigation.addListener(
+    this.detectScreenGoBackUnsubscriber = navigation.addListener(
       'beforeRemove',
       () => {
         onPopCommentsLayer();
       },
     );
-    this.onBlur = navigation.addListener('blur', () => {
+    this.blurUnsubcriber = navigation.addListener('blur', () => {
       this.setState({ shouldPlayMedia: false });
     });
-    this.onFocus = navigation.addListener('focus', () => {
+    this.focusUnsubcriber = navigation.addListener('focus', () => {
       this.setState({ shouldPlayMedia: true });
     });
-    const postID = this.state.post.id;
+
+    // delay before fetching comments to provide smoother experience
     await delay(500);
-    onFetchNewComments(postID);
+    onFetchNewComments(this.state.post.id);
   }
 
   componentWillUnmount() {
-    this.unsubscribeDetectScreenGoBack();
-    this.onBlur();
-    this.onFocus();
+    this.detectScreenGoBackUnsubscriber();
+    this.blurUnsubcriber();
+    this.focusUnsubcriber();
   }
 
   toUserScreen = (user: {
@@ -205,29 +240,32 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     username: string;
     avatar: string;
   }) => () => {
-    const { currentUID, navigation } = this.props;
-    if (currentUID !== user.id) {
-      this.props.onPushUsersLayer({
-        id: user.id,
-        username: user.username,
-        avatar: user.avatar,
-      });
-      navigation.push('UserScreen', {
-        title: user.username,
-        user,
-      });
-    } else {
-      navigation.push('ProfileScreen', {
-        title: user.username,
-        user,
-      });
-    }
+    // const { currentUID, navigation } = this.props;
+    // if (currentUID !== user.id) {
+    //   this.props.onPushUsersLayer({
+    //     id: user.id,
+    //     username: user.username,
+    //     avatar: user.avatar,
+    //   });
+    //   navigation.push('UserScreen', {
+    //     title: user.username,
+    //     user,
+    //   });
+    // } else {
+    //   navigation.push('ProfileScreen', {
+    //     title: user.username,
+    //     user,
+    //   });
+    // }
   };
 
   /* -------------------- post methods -------------------- */
 
+  /**
+   * Method perform like post
+   */
   performLikePost = async () => {
-    const postID = this.state.post.id;
+    // increase post's number of likes
     this.setState((prevState) => ({
       post: {
         ...prevState.post,
@@ -235,8 +273,13 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         isLiked: true,
       },
     }));
-    await this.props.onLikePost(postID);
+
+    // perform like post
+    await this.props.onLikePost(this.state.post.id);
+
+    // wait until done
     if (this.props.likePostError !== null) {
+      // if there's error, revert post's number of likes back
       this.setState((prevState) => ({
         post: {
           ...prevState.post,
@@ -247,8 +290,11 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     }
   };
 
+  /**
+   * Method perform unlike post
+   */
   performUnlikePost = async () => {
-    const postID = this.state.post.id;
+    // decrease post's number of likes
     this.setState((prevState) => ({
       post: {
         ...prevState.post,
@@ -256,8 +302,13 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         isLiked: false,
       },
     }));
-    await this.props.onUnlikePost(postID);
+
+    // perform unlike post
+    await this.props.onUnlikePost(this.state.post.id);
+
+    // wait until done
     if (this.props.unlikePostError !== null) {
+      // if there's error, revert post's number of likes back
       this.setState((prevState) => ({
         post: {
           ...prevState.post,
@@ -268,34 +319,51 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     }
   };
 
+  /**
+   * Method perform delete post
+   */
   performDeletePost = async () => {
     const { navigation, onPopCommentsLayer, onDeletePost } = this.props;
-    const postID = this.state.post.id;
     navigation.goBack();
     onPopCommentsLayer();
     await delay(500);
-    onDeletePost(postID);
+    onDeletePost(this.state.post.id);
   };
 
-  increaseCommentsForPostScreenBy = (by: number) => {
+  /**
+   * Method to increase post's number of comments.
+   * Used in create new comment and delete comment failure
+   * @param numberOfComments Number of comments to increase to.
+   * This could be the comment itself + all the replies associated
+   */
+  increaseCommentsForPostScreenBy = (numberOfComments: number) => {
     this.setState((prevState) => ({
       post: {
         ...prevState.post,
-        comments: prevState.post.comments + by,
+        comments: prevState.post.comments + numberOfComments,
       },
     }));
   };
 
-  decreaseCommentsForPostScreenBy = (numberOfReplies: number) => {
+  /**
+   * Method to decrease post's number of comments.
+   * Used in delete comment and create new comment failure
+   * @param numberOfComments Number of replies to increase to.
+   * This could be the comment itself + all the replies associated
+   */
+  decreaseCommentsForPostScreenBy = (numberOfComments: number) => {
     this.setState((prevState) => ({
       post: {
         ...prevState.post,
-        comments: prevState.post.comments - numberOfReplies,
+        comments: prevState.post.comments - numberOfComments,
       },
-      numberOfRepliesAndCommentDeleted: numberOfReplies,
+      numberOfRepliesAndCommentDeleted: numberOfComments,
     }));
   };
 
+  /**
+   * User control for delete post
+   */
   userControlForPost = () => {
     Alert.alert(
       '',
@@ -322,12 +390,24 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
   performDeleteComment = (commentID: string, numberOfReplies: number) => () => {
     const { onDecreaseCommentsForHomeScreenBy, onDeleteComment } = this.props;
     const postID = this.state.post.id;
+
+    // decrease number of comments + replies for post and home screen
     this.decreaseCommentsForPostScreenBy(numberOfReplies + 1);
     onDecreaseCommentsForHomeScreenBy(postID, numberOfReplies + 1);
+
+    // keep track of the comment and number of replies along with it
+    // in case delete comment fails
     this.setState({ numberOfRepliesAndCommentDeleted: numberOfReplies + 1 });
-    onDeleteComment(commentID, numberOfReplies + 1);
+
+    // perform delete the comment
+    onDeleteComment(postID, commentID, numberOfReplies);
   };
 
+  /**
+   * User control for delete comment
+   * @param commentID Comment's ID to delete
+   * @param numberOfReplies Number of replies associated to the comment
+   */
   userControlForComment = (
     commentID: string,
     numberOfReplies: number,
@@ -351,61 +431,69 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
   };
 
   fetchMoreComments = () => {
-    const {
-      sortCommentsBy,
-      onFetchNewComments,
-      onFetchTopComments,
-    } = this.props;
-    const postID = this.state.post.id;
-    if (sortCommentsBy === 'all') {
-      onFetchNewComments(postID);
-    } else {
-      onFetchTopComments(postID);
-    }
+    this.props.onFetchNewComments(this.state.post.id);
   };
 
-  emptyHandler = () => {
-    const postID = this.state.post.id;
-    this.props.onFetchNewComments(postID);
-  };
-
+  /**
+   * Method perform like comment
+   * @param commentID Comment's ID to like
+   */
   performLikeComment = (commentID: string) => () => {
-    this.props.onLikeComment(commentID);
+    this.props.onLikeComment(this.state.post.id, commentID);
   };
 
+  /**
+   * Method perform unlike comment
+   * @param commentID Comment's ID to unlike
+   */
   performUnlikeComment = (commentID: string) => () => {
-    this.props.onUnlikeComment(commentID);
+    this.props.onUnlikeComment(this.state.post.id, commentID);
   };
 
+  /**
+   * Method clear error from create comment failure
+   */
   performClearCreateCommentError = () => {
-    const { post } = this.state;
     const {
       onClearCreateCommentError,
       onDecreaseCommentsForHomeScreenBy,
     } = this.props;
+
+    // clear error
     onClearCreateCommentError();
+
+    // decrease post's number of comments for post screen by 1 due to failure
     this.decreaseCommentsForPostScreenBy(1);
-    onDecreaseCommentsForHomeScreenBy(post.id, 1);
+
+    // decrease post's number of comments for home screen by 1 due to failure
+    onDecreaseCommentsForHomeScreenBy(this.state.post.id, 1);
   };
 
+  /**
+   * Method clear error from delete comment failure
+   */
   performClearDeleteCommentError = () => {
-    const postID = this.state.post.id;
+    const { post, numberOfRepliesAndCommentDeleted } = this.state;
     const {
       onClearDeleteCommentError,
       onIncreaseCommentsForHomeScreen,
     } = this.props;
+
+    // clear error
     onClearDeleteCommentError();
-    this.increaseCommentsForPostScreenBy(
-      this.state.numberOfRepliesAndCommentDeleted,
-    );
-    onIncreaseCommentsForHomeScreen(
-      postID,
-      this.state.numberOfRepliesAndCommentDeleted,
-    );
+
+    // increase post's number of comments for post screen by 1 due to failure
+    this.increaseCommentsForPostScreenBy(numberOfRepliesAndCommentDeleted);
+
+    // increase post's number of comments for home screen by 1 due to failure
+    onIncreaseCommentsForHomeScreen(post.id, numberOfRepliesAndCommentDeleted);
   };
 
   /* ----------------- end comment methods ---------------- */
 
+  /**
+   * Method render comment for comment list
+   */
   renderItem = ({ item, index }: { item: Comment; index: number }) => {
     const { currentUID } = this.props;
     return (
@@ -435,15 +523,38 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     const { post } = this.state;
     const {
       comments,
-      error,
-      createCommentError,
-      deleteCommentError,
-      interactCommentError,
+      fetchError,
       loading,
       currentUID,
-      onClearInteractCommentError,
+      createCommentError,
+      deleteCommentError,
+      likeCommentError,
+      unlikeCommentError,
+      onClearLikeCommentError,
+      onClearUnlikeCommentError,
     } = this.props;
-    // console.log('post screen', this.state.post);
+
+    if (createCommentError) {
+      alertDialog(
+        createCommentError.message,
+        this.performClearCreateCommentError,
+      );
+    }
+
+    if (deleteCommentError) {
+      alertDialog(
+        deleteCommentError.message,
+        this.performClearDeleteCommentError,
+      );
+    }
+
+    if (likeCommentError) {
+      alertDialog(likeCommentError.message, onClearLikeCommentError);
+    }
+
+    if (unlikeCommentError) {
+      alertDialog(unlikeCommentError.message, onClearUnlikeCommentError);
+    }
 
     const postSection = (
       <PostSection
@@ -460,6 +571,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
 
     const commentInput = (
       <CommentInput
+        postID={post.id}
         increaseCommentsForPostScreenBy={this.increaseCommentsForPostScreenBy}
         increaseCommentsForHomeScreen={
           this.props.onIncreaseCommentsForHomeScreen
@@ -467,80 +579,45 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
       />
     );
 
-    if (createCommentError) {
-      alertDialog(
-        createCommentError.message,
-        this.performClearCreateCommentError,
-      );
-    }
-    if (deleteCommentError) {
-      alertDialog(
-        deleteCommentError.message,
-        this.performClearDeleteCommentError,
-      );
-    }
-    if (interactCommentError) {
-      alertDialog(interactCommentError.message, onClearInteractCommentError);
-    }
-
-    if (error) {
-      return (
-        <View style={styles.container}>
-          {postSection}
-          <ErrorView errorText={error.message} handle={this.emptyHandler} />
+    let emptyListComponent = null;
+    if (fetchError) {
+      emptyListComponent = (
+        <View style={styles.emptyWrapper}>
+          <ErrorView errorText={fetchError.message} />
         </View>
       );
-    }
-
-    if (loading && comments.length === 0) {
-      return (
-        <View style={styles.container}>
-          {postSection}
+    } else if (loading && comments.length === 0) {
+      emptyListComponent = (
+        <View style={styles.emptyWrapper}>
           <Loading />
-          {currentUID !== undefined ? commentInput : null}
         </View>
       );
-    }
-    if (comments.length === 0) {
-      return (
-        <View style={styles.container}>
-          {postSection}
-          {currentUID !== undefined ? commentInput : null}
-        </View>
-      );
+    } else {
+      emptyListComponent = undefined;
     }
 
     return (
       <KeyboardAvoidingView behavior="padding" style={styles.container}>
         <List
           listHeaderComponent={postSection}
+          listEmptyComponent={emptyListComponent}
           data={comments}
           renderItem={this.renderItem}
-          _onEndReachedDuringMomentum={this.fetchMoreComments}
+          onEndReached={this.fetchMoreComments}
           checkChangesToUpdate={checkPostCommentListChanged}
           initialNumToRender={5}
           onEndReachedThreshold={0.1}
-          maxToRenderPerBatch={5}
-          windowSize={undefined}
+          maxToRenderPerBatch={8}
+          windowSize={7}
           listFooterComponent={<View style={{ height: 136 }} />}
           extraData={{ post, shouldPlayMedia: this.state.shouldPlayMedia }}
         />
         {currentUID !== undefined ? commentInput : null}
-        <View style={styles.loadingWrapper}>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="white" />
-            </View>
-          ) : (
-            <View style={styles.loadingContainer}>
-              <MaterialIcons
-                name="done"
-                size={22}
-                color="rgba(255, 255, 255, 0.6)"
-              />
-            </View>
-          )}
-        </View>
+        {comments.length > 0 ? (
+          <View style={styles.loadingWrapper}>
+            <FooterLoading loading={loading} />
+          </View>
+        ) : null}
       </KeyboardAvoidingView>
     );
   }
@@ -558,6 +635,7 @@ const styles = StyleSheet.create({
     bottom: 44,
     zIndex: -1,
   },
+  emptyWrapper: { paddingTop: 12, paddingBottom: 12 },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
@@ -567,28 +645,36 @@ const styles = StyleSheet.create({
   },
 });
 
-const mapStateToProps = (state: AppState) => {
-  const { currentTab } = state.commentsStack;
+const mapStateToProps = (state: AppState, ownProps: PostScreenProps) => {
+  const { currentTabScreen } = ownProps.route.params;
   return {
     currentUID: state.auth.user?.id,
-    comments: state.commentsStack[currentTab].top()?.commentList ?? [],
-    loading: state.commentsStack[currentTab].top()?.loading ?? false,
-    error: state.commentsStack[currentTab].top()?.error ?? null,
-    createCommentError:
-      state.commentsStack[currentTab].top()?.createCommentError ?? null,
-    deleteCommentError:
-      state.commentsStack[currentTab].top()?.deleteCommentError ?? null,
-    interactCommentError:
-      state.commentsStack[currentTab].top()?.interactCommentError ?? null,
-    sortCommentsBy: state.commentsStack[currentTab].top()?.type ?? 'all',
+    comments: state.commentsStack[currentTabScreen].top()?.commentList ?? [],
+    loading:
+      state.commentsStack[currentTabScreen].top()?.loadings.fetchLoading ??
+      false,
+    fetchError:
+      state.commentsStack[currentTabScreen].top()?.errors.fetchError ?? null,
     likePostError: state.allPosts.likePost.error,
     unlikePostError: state.allPosts.unlikePost.error,
+    createCommentError:
+      state.commentsStack[currentTabScreen].top()?.errors.createCommentError ??
+      null,
+    deleteCommentError:
+      state.commentsStack[currentTabScreen].top()?.errors.deleteCommentError ??
+      null,
+    likeCommentError:
+      state.commentsStack[currentTabScreen].top()?.errors.likeCommentError ??
+      null,
+    unlikeCommentError:
+      state.commentsStack[currentTabScreen].top()?.errors.unlikeCommentError ??
+      null,
   };
 };
 
 const mapDispatchToProps = {
   onFetchNewComments: fetchNewComments,
-  onFetchTopComments: fetchTopComments,
+  // onFetchTopComments: fetchTopComments,
   onLikePost: likePost,
   onUnlikePost: unlikePost,
   onDeletePost: deletePost,
@@ -596,7 +682,8 @@ const mapDispatchToProps = {
   onLikeComment: likeComment,
   onUnlikeComment: unlikeComment,
   onClearCreateCommentError: clearCreateCommentError,
-  onClearInteractCommentError: clearInteractCommentError,
+  onClearLikeCommentError: clearLikeCommentError,
+  onClearUnlikeCommentError: clearUnlikeCommentError,
   onClearDeleteCommentError: clearDeleteCommentError,
   onDeleteComment: deleteComment,
   onDecreaseCommentsForHomeScreenBy: decreaseCommentsBy,

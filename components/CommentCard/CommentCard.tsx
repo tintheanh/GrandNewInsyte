@@ -69,6 +69,8 @@ function CommentCard(props: CommentCardProps) {
     });
   };
 
+  // console.log('card', id);
+
   return (
     <View
       style={[

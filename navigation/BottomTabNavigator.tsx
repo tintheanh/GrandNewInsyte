@@ -59,8 +59,8 @@ class BottomTabNavigator extends Component<any> {
           listeners={{
             tabPress: (e) => {
               this.props.onSetCurrentTabForCommentsStack('homeTabStack');
-              this.props.onSetCurrentTabForRepliesStack('homeTabStack');
-              this.props.onSetCurrentTabForUsersStack('homeTabStack');
+              // this.props.onSetCurrentTabForRepliesStack('homeTabStack');
+              // this.props.onSetCurrentTabForUsersStack('homeTabStack');
             },
           }}
         />
@@ -131,8 +131,8 @@ class BottomTabNavigator extends Component<any> {
           listeners={{
             tabPress: (e) => {
               this.props.onSetCurrentTabForCommentsStack('userTabStack');
-              this.props.onSetCurrentTabForRepliesStack('userTabStack');
-              this.props.onSetCurrentTabForUsersStack('userTabStack');
+              // this.props.onSetCurrentTabForRepliesStack('userTabStack');
+              // this.props.onSetCurrentTabForUsersStack('userTabStack');
             },
           }}
         />

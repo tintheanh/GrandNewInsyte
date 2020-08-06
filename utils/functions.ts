@@ -686,7 +686,13 @@ const postIDsToPostArray = async (
   return newPosts;
 };
 
-const docFStoCommentArray = async (
+/**
+ * Method get array of comments from firestore documents
+ * @param postID Post's ID where comments are fetched from
+ * @param docs Firestore documents
+ * @param currentUser preload current user
+ */
+const FSdocsToCommentArray = async (
   postID: string,
   docs: Array<FirebaseFirestoreTypes.QueryDocumentSnapshot>,
   currentUser?: {
@@ -934,7 +940,7 @@ export {
   openURL,
   generateSubstringForUsername,
   generateCaptionWithTagsAndUrls,
-  docFStoCommentArray,
+  FSdocsToCommentArray,
   docFStoReplyArray,
   checkPostReplyListChanged,
   checkCommentChanged,

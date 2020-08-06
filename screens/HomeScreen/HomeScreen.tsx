@@ -51,9 +51,9 @@ class HomeScreen extends Component<any> {
 
   async componentDidMount() {
     this.screenFocus = this.props.navigation.addListener('focus', (e) => {
-      this.props.onClearCommentsStack();
-      this.props.onClearRepliesStack();
-      this.props.onClearUsersStack();
+      // this.props.onClearCommentsStack();
+      // this.props.onClearRepliesStack();
+      // this.props.onClearUsersStack();
     });
 
     // try {
@@ -67,7 +67,7 @@ class HomeScreen extends Component<any> {
     //   console.log(err);
     // }
 
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 10; i++) {
       // const reply = {
       //   content: faker.lorem.sentence(),
       //   date_posted: faker.date.between('2020-07-11', '2020-07-26').getTime(),
@@ -90,7 +90,7 @@ class HomeScreen extends Component<any> {
       // };
       // await fsDB
       //   .collection('posts')
-      //   .doc('bvPdeR0lhaVTCYsm8tNw')
+      //   .doc('OVzTdk3S0hUFEseleGbS')
       //   .collection('comment_list')
       //   .add(comment);
       // const user = {

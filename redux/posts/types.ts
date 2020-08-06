@@ -93,7 +93,7 @@ export interface PostAction {
         postID: string;
       }
     | {
-        by: number;
+        numberOfComments: number;
         postID: string;
       }
     | {

@@ -14,12 +14,12 @@ import {
 import { Colors } from '../constants';
 import SearchBar from '../screens/HomeScreen/private_components/SearchBar';
 import { popCommentsLayer } from '../redux/commentsStack/actions';
-import { Post } from '../models';
+import { Post, CurrentTabScreen } from '../models';
 
 export type HomeStackParamList = {
   HomeScreen: undefined;
-  PostScreen: Post;
-  ReplyScreen: undefined;
+  PostScreen: { post: Post; currentTabScreen: CurrentTabScreen };
+  ReplyScreen: { currentTabScreen: CurrentTabScreen };
   UserScreen: {
     id: string;
     username: string;
@@ -79,25 +79,17 @@ export default connect(
       <Stack.Screen
         name="PostScreen"
         component={PostScreen}
+        initialParams={{ currentTabScreen: 'homeTabStack' }}
         options={({ route }) => {
           return {
-            title: `${route.params.user.username}'s post`,
+            title: `${route.params.post.user.username}'s post`,
           };
-          // avatar: route.params.avatar,
-          // headerLeft: (headerProps) => (
-          //   <HeaderBackButton
-          //     {...headerProps}
-          //     onPress={goBackAndPopPostStack(
-          //       navigation.goBack,
-          //       props.onPopCommentsLayer,
-          //     )}
-          //   />
-          // ),
         }}
       />
       <Stack.Screen
         name="ReplyScreen"
         component={ReplyScreen}
+        initialParams={{ currentTabScreen: 'homeTabStack' }}
         options={{ headerTitle: '' }}
       />
       <Stack.Screen

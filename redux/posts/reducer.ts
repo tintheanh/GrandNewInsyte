@@ -1008,7 +1008,7 @@ export default function postsReducer(
     }
     /* ---------------- end unlike post cases --------------- */
 
-    /* --------------------- clear cases -------------------- */
+    /* --------------------- clear error cases -------------------- */
 
     case DispatchTypes.CLEAR_CREATE_POST_ERROR: {
       const newState = { ...state };
@@ -1030,8 +1030,112 @@ export default function postsReducer(
       newState.unlikePost.error = null;
       return newState;
     }
+    case DispatchTypes.DECREASE_COMMENTS_BY_NUMBER: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        postID: string;
+        numberOfComments: number;
+      };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const ownPosts = [...state.own.posts];
+      const taggedPosts = [...state.tagged.posts];
+      newState.likePost.error = null;
 
-    /* ------------------- end clear cases ------------------ */
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const ownPostIndex = ownPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.comments -= payload.numberOfComments;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.comments -= payload.numberOfComments;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (ownPostIndex !== -1) {
+        const post = { ...ownPosts[ownPostIndex] };
+        post.comments -= payload.numberOfComments;
+        ownPosts[ownPostIndex] = post;
+      }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.comments -= payload.numberOfComments;
+        taggedPosts[taggedPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.own.posts = ownPosts;
+      newState.tagged.posts = taggedPosts;
+      return newState;
+    }
+
+    /* ------------------- end clear error cases ------------------ */
+
+    case DispatchTypes.INCREASE_COMMENTS_BY_NUMBER: {
+      const newState = { ...state };
+      const publicPosts = [...state.public.posts];
+      const followingPosts = [...state.following.posts];
+      const ownPosts = [...state.own.posts];
+      const taggedPosts = [...state.tagged.posts];
+      const payload = action.payload as {
+        postID: string;
+        numberOfComments: number;
+      };
+
+      const publicPostIndex = publicPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const followingPostIndex = followingPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const userPostIndex = ownPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+      const taggedPostIndex = taggedPosts.findIndex(
+        (post) => post.id === payload.postID,
+      );
+
+      if (publicPostIndex !== -1) {
+        const post = { ...publicPosts[publicPostIndex] };
+        post.comments += payload.numberOfComments;
+        publicPosts[publicPostIndex] = post;
+      }
+      if (followingPostIndex !== -1) {
+        const post = { ...followingPosts[followingPostIndex] };
+        post.comments += payload.numberOfComments;
+        followingPosts[followingPostIndex] = post;
+      }
+      if (userPostIndex !== -1) {
+        const post = { ...ownPosts[userPostIndex] };
+        post.comments += payload.numberOfComments;
+        ownPosts[userPostIndex] = post;
+      }
+      if (taggedPostIndex !== -1) {
+        const post = { ...taggedPosts[taggedPostIndex] };
+        post.comments += payload.numberOfComments;
+        taggedPosts[taggedPostIndex] = post;
+      }
+
+      newState.public.posts = publicPosts;
+      newState.following.posts = followingPosts;
+      newState.own.posts = ownPosts;
+      newState.tagged.posts = taggedPosts;
+      return newState;
+    }
 
     // /* ----------------- end like post cases ---------------- */
 
