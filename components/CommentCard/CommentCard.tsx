@@ -1,120 +1,97 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { connect } from 'react-redux';
 import CommentSection from '../CommentSection';
 import Avatar from '../Avatar';
+import { Comment } from '../../models';
 import InteractionSection from '../InteractionSection';
 import {
   Colors,
   pendingCommentID,
   pendingDeleteCommentFlag,
 } from '../../constants';
-import { pushRepliesLayer } from '../../redux/repliesStack/actions';
 
 interface CommentCardProps {
-  id: string;
-  user: {
-    id: string;
-    avatar: string;
-    username: string;
-  };
-  isLiked: boolean;
-  content: string;
-  datePosted: number;
-  likes: number;
-  replies: number;
+  /**
+   * Comment data
+   */
+  data: Comment;
+
+  /**
+   * Method like comment
+   */
   likeComment: () => void;
+
+  /**
+   * Method unlike comment
+   */
   unlikeComment: () => void;
+
+  /**
+   * Method navigate to reply screen
+   */
+  navigateToReplyScreen: () => void;
+
+  /**
+   * Method navigate to user screen
+   */
+  navigateToUserScreen: () => void;
+
+  /**
+   * Optional method used to delete comment.
+   * Only comments that belong to the current user
+   * can have this method
+   */
   userControl?: () => void;
-  onPushRepliesLayer: (id: string) => void;
-  decreaseCommentsForPostScreenBy: (numberOfReplies: number) => void;
-  increaseCommentsForPostScreenBy: (numberOfReplies: number) => void;
-  navigateToUserScreen?: () => void;
 }
-
-function CommentCard(props: CommentCardProps) {
-  const navigation = useNavigation<any>();
-
-  const {
-    id,
-    user,
-    content,
-    userControl = undefined,
-    likeComment,
-    unlikeComment,
-    datePosted,
-    replies,
-    likes,
-    isLiked,
-    decreaseCommentsForPostScreenBy,
-    increaseCommentsForPostScreenBy,
-    navigateToUserScreen,
-  } = props;
-
-  const toReplyScreen = () => {
-    props.onPushRepliesLayer(id);
-    navigation.push('ReplyScreen', {
-      comment: {
-        id,
-        user,
-        content,
-        datePosted,
-        replies,
-        likes,
-        isLiked,
-      },
-      decreaseCommentsForPostScreenBy,
-      increaseCommentsForPostScreenBy,
-    });
-  };
-
-  // console.log('card', id);
-
-  return (
-    <View
-      style={[
-        styles.container,
-        {
-          opacity:
-            id === pendingCommentID || id.includes(pendingDeleteCommentFlag)
-              ? 0.4
-              : 1,
-        },
-      ]}>
-      <Avatar avatar={user.avatar} onPress={navigateToUserScreen} />
-      <View style={{ marginLeft: 12 }}>
-        <CommentSection
-          username={user.username}
-          datePosted={datePosted}
-          content={content}
-          userControl={userControl}
-          navigateToUserScreen={navigateToUserScreen}
-        />
-        <InteractionSection
-          likes={likes}
-          replies={replies}
-          isLiked={isLiked}
-          likeComment={likeComment}
-          unlikeComment={unlikeComment}
-          toReplyScreen={toReplyScreen}
-        />
-      </View>
-    </View>
-  );
-}
-
-const mapDispatchToProps = {
-  onPushRepliesLayer: pushRepliesLayer,
-};
 
 export default React.memo(
-  connect(null, mapDispatchToProps)(CommentCard),
+  function CommentCard({
+    data,
+    userControl,
+    likeComment,
+    unlikeComment,
+    navigateToUserScreen,
+    navigateToReplyScreen,
+  }: CommentCardProps) {
+    const { id, user, content, datePosted, replies, likes, isLiked } = data;
+
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            opacity:
+              id === pendingCommentID || id.includes(pendingDeleteCommentFlag)
+                ? 0.4
+                : 1,
+          },
+        ]}>
+        <Avatar avatar={user.avatar} onPress={navigateToUserScreen} />
+        <View style={{ marginLeft: 12 }}>
+          <CommentSection
+            username={user.username}
+            datePosted={datePosted}
+            content={content}
+            userControl={userControl}
+            navigateToUserScreen={navigateToUserScreen}
+          />
+          <InteractionSection
+            likes={likes}
+            replies={replies}
+            isLiked={isLiked}
+            likeComment={likeComment}
+            unlikeComment={unlikeComment}
+            toReplyScreen={navigateToReplyScreen}
+          />
+        </View>
+      </View>
+    );
+  },
   (prevProps, nextProps) => {
-    if (prevProps.likes !== nextProps.likes) {
+    if (prevProps.data.likes !== nextProps.data.likes) {
       return false;
     }
-    if (prevProps.replies !== nextProps.replies) {
+    if (prevProps.data.replies !== nextProps.data.replies) {
       return false;
     }
     return true;

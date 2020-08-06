@@ -1,8 +1,6 @@
 import React, { Component } from 'react';
 import { View, StyleSheet, KeyboardAvoidingView, Alert } from 'react-native';
 import { connect } from 'react-redux';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { HomeStackParamList } from '../../stacks/HomeStack';
 import { Layout, Colors } from '../../constants';
 import {
   CommentCard,
@@ -29,6 +27,7 @@ import {
   clearUnlikeCommentError,
   deleteComment,
 } from '../../redux/commentsStack/actions';
+import { pushRepliesLayer } from '../../redux/repliesStack/actions';
 import {
   likePost,
   unlikePost,
@@ -39,11 +38,6 @@ import {
 import { pushUsersLayer } from '../../redux/usersStack/actions';
 import { AppState } from '../../redux/store';
 import { Post, Comment, CurrentTabScreen } from '../../models';
-
-type PostScreenNavigationProp = StackNavigationProp<
-  HomeStackParamList,
-  'HomeScreen'
->;
 
 interface PostScreenProps {
   navigation: any;
@@ -105,31 +99,91 @@ interface PostScreenProps {
    */
   unlikeCommentError: Error | null;
 
-  // redux dispatches
-  onFetchNewComments: (postID: string) => void;
-  onLikeComment: (postID: string, commentID: string) => void;
-  onUnlikeComment: (postID: string, commentID: string) => void;
+  /**
+   * Method like post
+   */
   onLikePost: (postID: string) => void;
+
+  /**
+   * Method unlike post
+   */
   onUnlikePost: (postID: string) => void;
+
+  /**
+   * Method delete post
+   */
   onDeletePost: (postID: string) => void;
+
+  /**
+   * Method fetch comments
+   */
+  onFetchNewComments: (postID: string) => void;
+
+  /**
+   * Method like comment
+   */
+  onLikeComment: (postID: string, commentID: string) => void;
+
+  /**
+   * Method unlike comment
+   */
+  onUnlikeComment: (postID: string, commentID: string) => void;
+
+  /**
+   * Method delete comment
+   */
   onDeleteComment: (
     postID: string,
     commentID: string,
     numberOfReplies: number,
   ) => void;
+
+  /**
+   * Method pop comments stack when screen going back
+   */
   onPopCommentsLayer: () => void;
+
+  /**
+   * Method clear error from create comment failure
+   */
   onClearCreateCommentError: () => void;
+
+  /**
+   * Method clear error from delete comment failure
+   */
   onClearDeleteCommentError: () => void;
+
+  /**
+   * Method clear error from like comment failure
+   */
   onClearLikeCommentError: () => void;
+
+  /**
+   * Method clear error from unlike comment failure
+   */
   onClearUnlikeCommentError: () => void;
+
+  /**
+   * Method decrease post's number of comments for home screen.
+   * Used when delete comment and create new comment failure
+   */
   onDecreaseCommentsForHomeScreenBy: (
     postID: string,
     numberOfReplies: number,
   ) => void;
+
+  /**
+   * Method decrease post's number of comments for home screen.
+   * Used when create comment and delete comment failure
+   */
   onIncreaseCommentsForHomeScreen: (
     postID: string,
     numberOfReplies: number,
   ) => void;
+
+  /**
+   * Method push new user layer when navigating to user screen
+   */
   onPushUsersLayer: ({
     id,
     username,
@@ -139,6 +193,11 @@ interface PostScreenProps {
     username: string;
     avatar: string;
   }) => void;
+
+  /**
+   * Method push new reply layer when navigating to reply screen
+   */
+  onPushRepliesLayer: (commentID: string) => void;
 }
 
 /**
@@ -257,6 +316,20 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     //     user,
     //   });
     // }
+  };
+
+  /**
+   * Method navigate to reply screen
+   * @param comment Comment payload passed to reply screen
+   */
+  navigateToReplyScreen = (comment: Comment) => () => {
+    const { onPushRepliesLayer, navigation } = this.props;
+    onPushRepliesLayer(comment.id);
+    navigation.push('ReplyScreen', {
+      comment,
+      decreaseCommentsForPostScreenBy: this.decreaseCommentsForPostScreenBy,
+      increaseCommentsForPostScreenBy: this.increaseCommentsForPostScreenBy,
+    });
   };
 
   /* -------------------- post methods -------------------- */
@@ -498,13 +571,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     const { currentUID } = this.props;
     return (
       <CommentCard
-        id={item.id}
-        user={item.user}
-        content={item.content}
-        datePosted={item.datePosted}
-        likes={item.likes}
-        isLiked={item.isLiked}
-        replies={item.replies}
+        data={item}
         userControl={
           currentUID === item.user.id
             ? this.userControlForComment(item.id, item.replies)
@@ -512,8 +579,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         }
         likeComment={this.performLikeComment(item.id)}
         unlikeComment={this.performUnlikeComment(item.id)}
-        decreaseCommentsForPostScreenBy={this.decreaseCommentsForPostScreenBy}
-        increaseCommentsForPostScreenBy={this.increaseCommentsForPostScreenBy}
+        navigateToReplyScreen={this.navigateToReplyScreen(item)}
         navigateToUserScreen={this.toUserScreen(item.user)}
       />
     );
@@ -689,6 +755,7 @@ const mapDispatchToProps = {
   onDecreaseCommentsForHomeScreenBy: decreaseCommentsBy,
   onIncreaseCommentsForHomeScreen: increaseCommentsBy,
   onPushUsersLayer: pushUsersLayer,
+  onPushRepliesLayer: pushRepliesLayer,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(PostScreen);

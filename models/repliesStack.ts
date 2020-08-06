@@ -1,15 +1,27 @@
 import RepliesStackLayer from './repliesStackLayer';
 
+/**
+ * Stack for reply screen navigation.
+ * Each reply screen has a reply layer
+ */
 export default class RepliesStack {
   private stack: Array<RepliesStackLayer>;
   constructor() {
     this.stack = [];
   }
 
+  /**
+   * Method push a new layer when navigating
+   * @param replyLayer New layer to push
+   */
+
   push = (replyLayer: RepliesStackLayer) => {
     this.stack.push(replyLayer);
   };
 
+  /**
+   * Method pop the top layer when screen going back
+   */
   pop = () => {
     if (this.stack.length > 0) {
       return this.stack.pop() as RepliesStackLayer;
@@ -17,75 +29,78 @@ export default class RepliesStack {
     return null;
   };
 
+  /**
+   * Method peek to see the top of current stack
+   */
   top = () => {
     if (this.stack.length > 0) {
-      const topLayer = this.stack[this.stack.length - 1];
-      const errorClone = topLayer.error
-        ? new Error(topLayer.error.message)
-        : null;
-      const createReplyErrorClone = topLayer.createReplyError
-        ? new Error(topLayer.createReplyError.message)
-        : null;
-      const interactReplyErrorClone = topLayer.interactReplyError
-        ? new Error(topLayer.interactReplyError.message)
-        : null;
-      const deleteReplyErrorClone = topLayer.deleteReplyError
-        ? new Error(topLayer.deleteReplyError.message)
-        : null;
-      return {
-        ...topLayer,
-        error: errorClone,
-        createReplyError: createReplyErrorClone,
-        interactReplyError: interactReplyErrorClone,
-        deleteReplyError: deleteReplyErrorClone,
-        replyList: topLayer.replyList.map((comment) => ({ ...comment })),
-      };
+      return this.stack[this.stack.length - 1];
     }
     return null;
   };
 
-  updateTop = (replyLayer: RepliesStackLayer) => {
+  /**
+   * Method update top layer
+   * @param newReplyLayer New layer to update
+   */
+  updateTop = (newReplyLayer: RepliesStackLayer) => {
     if (this.stack.length > 0) {
-      this.stack[this.stack.length - 1] = replyLayer;
+      this.stack[this.stack.length - 1] = newReplyLayer;
     }
   };
 
+  /**
+   * Method check if current stack has no element
+   */
   isEmpty = () => this.stack.length === 0;
 
+  /**
+   * Method get current size of the stack
+   */
   size = () => this.stack.length;
 
-  private toArray = () => this.stack;
+  /**
+   * Helper method get the real array stack
+   */ private toArray = () => this.stack;
 
   static clone = (stackForClone: RepliesStack) => {
     const newStack = new RepliesStack();
     const array = stackForClone.toArray();
 
     for (const replyLayer of array) {
-      const errorClone = replyLayer.error
-        ? new Error(replyLayer.error.message)
+      const fetchErrorClone = replyLayer.errors.fetchError
+        ? new Error(replyLayer.errors.fetchError.message)
         : null;
-      const createReplyErrorClone = replyLayer.createReplyError
-        ? new Error(replyLayer.createReplyError.message)
+      const createReplyErrorClone = replyLayer.errors.createReplyError
+        ? new Error(replyLayer.errors.createReplyError.message)
         : null;
-      const interactReplyErrorClone = replyLayer.interactReplyError
-        ? new Error(replyLayer.interactReplyError.message)
+      const likeReplyErrorClone = replyLayer.errors.likeReplyError
+        ? new Error(replyLayer.errors.likeReplyError.message)
         : null;
-      const deleteReplyErrorClone = replyLayer.deleteReplyError
-        ? new Error(replyLayer.deleteReplyError.message)
+      const unlikeReplyErrorClone = replyLayer.errors.unlikeReplyError
+        ? new Error(replyLayer.errors.unlikeReplyError.message)
         : null;
-      const clonedPostLayer = {
-        postID: replyLayer.postID,
+      const deleteReplyErrorClone = replyLayer.errors.deleteReplyError
+        ? new Error(replyLayer.errors.deleteReplyError.message)
+        : null;
+      const clonedReplyLayer = {
+        // postID: replyLayer.postID,
         commentID: replyLayer.commentID,
-        loading: replyLayer.loading,
-        createReplyLoading: replyLayer.createReplyLoading,
         lastVisible: replyLayer.lastVisible,
-        error: errorClone,
-        createReplyError: createReplyErrorClone,
-        deleteReplyError: deleteReplyErrorClone,
-        interactReplyError: interactReplyErrorClone,
+        errors: {
+          fetchError: fetchErrorClone,
+          createReplyError: createReplyErrorClone,
+          likeReplyError: likeReplyErrorClone,
+          unlikeReplyError: unlikeReplyErrorClone,
+          deleteReplyError: deleteReplyErrorClone,
+        },
+        loadings: {
+          fetchLoading: replyLayer.loadings.fetchLoading,
+          createReplyLoading: replyLayer.loadings.createReplyLoading,
+        },
         replyList: replyLayer.replyList.map((reply) => ({ ...reply })),
       };
-      newStack.push(clonedPostLayer);
+      newStack.push(clonedReplyLayer);
     }
 
     return newStack;

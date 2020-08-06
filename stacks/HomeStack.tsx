@@ -41,7 +41,7 @@ const mapDispatchToProps = {
 export default connect(
   null,
   mapDispatchToProps,
-)(function HomeStack(props: any) {
+)(function HomeStack() {
   // const navigation = useNavigation();
   // React.useEffect(() => {
   //   const unsubscribe = navigation.addListener('focus', (e) => {

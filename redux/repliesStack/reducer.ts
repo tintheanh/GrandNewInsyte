@@ -1,32 +1,5 @@
-import {
-  SET_CURRENT_TAB,
-  PUSH_REPLIES_LAYER,
-  CurrentTab,
-  RepliesStackState,
-  RepliesStackAction,
-  POP_REPLIES_LAYER,
-  FETCH_REPLIES_STARTED,
-  FETCH_REPLIES_SUCCESS,
-  FETCH_REPLIES_FAILURE,
-  FETCH_REPLIES_END,
-  CREATE_REPLY_FAILURE,
-  CREATE_REPLY_STARTED,
-  CREATE_REPLY_SUCCESS,
-  DELETE_REPLY_FAILURE,
-  DELETE_REPLY_STARTED,
-  DELETE_REPLY_SUCCESS,
-  LIKE_REPLY_FAILURE,
-  LIKE_REPLY_STARTED,
-  LIKE_REPLY_SUCCESS,
-  UNLIKE_REPLY_FAILURE,
-  UNLIKE_REPLY_STARTED,
-  UNLIKE_REPLY_SUCCESS,
-  CLEAR_STACK,
-  CLEAR_CREATE_REPLY_ERROR,
-  CLEAR_DELETE_REPLY_ERROR,
-  CLEAR_INTERACT_REPLY_ERROR,
-} from './types';
-import { RepliesStack, Reply } from '../../models';
+import { RepliesStackState, RepliesStackAction, DispatchTypes } from './types';
+import { RepliesStack, Reply, CurrentTabScreen } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
 import { pendingReplyID, pendingDeleteReplyFlag } from '../../constants';
 import { removeDuplicatesFromArray } from '../../utils/functions';
@@ -42,24 +15,28 @@ export default function commentsStackReducer(
   action: RepliesStackAction,
 ): RepliesStackState {
   switch (action.type) {
-    case SET_CURRENT_TAB: {
+    case DispatchTypes.SET_CURRENT_TAB: {
       const newState = { ...state };
-      newState.currentTab = action.payload as CurrentTab;
+      newState.currentTab = action.payload as CurrentTabScreen;
       return newState;
     }
-    case PUSH_REPLIES_LAYER: {
+    case DispatchTypes.PUSH_REPLIES_LAYER: {
       const newState = { ...state };
       const payload = action.payload as { postID: string; commentID: string };
       const currentTab = state.currentTab;
       const repliesLayer = {
-        postID: payload.postID,
         commentID: payload.commentID,
-        loading: false,
-        error: null,
-        createReplyLoading: false,
-        createReplyError: null,
-        deleteReplyError: null,
-        interactReplyError: null,
+        loadings: {
+          fetchLoading: false,
+          createReplyLoading: false,
+        },
+        errors: {
+          fetchError: null,
+          createReplyError: null,
+          deleteReplyError: null,
+          likeReplyError: null,
+          unlikeReplyError: null,
+        },
         lastVisible: null,
         replyList: [],
       };
@@ -68,7 +45,7 @@ export default function commentsStackReducer(
       newState[currentTab] = newStack;
       return newState;
     }
-    case POP_REPLIES_LAYER: {
+    case DispatchTypes.POP_REPLIES_LAYER: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
@@ -76,20 +53,19 @@ export default function commentsStackReducer(
       newState[currentTab] = newStack;
       return newState;
     }
-    case FETCH_REPLIES_STARTED: {
+    case DispatchTypes.FETCH_REPLIES_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.loading = true;
-        topLayer.error = null;
+        topLayer.loadings.fetchLoading = true;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case FETCH_REPLIES_SUCCESS: {
+    case DispatchTypes.FETCH_REPLIES_SUCCESS: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const payload = action.payload as {
@@ -99,54 +75,40 @@ export default function commentsStackReducer(
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.loading = false;
+        topLayer.loadings.fetchLoading = false;
         const newCommentList = topLayer.replyList.concat(payload.replyList);
         const removedDuplicates = removeDuplicatesFromArray(newCommentList);
         removedDuplicates.sort((a, b) => a.datePosted - b.datePosted);
         topLayer.replyList = removedDuplicates;
         topLayer.lastVisible = payload.lastVisible;
-        topLayer.error = null;
+        topLayer.errors.fetchError = null;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case FETCH_REPLIES_FAILURE: {
+    case DispatchTypes.FETCH_REPLIES_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.loading = false;
+        topLayer.loadings.fetchLoading = false;
         topLayer.replyList = [];
         topLayer.lastVisible = null;
-        topLayer.error = action.payload as Error;
+        topLayer.errors.fetchError = action.payload as Error;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case FETCH_REPLIES_END: {
+    case DispatchTypes.CREATE_REPLY_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.loading = false;
-        topLayer.error = null;
-        newStack.updateTop(topLayer);
-        newState[currentTab] = newStack;
-      }
-      return newState;
-    }
-    case CREATE_REPLY_STARTED: {
-      const newState = { ...state };
-      const currentTab = state.currentTab;
-      const newStack = RepliesStack.clone(state[currentTab]);
-      const topLayer = newStack.top();
-      if (topLayer) {
-        topLayer.createReplyLoading = true;
-        topLayer.createReplyError = null;
+        topLayer.loadings.createReplyLoading = true;
         const filteredPending = topLayer.replyList.filter(
           (reply) => reply.id !== pendingReplyID,
         );
@@ -157,7 +119,7 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case CREATE_REPLY_SUCCESS: {
+    case DispatchTypes.CREATE_REPLY_SUCCESS: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const payload = action.payload as {
@@ -167,8 +129,8 @@ export default function commentsStackReducer(
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer && topLayer.commentID === payload.commentID) {
-        topLayer.createReplyLoading = false;
-        topLayer.createReplyError = null;
+        topLayer.loadings.createReplyLoading = false;
+        topLayer.errors.createReplyError = null;
         const index = topLayer.replyList.findIndex(
           (reply) => reply.id === pendingReplyID,
         );
@@ -185,14 +147,14 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case CREATE_REPLY_FAILURE: {
+    case DispatchTypes.CREATE_REPLY_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.createReplyLoading = false;
-        topLayer.createReplyError = action.payload as Error;
+        topLayer.loadings.createReplyLoading = false;
+        topLayer.errors.createReplyError = action.payload as Error;
         const filteredPending = topLayer.replyList.filter(
           (reply) => reply.id !== pendingReplyID,
         );
@@ -202,13 +164,12 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case DELETE_REPLY_STARTED: {
+    case DispatchTypes.DELETE_REPLY_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.deleteReplyError = null;
         const index = topLayer.replyList.findIndex(
           (reply) => reply.id === (action.payload as string),
         );
@@ -220,13 +181,13 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case DELETE_REPLY_SUCCESS: {
+    case DispatchTypes.DELETE_REPLY_SUCCESS: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.deleteReplyError = null;
+        topLayer.errors.deleteReplyError = null;
         const index = topLayer.replyList.findIndex(
           (reply) => reply.id === (action.payload as string),
         );
@@ -238,7 +199,7 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case DELETE_REPLY_FAILURE: {
+    case DispatchTypes.DELETE_REPLY_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const payload = action.payload as {
@@ -248,7 +209,7 @@ export default function commentsStackReducer(
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.deleteReplyError = payload.error;
+        topLayer.errors.deleteReplyError = payload.error;
         const index = topLayer.replyList.findIndex(
           (reply) => reply.id === payload.replyIDwithFlag,
         );
@@ -263,7 +224,7 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case LIKE_REPLY_STARTED: {
+    case DispatchTypes.LIKE_REPLY_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
@@ -281,15 +242,15 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case LIKE_REPLY_SUCCESS: {
+    case DispatchTypes.LIKE_REPLY_SUCCESS: {
       return state;
     }
-    case LIKE_REPLY_FAILURE: {
+    case DispatchTypes.LIKE_REPLY_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const payload = action.payload as {
         replyID: string;
-        error: Error | null;
+        error: Error;
       };
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
@@ -303,13 +264,13 @@ export default function commentsStackReducer(
             topLayer.replyList[index].isLiked = false;
           }
         }
-        topLayer.interactReplyError = payload.error;
+        topLayer.errors.likeReplyError = payload.error;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case UNLIKE_REPLY_STARTED: {
+    case DispatchTypes.UNLIKE_REPLY_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
@@ -327,10 +288,10 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case UNLIKE_REPLY_SUCCESS: {
+    case DispatchTypes.UNLIKE_REPLY_SUCCESS: {
       return state;
     }
-    case UNLIKE_REPLY_FAILURE: {
+    case DispatchTypes.UNLIKE_REPLY_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const payload = action.payload as {
@@ -349,49 +310,61 @@ export default function commentsStackReducer(
             topLayer.replyList[index].isLiked = true;
           }
         }
-        topLayer.interactReplyError = payload.error;
+        topLayer.errors.unlikeReplyError = payload.error;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case CLEAR_CREATE_REPLY_ERROR: {
+    case DispatchTypes.CLEAR_CREATE_REPLY_ERROR: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.createReplyError = null;
+        topLayer.errors.createReplyError = null;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case CLEAR_DELETE_REPLY_ERROR: {
+    case DispatchTypes.CLEAR_DELETE_REPLY_ERROR: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.deleteReplyError = null;
+        topLayer.errors.deleteReplyError = null;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case CLEAR_INTERACT_REPLY_ERROR: {
+    case DispatchTypes.CLEAR_LIKE_REPLY_ERROR: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = RepliesStack.clone(state[currentTab]);
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.interactReplyError = null;
+        topLayer.errors.likeReplyError = null;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case CLEAR_STACK: {
+    case DispatchTypes.CLEAR_UNLIKE_REPLY_ERROR: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = RepliesStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.errors.unlikeReplyError = null;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DispatchTypes.CLEAR_STACK: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       newState[currentTab] = new RepliesStack();

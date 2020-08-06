@@ -225,7 +225,7 @@ export const likeComment = (postID: string, commentID: string) => async (
     const { user } = getState().auth;
     if (!user) {
       throw new MyError(
-        'Unauthenticated. Please try again.',
+        'Unauthenticated. Please sign in.',
         MyErrorCodes.NotAuthenticated,
       );
     }
@@ -294,7 +294,7 @@ export const unlikeComment = (postID: string, commentID: string) => async (
     const { user } = getState().auth;
     if (!user) {
       throw new MyError(
-        'Unauthenticated. Please try again.',
+        'Unauthenticated. Please sign in.',
         MyErrorCodes.NotAuthenticated,
       );
     }
@@ -365,7 +365,7 @@ export const deleteComment = (
     const { user } = getState().auth;
     if (!user) {
       throw new MyError(
-        'Unauthenticated. Please try again.',
+        'Unauthenticated. Please sign in.',
         MyErrorCodes.NotAuthenticated,
       );
     }
