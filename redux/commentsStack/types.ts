@@ -62,7 +62,7 @@ export interface CommentsStackAction {
         commentID: string;
         error: Error;
       }
-    | { commentID: string; by: number }
+    | { commentID: string; numberOfReplies: number }
     | {
         commentIDwithFlag: string;
         error: Error;

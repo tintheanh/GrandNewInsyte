@@ -195,6 +195,7 @@ export const createReply = (commentID: string, content: string) => async (
       dispatch(createReplySuccess(newReply, commentID));
     });
   } catch (err) {
+    console.log(err.message);
     dispatch(
       createReplyFailure(new Error('Error occurred. Please try again.')),
     );
@@ -428,6 +429,24 @@ export const clearDeleteReplyError = () => (
 ) => {
   dispatch({
     type: DispatchTypes.CLEAR_DELETE_REPLY_ERROR,
+    payload: null,
+  });
+};
+
+export const clearLikeReplyError = () => (
+  dispatch: (action: RepliesStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_LIKE_REPLY_ERROR,
+    payload: null,
+  });
+};
+
+export const clearUnlikeReplyError = () => (
+  dispatch: (action: RepliesStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_UNLIKE_REPLY_ERROR,
     payload: null,
   });
 };

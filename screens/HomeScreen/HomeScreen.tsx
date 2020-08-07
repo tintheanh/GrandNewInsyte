@@ -70,15 +70,15 @@ class HomeScreen extends Component<any> {
     for (let i = 0; i < 10; i++) {
       // const reply = {
       //   content: faker.lorem.sentence(),
-      //   date_posted: faker.date.between('2020-07-11', '2020-07-26').getTime(),
+      //   date_posted: faker.date.between('2020-08-05', '2020-08-07').getTime(),
       //   likes: faker.random.number(100),
       //   posted_by: '9DHOf4becGfrx7fmUXPcYdqtc2I3',
       // };
       // await fsDB
       //   .collection('posts')
-      //   .doc('RC3UIywu6KSt1e4LHr7v')
+      //   .doc('KW4wZGYeK7ZN4zhTvD12')
       //   .collection('comment_list')
-      //   .doc('DxgpOXFI0vJGNti3PoMM')
+      //   .doc('anQqFlRiQuWQTappJNQ7')
       //   .collection('reply_list')
       //   .add(reply);
       // const comment = {

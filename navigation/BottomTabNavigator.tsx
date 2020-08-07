@@ -37,7 +37,6 @@ class BottomTabNavigator extends Component<any> {
   }
 
   render() {
-    console.log('bottom');
     return (
       <BottomTab.Navigator
         initialRouteName="Home"

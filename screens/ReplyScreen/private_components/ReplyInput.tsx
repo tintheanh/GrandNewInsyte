@@ -18,22 +18,66 @@ import { createReply } from '../../../redux/repliesStack/actions';
 import { AppState } from '../../../redux/store';
 import { alertDialog } from '../../../utils/functions';
 
-interface ReplyInputState {
-  text: string;
-  textInputHeight: number;
-}
-
 interface ReplyInputProps {
+  /**
+   * Parent comment's ID for the new reply to add into
+   */
+  commentID: string;
+
+  /**
+   * Loading when create reply.
+   * Used for disabling submit button when creating reply
+   */
   loading: boolean;
-  error: Error | null;
-  onCreateReply: (content: string) => void;
+
+  /**
+   * Method create new reply
+   * @param commentID Parent comment's ID for the new reply to add into
+   * @param content
+   */
+  onCreateReply: (commentID: string, content: string) => void;
+
+  /**
+   * Method increase reply number on reply screen
+   * @param numberOfReplies Number of replies to increase to
+   */
   increaseRepliesForReplyScreenBy: (numberOfReplies: number) => void;
+
+  /**
+   * Method increase reply number on post screen
+   */
   increaseRepliesForPostScreen: () => void;
+
+  /**
+   * Method increase comment number on post screen
+   */
   increaseCommentsForPostScreen: () => void;
+
+  /**
+   * Method increase comment number on home screen
+   */
   increaseCommentsForHomeScreen: () => void;
 }
 
+/**
+ * Local state
+ */
+interface ReplyInputState {
+  text: string;
+
+  /**
+   * State to keep track of height of TextInput.
+   * Used in expanding TextInput as its content grows
+   */
+  textInputHeight: number;
+}
+
 class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
+  /**
+   * @var keyboardWillShowListener detect when keyboard is on
+   * @var keyboardWillHideListener detect when keyboard is off
+   * @var moveAnimation animation value for moving keyboard vertically
+   */
   private keyboardWillShowListener: EmitterSubscription | null = null;
   private keyboardWillHideListener: EmitterSubscription | null = null;
   private moveAnimation: Animated.Value;
@@ -50,11 +94,11 @@ class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
   componentDidMount() {
     this.keyboardWillShowListener = Keyboard.addListener(
       'keyboardWillShow',
-      this._keyboardWillShow,
+      this.keyboardWillShow,
     );
     this.keyboardWillHideListener = Keyboard.addListener(
       'keyboardWillHide',
-      this._keyboardWillHide,
+      this.keyboardWillHide,
     );
   }
 
@@ -63,15 +107,20 @@ class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
     this.keyboardWillHideListener!.remove();
   }
 
-  _keyboardWillShow = (event: any) => {
-    this._move(-event.endCoordinates.height + bottomTabHeight, 270);
+  keyboardWillShow = (event: any) => {
+    this.move(-event.endCoordinates.height + bottomTabHeight, 270);
   };
 
-  _keyboardWillHide = () => {
-    this._move(0, 100);
+  keyboardWillHide = () => {
+    this.move(0, 100);
   };
 
-  _move = (value: number, duration: number) => {
+  /**
+   * Method move vertically
+   * @param value Move to value
+   * @param duration Duration in milliseconds
+   */
+  move = (value: number, duration: number) => {
     Animated.timing(this.moveAnimation, {
       toValue: value,
       duration,
@@ -79,7 +128,11 @@ class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
     }).start();
   };
 
-  setCommentContent = (text: string) => this.setState({ text });
+  /**
+   * Method set content for reply
+   * @param text New content to set
+   */
+  setReplyContent = (text: string) => this.setState({ text });
 
   performSubmitReply = () => {
     const { text } = this.state;
@@ -87,18 +140,31 @@ class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
       return alertDialog('Reply cannot be empty');
     }
     const {
+      commentID,
       increaseRepliesForReplyScreenBy,
       increaseRepliesForPostScreen,
       increaseCommentsForHomeScreen,
       increaseCommentsForPostScreen,
       onCreateReply,
     } = this.props;
+
+    // increase reply number on reply screen
     increaseRepliesForReplyScreenBy(1);
+
+    // increase reply number for each reply card on post screen
     increaseRepliesForPostScreen();
+
+    // increase comment number on post screen
     increaseCommentsForPostScreen();
+
+    // increase comment number for each post card on home screen
     increaseCommentsForHomeScreen();
     Keyboard.dismiss();
-    onCreateReply(text);
+
+    // submit reply
+    onCreateReply(commentID, text);
+
+    // reset text for the next reply
     this.setState({ text: '' });
   };
 
@@ -113,7 +179,7 @@ class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
     return (
       <Animated.View style={[styles.wrapper, animStyle]}>
         <TextInput
-          onChangeText={this.setCommentContent}
+          onChangeText={this.setReplyContent}
           onContentSizeChange={(event) => {
             this.setState({
               textInputHeight: event.nativeEvent.contentSize.height,
@@ -194,8 +260,9 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: AppState) => {
   const { currentTab } = state.repliesStack;
   return {
-    loading: state.repliesStack[currentTab].top()?.createReplyLoading ?? false,
-    error: state.repliesStack[currentTab].top()?.createReplyError ?? null,
+    loading:
+      state.repliesStack[currentTab].top()?.loadings.createReplyLoading ??
+      false,
   };
 };
 

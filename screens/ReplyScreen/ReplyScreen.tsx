@@ -1,11 +1,5 @@
 import React, { Component } from 'react';
-import {
-  View,
-  ActivityIndicator,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Alert,
-} from 'react-native';
+import { View, StyleSheet, KeyboardAvoidingView, Alert } from 'react-native';
 import { connect } from 'react-redux';
 import { CommentSectionForReplyScreen, ReplyInput } from './private_components';
 import {
@@ -16,7 +10,8 @@ import {
   unlikeReply,
   clearCreateReplyError,
   clearDeleteReplyError,
-  clearInteractReplyError,
+  clearLikeReplyError,
+  clearUnlikeReplyError,
 } from '../../redux/repliesStack/actions';
 import {
   decreaseCommentsBy,
@@ -28,11 +23,19 @@ import {
   deleteComment,
   increaseRepliesBy,
   decreaseRepliesBy,
+  clearLikeCommentError,
+  clearUnlikeCommentError,
 } from '../../redux/commentsStack/actions';
 import { AppState } from '../../redux/store';
-import { Reply, Comment } from '../../models';
-import { ReplyCard, List, ErrorView, Loading } from '../../components';
-import { Colors, Layout, MaterialIcons } from '../../constants';
+import { Reply, Comment, CurrentTabScreen } from '../../models';
+import {
+  ReplyCard,
+  List,
+  ErrorView,
+  Loading,
+  FooterLoading,
+} from '../../components';
+import { Colors, Layout } from '../../constants';
 import {
   delay,
   checkPostReplyListChanged,
@@ -50,49 +53,219 @@ interface ReplyScreenProps {
       callback: () => void,
     ) => any;
   };
+
+  /**
+   * Payload receive after navigating
+   */
   route: {
     params: {
       comment: Comment;
+      currentTabScreen: CurrentTabScreen;
       decreaseCommentsForPostScreenBy: (numberOfReplies: number) => void;
       increaseCommentsForPostScreenBy: (numberOfReplies: number) => void;
     };
   };
 
-  // redux states
+  /**
+   * Current user's id
+   */
   currentUID: string | undefined;
-  postID: string;
-  replies: Array<Reply>;
-  loading: boolean;
-  error: Error | null;
-  createReplyError: Error | null;
-  deleteReplyError: Error | null;
-  interactReplyError: Error | null;
-  interactCommentError: Error | null;
 
-  // redux dispatches
+  /**
+   * Parent post's ID of the replies
+   */
+  postID: string;
+
+  /**
+   * Reply list fetched from database
+   */
+  replies: Array<Reply>;
+
+  /**
+   * Loading from fetching replies
+   */
+  loading: boolean;
+
+  /**
+   * Error from fetching replies failure
+   */
+  fetchError: Error | null;
+
+  /**
+   * Error from create reply failure
+   */
+  createReplyError: Error | null;
+
+  /**
+   * Error from delete reply failure
+   */
+  deleteReplyError: Error | null;
+
+  /**
+   * Error from like reply failure
+   */
+  likeReplyError: Error | null;
+
+  /**
+   * Error from unlike reply failure
+   */
+  unlikeReplyError: Error | null;
+
+  /**
+   * Error from like comment failure
+   */
+  likeCommentError: Error | null;
+
+  /**
+   * Error from unlike comment failure
+   */
+  unlikeCommentError: Error | null;
+
+  /**
+   * Method pop replies stack when screen going back
+   */
   onPopRepliesLayer: () => void;
+
+  /**
+   * Method fetch replies from database
+   * @param commentID Parent comment's ID to which replies belong
+   */
   onFetchReplies: (commentID: string) => void;
-  onLikeComment: (commentID: string) => void;
-  onUnlikeComment: (commentID: string) => void;
-  onDeleteComment: (commentID: string, numberOfReplies: number) => void;
-  onDeleteReply: (replyID: string) => void;
-  onLikeReply: (replyID: string) => void;
-  onUnlikeReply: (replyID: string) => void;
+
+  /**
+   * Method like comment
+   * @param postID Parent post's ID to which comment belongs
+   * @param commentID Comment's ID to like
+   */
+  onLikeComment: (postID: string, commentID: string) => void;
+
+  /**
+   * Method unlike comment
+   * @param postID Parent post's ID to which comment belongs
+   * @param commentID Comment's ID to unlike
+   */
+  onUnlikeComment: (postID: string, commentID: string) => void;
+
+  /**
+   * Method delete a comment
+   * @param postID Parent post's ID to which comment belongs
+   * @param commentID Comment's ID to delete
+   * @param numberOfReplies Number of replies belong to the comment
+   */
+  onDeleteComment: (
+    postID: string,
+    commentID: string,
+    numberOfReplies: number,
+  ) => void;
+
+  /**
+   * Method delete a reply
+   * @param commentID Parent comment's ID to which reply belongs
+   * @param replyID Reply's ID to delete
+   */
+  onDeleteReply: (commentID: string, replyID: string) => void;
+
+  /**
+   * Method like a reply
+   * @param commentID Parent comment's ID to which reply belongs
+   * @param replyID Reply's ID to like
+   */
+  onLikeReply: (commentID: string, replyID: string) => void;
+
+  /**
+   * Method unlike a reply
+   * @param commentID Parent comment's ID to which reply belongs
+   * @param replyID Reply's ID to unlike
+   */
+  onUnlikeReply: (commentID: string, replyID: string) => void;
+
+  /**
+   * Method clear create reply error
+   */
   onClearCreateReplyError: () => void;
+
+  /**
+   * Method clear delete reply error
+   */
   onClearDeleteReplyError: () => void;
-  onClearInteractReplyError: () => void;
-  onIncreaseRepliesForPostScreenBy: (commentID: string, by: number) => void;
-  onDecreaseRepliesForPostScreenBy: (commentID: string, by: number) => void;
-  onDecreaseCommentsForHomeScreenBy: (postID: string, by: number) => void;
-  onIncreaseCommentsForHomeScreenBy: (postID: string, by: number) => void;
+
+  /**
+   * Method clear like reply error
+   */
+  onClearLikeReplyError: () => void;
+
+  /**
+   * Method clear unlike reply error
+   */
+  onClearUnlikeReplyError: () => void;
+
+  /**
+   * Method clear like comment error
+   */
+  onClearLikeCommentError: () => void;
+
+  /**
+   * Method clear unlike comment error
+   */
+  onClearUnlikeCommentError: () => void;
+
+  /**
+   * Method increase number of replies for a comment in post screen
+   * @param commentID Parent comment's to which replies belong
+   * @param numberOfReplies Number of comment + replies to increase to.
+   * This could be the comment itself + all the replies associated
+   */
+  onIncreaseRepliesForPostScreenBy: (
+    commentID: string,
+    numberOfReplies: number,
+  ) => void;
+
+  /**
+   * Method decrease number of replies for a comment in post screen
+   * @param commentID Parent comment's to which replies belong
+   * @param numberOfReplies Number of comment + replies to decrease to.
+   * This could be the comment itself + all the replies associated
+   */
+  onDecreaseRepliesForPostScreenBy: (
+    commentID: string,
+    numberOfReplies: number,
+  ) => void;
+
+  /**
+   * Method increase number of comments for a post in home screen
+   * @param postID Parent post's ID to which comments belong to
+   * @param numberOfComments Number of comment + replies to increase to
+   */
+  onDecreaseCommentsForHomeScreenBy: (
+    postID: string,
+    numberOfComments: number,
+  ) => void;
+
+  /**
+   * Method decrease number of comments for a post in home screen
+   * @param postID Parent post's ID to which comments belong to
+   * @param numberOfComments Number of comment + replies to decrease to
+   */
+  onIncreaseCommentsForHomeScreenBy: (
+    postID: string,
+    numberOfComments: number,
+  ) => void;
 }
 
+/**
+ * Local state
+ */
 interface ReplyScreenState {
+  /**
+   * State mapped from comment props data passed by navigation.
+   * Used in changing comment's number of likes and replies of reply screen
+   */
   comment: Comment;
 }
 
 class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
-  private unsubscribeDetectScreenGoBack: any;
+  private detectScreenGoBackUnsubscriber: () => void = () => {};
+
   constructor(props: ReplyScreenProps) {
     super(props);
     this.state = {
@@ -107,16 +280,24 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     const {
       replies,
       loading,
-      error,
+      fetchError,
+      likeReplyError,
+      unlikeReplyError,
       createReplyError,
       deleteReplyError,
-      interactReplyError,
-      interactCommentError,
+      likeCommentError,
+      unlikeCommentError,
     } = this.props;
     if (loading !== nextProps.loading) {
       return true;
     }
-    if (error !== nextProps.error) {
+    if (fetchError !== nextProps.fetchError) {
+      return true;
+    }
+    if (likeReplyError !== nextProps.likeReplyError) {
+      return true;
+    }
+    if (unlikeReplyError !== nextProps.unlikeReplyError) {
       return true;
     }
     if (createReplyError !== nextProps.createReplyError) {
@@ -125,10 +306,10 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     if (deleteReplyError !== nextProps.deleteReplyError) {
       return true;
     }
-    if (interactReplyError !== nextProps.interactReplyError) {
+    if (likeCommentError !== nextProps.likeCommentError) {
       return true;
     }
-    if (interactCommentError !== nextProps.interactCommentError) {
+    if (unlikeCommentError !== nextProps.unlikeCommentError) {
       return true;
     }
     if (checkCommentChanged(this.state.comment, nextState.comment)) {
@@ -144,24 +325,29 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
   async componentDidMount() {
     const { navigation, onPopRepliesLayer, onFetchReplies } = this.props;
     const { comment } = this.state;
-    this.unsubscribeDetectScreenGoBack = navigation.addListener(
+    this.detectScreenGoBackUnsubscriber = navigation.addListener(
       'beforeRemove',
       () => {
         onPopRepliesLayer();
       },
     );
+
+    // delay before fetching replies to provide smoother experience
     await delay(500);
     onFetchReplies(comment.id);
   }
 
   componentWillUnmount() {
-    this.unsubscribeDetectScreenGoBack();
+    this.detectScreenGoBackUnsubscriber();
   }
 
   /* ------------------- comment methods ------------------ */
 
+  /**
+   * Method perform like comment
+   */
   performLikeComment = async () => {
-    const { id } = this.state.comment;
+    // increase comment's number of likes
     this.setState((prevState) => ({
       comment: {
         ...prevState.comment,
@@ -169,8 +355,13 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
         isLiked: true,
       },
     }));
-    await this.props.onLikeComment(id);
-    if (this.props.interactCommentError !== null) {
+
+    // perform like comment
+    await this.props.onLikeComment(this.props.postID, this.state.comment.id);
+
+    // wait until done
+    if (this.props.likeCommentError !== null) {
+      // if there's error, revert comment's number of likes back
       this.setState((prevState) => ({
         comment: {
           ...prevState.comment,
@@ -181,8 +372,11 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     }
   };
 
+  /**
+   * Method perform unlike comment
+   */
   performUnlikeComment = async () => {
-    const { id } = this.state.comment;
+    // increase comment's number of likes
     this.setState((prevState) => ({
       comment: {
         ...prevState.comment,
@@ -190,8 +384,13 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
         isLiked: false,
       },
     }));
-    await this.props.onUnlikeComment(id);
-    if (this.props.interactCommentError !== null) {
+
+    // perform unlike comment
+    await this.props.onUnlikeComment(this.props.postID, this.state.comment.id);
+
+    // wait until done
+    if (this.props.unlikeCommentError !== null) {
+      // if there's error, revert comment's number of likes back
       this.setState((prevState) => ({
         comment: {
           ...prevState.comment,
@@ -202,10 +401,14 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     }
   };
 
+  /**
+   * Method perform delete comment
+   */
   performDeleteComment = async () => {
     const {
       postID,
       navigation,
+      route,
       onPopRepliesLayer,
       onDeleteComment,
       onDecreaseCommentsForHomeScreenBy,
@@ -214,13 +417,20 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     navigation.goBack();
     onPopRepliesLayer();
     await delay(500);
-    onDeleteComment(comment.id, comment.replies + 1);
+
+    // perform delete comment
+    onDeleteComment(postID, comment.id, comment.replies + 1);
+
+    // decrease post's number of comment + replies for home screen
     onDecreaseCommentsForHomeScreenBy(postID, comment.replies + 1);
-    this.props.route.params.decreaseCommentsForPostScreenBy(
-      comment.replies + 1,
-    );
+
+    // decrease post's number of comment + replies for post screen
+    route.params.decreaseCommentsForPostScreenBy(comment.replies + 1);
   };
 
+  /**
+   * User control for delete comment
+   */
   userControlForComment = () => {
     Alert.alert(
       '',
@@ -248,10 +458,10 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     this.props.onFetchReplies(this.state.comment.id);
   };
 
-  emptyHandler = () => {
-    this.props.onFetchReplies(this.state.comment.id);
-  };
-
+  /**
+   * Method increase number of replies for reply screen
+   * @param numberOfReplies Number of replies to increase to
+   */
   increaseRepliesForReplyScreenBy = (numberOfReplies: number) => {
     this.setState((prevState) => ({
       comment: {
@@ -261,6 +471,10 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     }));
   };
 
+  /**
+   * Method decrease number of replies for reply screen
+   * @param numberOfReplies Number of replies to decrease to
+   */
   decreaseRepliesForReplyScreenBy = (numberOfReplies: number) => {
     this.setState((prevState) => ({
       comment: {
@@ -270,17 +484,31 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     }));
   };
 
+  /**
+   * Method clear error from create reply failure
+   */
   performClearCreateReplyError = () => {
     const {
       postID,
+      route,
       onClearCreateReplyError,
       onDecreaseRepliesForPostScreenBy,
       onDecreaseCommentsForHomeScreenBy,
     } = this.props;
+
+    // clear error
     onClearCreateReplyError();
+
+    // decrease reply number for reply screen due to error
     this.decreaseRepliesForReplyScreenBy(1);
+
+    // decrease reply number for post screen due to error
     onDecreaseRepliesForPostScreenBy(this.state.comment.id, 1);
-    this.props.route.params.decreaseCommentsForPostScreenBy(1);
+
+    // decrease comment number for post screen due to error
+    route.params.decreaseCommentsForPostScreenBy(1);
+
+    // decrease comment number for home screen due to error
     onDecreaseCommentsForHomeScreenBy(postID, 1);
   };
 
@@ -296,6 +524,10 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     this.props.route.params.increaseCommentsForPostScreenBy(1);
   };
 
+  /**
+   * Method perform delete reply
+   * @param replyID Reply's ID to delete
+   */
   performDeleteReply = (replyID: string) => () => {
     const {
       postID,
@@ -304,13 +536,27 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
       onDecreaseRepliesForPostScreenBy,
       onDecreaseCommentsForHomeScreenBy,
     } = this.props;
-    onDeleteReply(replyID);
+
+    // decrease reply number for reply screen
     this.decreaseRepliesForReplyScreenBy(1);
+
+    // decrease reply number for post screen
     onDecreaseRepliesForPostScreenBy(this.state.comment.id, 1);
+
+    // decrease comment number for post screen
     route.params.decreaseCommentsForPostScreenBy(1);
+
+    // decrease comment number for home screen
     onDecreaseCommentsForHomeScreenBy(postID, 1);
+
+    // perform delete reply
+    onDeleteReply(this.state.comment.id, replyID);
   };
 
+  /**
+   * User control for delete reply
+   * @param replyID Reply's ID to delete
+   */
   userControlForReply = (replyID: string) => () => {
     Alert.alert(
       '',
@@ -330,6 +576,9 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     );
   };
 
+  /**
+   * Method clear error from delete reply failure
+   */
   performClearDeleteReplyError = () => {
     const {
       postID,
@@ -338,32 +587,48 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
       onIncreaseCommentsForHomeScreenBy,
       onClearDeleteReplyError,
     } = this.props;
+
+    // clear error
     onClearDeleteReplyError();
+
+    // increase reply number for reply screen due to error
     this.increaseRepliesForReplyScreenBy(1);
+
+    // increase reply number for post screen due to error
     onIncreaseRepliesForPostScreenBy(this.state.comment.id, 1);
+
+    // increase comment number for post screen due to error
     route.params.increaseCommentsForPostScreenBy(1);
+
+    // increase comment number for home screen due to error
     onIncreaseCommentsForHomeScreenBy(postID, 1);
   };
 
+  /**
+   * Method like reply
+   * @param replyID Reply's ID to like
+   */
   performLikeReply = (replyID: string) => () => {
-    this.props.onLikeReply(replyID);
+    this.props.onLikeReply(this.state.comment.id, replyID);
   };
 
+  /**
+   * Method unlike reply
+   * @param replyID Reply's ID to unlike
+   */
   performUnlikeReply = (replyID: string) => () => {
-    this.props.onUnlikeReply(replyID);
+    this.props.onUnlikeReply(this.state.comment.id, replyID);
   };
 
   /* ------------------ end reply methods ----------------- */
 
+  /**
+   * Method render reply for reply list
+   */
   renderItem = ({ item, index }: { item: Reply; index: number }) => {
     return (
       <ReplyCard
-        id={item.id}
-        user={item.user}
-        content={item.content}
-        datePosted={item.datePosted}
-        likes={item.likes}
-        isLiked={item.isLiked}
+        data={item}
         likeReply={this.performLikeReply(item.id)}
         unlikeReply={this.performUnlikeReply(item.id)}
         userControl={
@@ -379,14 +644,45 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     const { comment } = this.state;
     const {
       replies,
+      fetchError,
       createReplyError,
       deleteReplyError,
-      interactReplyError,
-      error,
+      likeCommentError,
+      unlikeCommentError,
+      likeReplyError,
+      unlikeReplyError,
       loading,
       currentUID,
-      onClearInteractReplyError,
+      onClearLikeCommentError,
+      onClearUnlikeCommentError,
+      onClearLikeReplyError,
+      onClearUnlikeReplyError,
     } = this.props;
+
+    if (createReplyError) {
+      alertDialog(createReplyError.message, this.performClearCreateReplyError);
+    }
+
+    if (deleteReplyError) {
+      alertDialog(deleteReplyError.message, this.performClearDeleteReplyError);
+    }
+
+    if (likeCommentError) {
+      alertDialog(likeCommentError.message, onClearLikeCommentError);
+    }
+
+    if (unlikeCommentError) {
+      alertDialog(unlikeCommentError.message, onClearUnlikeCommentError);
+    }
+
+    if (likeReplyError) {
+      alertDialog(likeReplyError.message, onClearLikeReplyError);
+    }
+
+    if (unlikeReplyError) {
+      alertDialog(unlikeReplyError.message, onClearUnlikeReplyError);
+    }
+
     const commentSection = (
       <CommentSectionForReplyScreen
         comment={comment}
@@ -402,6 +698,7 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
 
     const replyInput = (
       <ReplyInput
+        commentID={comment.id}
         increaseRepliesForReplyScreenBy={this.increaseRepliesForReplyScreenBy}
         increaseRepliesForPostScreen={this.increaseRepliesForPostScreen}
         increaseCommentsForPostScreen={this.increaseCommentsForPostScreen}
@@ -409,75 +706,45 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
       />
     );
 
-    if (createReplyError) {
-      alertDialog(createReplyError.message, this.performClearCreateReplyError);
-    }
-    if (deleteReplyError) {
-      alertDialog(deleteReplyError.message, this.performClearDeleteReplyError);
-    }
-    if (interactReplyError) {
-      alertDialog(interactReplyError.message, onClearInteractReplyError);
-    }
-
-    if (error) {
-      return (
-        <View style={styles.container}>
-          {commentSection}
-          <ErrorView errorText={error.message} handle={this.emptyHandler} />
+    let emptyListComponent = null;
+    if (fetchError) {
+      emptyListComponent = (
+        <View style={styles.emptyWrapper}>
+          <ErrorView errorText={fetchError.message} />
         </View>
       );
-    }
-
-    if (loading && replies.length === 0) {
-      return (
-        <View style={styles.container}>
-          {commentSection}
+    } else if (loading && replies.length === 0) {
+      emptyListComponent = (
+        <View style={styles.emptyWrapper}>
           <Loading />
-          {currentUID !== undefined ? replyInput : null}
         </View>
       );
-    }
-
-    if (replies.length === 0) {
-      return (
-        <View style={styles.container}>
-          {commentSection}
-          {currentUID !== undefined ? replyInput : null}
-        </View>
-      );
+    } else {
+      emptyListComponent = undefined;
     }
 
     return (
       <KeyboardAvoidingView behavior="padding" style={styles.container}>
         <List
           listHeaderComponent={commentSection}
+          listEmptyComponent={emptyListComponent}
           data={replies}
           renderItem={this.renderItem}
-          _onEndReachedDuringMomentum={this.fetchMoreReplies}
+          onEndReached={this.fetchMoreReplies}
           checkChangesToUpdate={checkPostReplyListChanged}
           initialNumToRender={5}
           onEndReachedThreshold={0.1}
-          maxToRenderPerBatch={5}
-          windowSize={undefined}
+          maxToRenderPerBatch={8}
+          windowSize={7}
           listFooterComponent={<View style={{ height: 136 }} />}
-          extraData={this.state.comment}
+          extraData={{ comment, loading }}
         />
         {currentUID !== undefined ? replyInput : null}
-        <View style={styles.loadingWrapper}>
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color="white" />
-            </View>
-          ) : (
-            <View style={styles.loadingContainer}>
-              <MaterialIcons
-                name="done"
-                size={22}
-                color="rgba(255, 255, 255, 0.6)"
-              />
-            </View>
-          )}
-        </View>
+        {replies.length > 0 ? (
+          <View style={styles.loadingWrapper}>
+            <FooterLoading loading={loading} />
+          </View>
+        ) : null}
       </KeyboardAvoidingView>
     );
   }
@@ -495,6 +762,7 @@ const styles = StyleSheet.create({
     bottom: 44,
     zIndex: -1,
   },
+  emptyWrapper: { paddingTop: 12, paddingBottom: 12 },
   loadingContainer: {
     flex: 1,
     alignItems: 'center',
@@ -504,24 +772,33 @@ const styles = StyleSheet.create({
   },
 });
 
-const mapStateToProps = (state: AppState) => {
-  const currentTabForReplies = state.repliesStack.currentTab;
-  const currentTabForComments = state.commentsStack.currentTab;
+const mapStateToProps = (state: AppState, ownProps: ReplyScreenProps) => {
+  const { currentTabScreen } = ownProps.route.params;
   return {
     currentUID: state.auth.user?.id,
-    postID: state.commentsStack[currentTabForComments].top()?.postID ?? '',
-    replies: state.repliesStack[currentTabForReplies].top()?.replyList ?? [],
-    loading: state.repliesStack[currentTabForReplies].top()?.loading ?? false,
-    error: state.repliesStack[currentTabForReplies].top()?.error ?? null,
+    postID: state.commentsStack[currentTabScreen].top()?.postID ?? '',
+    replies: state.repliesStack[currentTabScreen].top()?.replyList ?? [],
+    loading:
+      state.repliesStack[currentTabScreen].top()?.loadings.fetchLoading ??
+      false,
+    fetchError:
+      state.repliesStack[currentTabScreen].top()?.errors.fetchError ?? null,
     createReplyError:
-      state.repliesStack[currentTabForReplies].top()?.createReplyError ?? null,
-    deleteReplyError:
-      state.repliesStack[currentTabForReplies].top()?.deleteReplyError ?? null,
-    interactReplyError:
-      state.repliesStack[currentTabForReplies].top()?.interactReplyError ??
+      state.repliesStack[currentTabScreen].top()?.errors.createReplyError ??
       null,
-    interactCommentError:
-      state.commentsStack[currentTabForComments].top()?.interactCommentError ??
+    deleteReplyError:
+      state.repliesStack[currentTabScreen].top()?.errors.deleteReplyError ??
+      null,
+    likeReplyError:
+      state.repliesStack[currentTabScreen].top()?.errors.likeReplyError ?? null,
+    unlikeReplyError:
+      state.repliesStack[currentTabScreen].top()?.errors.unlikeReplyError ??
+      null,
+    likeCommentError:
+      state.commentsStack[currentTabScreen].top()?.errors.likeCommentError ??
+      null,
+    unlikeCommentError:
+      state.commentsStack[currentTabScreen].top()?.errors.unlikeCommentError ??
       null,
   };
 };
@@ -534,7 +811,10 @@ const mapDispatchToProps = {
   onDeleteComment: deleteComment,
   onClearCreateReplyError: clearCreateReplyError,
   onClearDeleteReplyError: clearDeleteReplyError,
-  onClearInteractReplyError: clearInteractReplyError,
+  onClearLikeReplyError: clearLikeReplyError,
+  onClearUnlikeReplyError: clearUnlikeReplyError,
+  onClearLikeCommentError: clearLikeCommentError,
+  onClearUnlikeCommentError: clearUnlikeCommentError,
   onIncreaseRepliesForPostScreenBy: increaseRepliesBy,
   onDecreaseRepliesForPostScreenBy: decreaseRepliesBy,
   onDecreaseCommentsForHomeScreenBy: decreaseCommentsBy,

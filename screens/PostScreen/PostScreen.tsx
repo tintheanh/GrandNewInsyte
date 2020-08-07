@@ -43,7 +43,7 @@ interface PostScreenProps {
   navigation: any;
 
   /**
-   * Post data receive after navigating
+   * Payload receive after navigating
    */
   route: {
     params: { post: Post; currentTabScreen: CurrentTabScreen };
@@ -206,7 +206,7 @@ interface PostScreenProps {
 interface PostScreenState {
   /**
    * State mapped from post props data passed by navigation.
-   * Used in changing number of likes and comments of post screen
+   * Used in changing post's number of likes and comments of post screen
    */
   post: Post;
 
@@ -241,7 +241,17 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     nextProps: PostScreenProps,
     nextState: PostScreenState,
   ) {
-    const { comments, loading, fetchError } = this.props;
+    const {
+      comments,
+      loading,
+      fetchError,
+      createCommentError,
+      deleteCommentError,
+      likeCommentError,
+      unlikeCommentError,
+      likePostError,
+      unlikePostError,
+    } = this.props;
 
     if (this.state.shouldPlayMedia !== nextState.shouldPlayMedia) {
       return true;
@@ -250,6 +260,24 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
       return true;
     }
     if (fetchError !== nextProps.fetchError) {
+      return true;
+    }
+    if (createCommentError !== nextProps.createCommentError) {
+      return true;
+    }
+    if (deleteCommentError !== nextProps.deleteCommentError) {
+      return true;
+    }
+    if (likeCommentError !== nextProps.likeCommentError) {
+      return true;
+    }
+    if (unlikeCommentError !== nextProps.unlikeCommentError) {
+      return true;
+    }
+    if (likePostError !== nextProps.likePostError) {
+      return true;
+    }
+    if (unlikePostError !== nextProps.unlikePostError) {
       return true;
     }
     if (checkPostChanged(this.state.post, nextState.post)) {
@@ -406,14 +434,14 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
   /**
    * Method to increase post's number of comments.
    * Used in create new comment and delete comment failure
-   * @param numberOfComments Number of comments to increase to.
+   * @param numberOfReplies Number of comments + replies to increase to.
    * This could be the comment itself + all the replies associated
    */
-  increaseCommentsForPostScreenBy = (numberOfComments: number) => {
+  increaseCommentsForPostScreenBy = (numberOfReplies: number) => {
     this.setState((prevState) => ({
       post: {
         ...prevState.post,
-        comments: prevState.post.comments + numberOfComments,
+        comments: prevState.post.comments + numberOfReplies,
       },
     }));
   };
@@ -421,16 +449,16 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
   /**
    * Method to decrease post's number of comments.
    * Used in delete comment and create new comment failure
-   * @param numberOfComments Number of replies to increase to.
+   * @param numberOfReplies Number of comment + replies to increase to.
    * This could be the comment itself + all the replies associated
    */
-  decreaseCommentsForPostScreenBy = (numberOfComments: number) => {
+  decreaseCommentsForPostScreenBy = (numberOfReplies: number) => {
     this.setState((prevState) => ({
       post: {
         ...prevState.post,
-        comments: prevState.post.comments - numberOfComments,
+        comments: prevState.post.comments - numberOfReplies,
       },
-      numberOfRepliesAndCommentDeleted: numberOfComments,
+      numberOfRepliesAndCommentDeleted: numberOfReplies,
     }));
   };
 
@@ -586,7 +614,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
   };
 
   render() {
-    const { post } = this.state;
+    const { post, shouldPlayMedia } = this.state;
     const {
       comments,
       fetchError,
@@ -676,7 +704,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
           maxToRenderPerBatch={8}
           windowSize={7}
           listFooterComponent={<View style={{ height: 136 }} />}
-          extraData={{ post, shouldPlayMedia: this.state.shouldPlayMedia }}
+          extraData={{ post, shouldPlayMedia }}
         />
         {currentUID !== undefined ? commentInput : null}
         {comments.length > 0 ? (

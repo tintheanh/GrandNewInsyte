@@ -480,23 +480,25 @@ export const popCommentsLayer = () => (
 //   });
 // };
 
-// export const increaseRepliesBy = (commentID: string, by: number) => (
-//   dispatch: (action: CommentsStackAction) => void,
-// ) => {
-//   dispatch({
-//     type: INCREASE_REPLIES_BY_NUMBER,
-//     payload: { commentID, by },
-//   });
-// };
+export const increaseRepliesBy = (
+  commentID: string,
+  numberOfReplies: number,
+) => (dispatch: (action: CommentsStackAction) => void) => {
+  dispatch({
+    type: DispatchTypes.INCREASE_REPLIES_BY_NUMBER,
+    payload: { commentID, numberOfReplies },
+  });
+};
 
-// export const decreaseRepliesBy = (commentID: string, by: number) => (
-//   dispatch: (action: CommentsStackAction) => void,
-// ) => {
-//   dispatch({
-//     type: DECREASE_REPLIES_BY_NUMBER,
-//     payload: { commentID, by },
-//   });
-// };
+export const decreaseRepliesBy = (
+  commentID: string,
+  numberOfReplies: number,
+) => (dispatch: (action: CommentsStackAction) => void) => {
+  dispatch({
+    type: DispatchTypes.DECREASE_REPLIES_BY_NUMBER,
+    payload: { commentID, numberOfReplies },
+  });
+};
 
 // export const clearCommentsStack = () => (
 //   dispatch: (action: CommentsStackAction) => void,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableWithoutFeedback, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { Reply } from '../models';
 import Avatar from './Avatar';
 import {
   Colors,
@@ -13,49 +13,20 @@ import {
 import { convertTime, convertNumber } from '../utils/functions';
 
 interface ReplyCardProps {
-  id: string;
-  user: {
-    id: string;
-    avatar: string;
-    username: string;
-  };
-  isLiked: boolean;
-  content: string;
-  datePosted: number;
-  likes: number;
+  data: Reply;
   likeReply: () => void;
   unlikeReply: () => void;
   userControl?: () => void;
 }
 
 export default React.memo(
-  function ReplyCard(props: ReplyCardProps) {
-    // const navigation = useNavigation<any>();
-
-    const {
-      id,
-      user,
-      content,
-      userControl,
-      likeReply,
-      unlikeReply,
-      datePosted,
-      likes,
-      isLiked,
-    } = props;
-
-    // const toReplyScreen = () =>
-    //   navigation.push('ReplyScreen', {
-    //     comment: {
-    //       id,
-    //       user,
-    //       content,
-    //       datePosted,
-    //       replies,
-    //       likes,
-    //       isLiked,
-    //     },
-    //   });
+  function ReplyCard({
+    data,
+    likeReply,
+    unlikeReply,
+    userControl,
+  }: ReplyCardProps) {
+    const { id, user, content, datePosted, likes, isLiked } = data;
 
     return (
       <View
@@ -122,7 +93,7 @@ export default React.memo(
     );
   },
   (prevProps, nextProps) => {
-    if (prevProps.likes !== nextProps.likes) {
+    if (prevProps.data.likes !== nextProps.data.likes) {
       return false;
     }
     return true;

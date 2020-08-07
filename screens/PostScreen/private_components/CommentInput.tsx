@@ -39,15 +39,18 @@ interface CommentInputProps {
 
   /**
    * Method increase comment number on post screen
+   * @param numberOfComments Number of comments to increase to
    */
-  increaseCommentsForPostScreenBy: (by: number) => void;
+  increaseCommentsForPostScreenBy: (numberOfComments: number) => void;
 
   /**
    * Method increase comment number for each post card on home screen
+   * @param postID Post's ID to increase comment number
+   * @param numberOfComments Number of comments to increase to
    */
   increaseCommentsForHomeScreen: (
     postID: string,
-    numberOfReplies: number,
+    numberOfComments: number,
   ) => void;
 }
 
@@ -147,7 +150,7 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
     // submit comment
     onCreateComment(postID, text);
 
-    // create old text for the next comment
+    // reset text for the next comment
     this.setState({ text: '' });
   };
 

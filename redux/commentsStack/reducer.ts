@@ -2,9 +2,8 @@ import {
   CommentsStackState,
   CommentsStackAction,
   DispatchTypes,
-  CurrentTab,
 } from './types';
-import { CommentsStack, Comment } from '../../models';
+import { CommentsStack, Comment, CurrentTabScreen } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
 import { pendingCommentID, pendingDeleteCommentFlag } from '../../constants';
 import { removeDuplicatesFromArray } from '../../utils/functions';
@@ -56,7 +55,7 @@ export default function commentsStackReducer(
 
     case DispatchTypes.SET_CURRENT_TAB: {
       const newState = { ...state };
-      newState.currentTab = action.payload as CurrentTab;
+      newState.currentTab = action.payload as CurrentTabScreen;
       return newState;
     }
     case DispatchTypes.FETCH_NEW_COMMENTS_STARTED: {
@@ -705,48 +704,54 @@ export default function commentsStackReducer(
     //   }
     //   return newState;
     // }
-    // case INCREASE_REPLIES_BY_NUMBER: {
-    //   const newState = { ...state };
-    //   const payload = action.payload as { commentID: string; by: number };
-    //   const currentTab = state.currentTab;
-    //   const newStack = CommentsStack.clone(state[currentTab]);
-    //   const topLayer = newStack.top();
-    //   if (topLayer) {
-    //     const index = topLayer.commentList.findIndex(
-    //       (comment) => comment.id === payload.commentID,
-    //     );
-    //     if (index !== -1) {
-    //       topLayer.commentList[index].replies += payload.by;
-    //     }
-    //     newStack.updateTop(topLayer);
-    //     newState[currentTab] = newStack;
-    //   }
-    //   return newState;
-    // }
-    // case DECREASE_REPLIES_BY_NUMBER: {
-    //   const newState = { ...state };
-    //   const payload = action.payload as { commentID: string; by: number };
-    //   const currentTab = state.currentTab;
-    //   const newStack = CommentsStack.clone(state[currentTab]);
-    //   const topLayer = newStack.top();
-    //   if (topLayer) {
-    //     const index = topLayer.commentList.findIndex(
-    //       (comment) => comment.id === payload.commentID,
-    //     );
-    //     if (index !== -1) {
-    //       topLayer.commentList[index].replies -= payload.by;
-    //     }
-    //     newStack.updateTop(topLayer);
-    //     newState[currentTab] = newStack;
-    //   }
-    //   return newState;
-    // }
-    // case CLEAR_STACK: {
-    //   const newState = { ...state };
-    //   const currentTab = state.currentTab;
-    //   newState[currentTab] = new CommentsStack();
-    //   return newState;
-    // }
+    case DispatchTypes.INCREASE_REPLIES_BY_NUMBER: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        commentID: string;
+        numberOfReplies: number;
+      };
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === payload.commentID,
+        );
+        if (index !== -1) {
+          topLayer.commentList[index].replies += payload.numberOfReplies;
+        }
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DispatchTypes.DECREASE_REPLIES_BY_NUMBER: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        commentID: string;
+        numberOfReplies: number;
+      };
+      const currentTab = state.currentTab;
+      const newStack = CommentsStack.clone(state[currentTab]);
+      const topLayer = newStack.top();
+      if (topLayer) {
+        const index = topLayer.commentList.findIndex(
+          (comment) => comment.id === payload.commentID,
+        );
+        if (index !== -1) {
+          topLayer.commentList[index].replies -= payload.numberOfReplies;
+        }
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DispatchTypes.CLEAR_STACK: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      newState[currentTab] = new CommentsStack();
+      return newState;
+    }
     default:
       return state;
   }
