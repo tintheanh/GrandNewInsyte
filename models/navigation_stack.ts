@@ -1,5 +1,6 @@
-import RepliesStackLayer from './repliesStackLayer';
-import CommentsStackLayer from './commentsStackLayer';
+import RepliesStackLayer from './reply_stack_layer';
+import CommentsStackLayer from './comment_stack_layer';
+import UsersStackLayer from './user_stack_layer';
 import Reply from './reply';
 import Comment from './comment';
 
@@ -63,6 +64,10 @@ export default class NavigationStack<T> {
    */
   private toArray = () => this.stack;
 
+  /**
+   * Generic method clone a stack
+   * @param stackToClone
+   */
   static clone = (stackToClone: NavigationStack<any>) => {
     if (stackToClone.isEmpty()) {
       return stackToClone;
@@ -74,6 +79,8 @@ export default class NavigationStack<T> {
       newStack = new NavigationStack<CommentsStackLayer>();
     } else if ('commentID' in layer) {
       newStack = new NavigationStack<RepliesStackLayer>();
+    } else if ('userID' in layer) {
+      newStack = new NavigationStack<UsersStackLayer>();
     } else {
       throw new Error('Invalid arguments.');
     }
@@ -148,6 +155,36 @@ export default class NavigationStack<T> {
             createReplyLoading: oneLayer.loadings.createReplyLoading,
           },
           replyList: oneLayer.replyList.map((reply: Reply) => ({ ...reply })),
+        };
+      } else {
+        const fetchErrorClone = oneLayer.errors.fetchError
+          ? new Error(oneLayer.errors.fetchError.message)
+          : null;
+        const followErrorClone = oneLayer.errors.followError
+          ? new Error(oneLayer.errors.followError.message)
+          : null;
+        const unfollowErrorClone = oneLayer.errors.unfollow
+          ? new Error(oneLayer.errors.unfollow.message)
+          : null;
+        layerClone = {
+          userID: oneLayer.userID,
+          username: oneLayer.username,
+          name: oneLayer.name,
+          avatar: oneLayer.avatar,
+          bio: oneLayer.bio,
+          following: oneLayer.following,
+          followers: oneLayer.followers,
+          totalPosts: oneLayer.totalPosts,
+          isFollowed: oneLayer.isFollowed,
+          errors: {
+            fetchError: fetchErrorClone,
+            followError: followErrorClone,
+            unfollowError: unfollowErrorClone,
+          },
+          loading: oneLayer.loading,
+          lastVisible: oneLayer.lastVisible,
+          currentViewableIndex: oneLayer.currentViewableIndex,
+          posts: oneLayer.posts,
         };
       }
 

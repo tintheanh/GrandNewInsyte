@@ -19,7 +19,6 @@ import { generateSubstringForUsername } from '../../utils/functions';
 // }
 
 class HomeScreen extends Component<any> {
-  private screenFocus: any;
   constructor(props: any) {
     super(props);
     // for (let i = 0; i < 10; i++) {
@@ -45,16 +44,14 @@ class HomeScreen extends Component<any> {
     // }
   }
 
-  componentWillUnmount() {
-    this.screenFocus();
-  }
+  
 
   async componentDidMount() {
-    this.screenFocus = this.props.navigation.addListener('focus', (e) => {
-      // this.props.onClearCommentsStack();
-      // this.props.onClearRepliesStack();
-      // this.props.onClearUsersStack();
-    });
+    // this.screenFocus = this.props.navigation.addListener('focus', (e) => {
+    //   // this.props.onClearCommentsStack();
+    //   // this.props.onClearRepliesStack();
+    //   // this.props.onClearUsersStack();
+    // });
 
     // try {
     //   const snapshot = await fireStorage
@@ -207,10 +204,10 @@ const mapStateToProps = (state: AppState) => ({
   // loading: state.auth.loading,
 });
 
-const mapDispatchToProps = {
-  onClearCommentsStack: clearCommentsStack,
-  onClearRepliesStack: clearRepliesStack,
-  onClearUsersStack: clearUsersStack,
-};
+// const mapDispatchToProps = {
+//   onClearCommentsStack: clearCommentsStack,
+//   onClearRepliesStack: clearRepliesStack,
+//   onClearUsersStack: clearUsersStack,
+// };
 
-export default connect(mapStateToProps, mapDispatchToProps)(HomeScreen);
+export default connect(mapStateToProps)(HomeScreen);

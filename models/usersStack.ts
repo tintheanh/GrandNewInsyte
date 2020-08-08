@@ -1,4 +1,4 @@
-import UsersStackLayer from './usersStackLayer';
+import UsersStackLayer from './user_stack_layer';
 
 /**
  * Stack for user screen navigation.

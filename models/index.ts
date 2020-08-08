@@ -3,12 +3,12 @@ import User from './user';
 import UserResult from './userResult';
 import Comment from './comment';
 import Reply from './reply';
-import CommentsStackLayer from './commentsStackLayer';
-import RepliesStackLayer from './repliesStackLayer';
+import CommentsStackLayer from './comment_stack_layer';
+import RepliesStackLayer from './reply_stack_layer';
 import UsersStack from './usersStack';
-import UsersStackLayer from './usersStackLayer';
+import UsersStackLayer from './user_stack_layer';
 import MyError, { MyErrorCodes } from './my_error';
-import { CurrentTabScreen } from './currentTabScreen';
+import { CurrentTabScreen } from './current_tab_screen';
 import NavigationStack from './navigation_stack';
 
 export {

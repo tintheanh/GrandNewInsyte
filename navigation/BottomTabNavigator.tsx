@@ -1,6 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React, { Component } from 'react';
-
 import { connect } from 'react-redux';
 import { View } from 'react-native';
 import {
@@ -11,11 +10,21 @@ import {
   Ionicons,
   bottomTabHeight,
 } from '../constants';
-import { setCurrentTabForCommentsStack } from '../redux/commentsStack/actions';
-import { setCurrentTabForRepliesStack } from '../redux/repliesStack/actions';
-import { setCurrentTabForUsersStack } from '../redux/usersStack/actions';
+import {
+  setCurrentTabForCommentsStack,
+  clearCommentsStack,
+} from '../redux/commentsStack/actions';
+import {
+  setCurrentTabForRepliesStack,
+  clearRepliesStack,
+} from '../redux/repliesStack/actions';
+import {
+  setCurrentTabForUsersStack,
+  clearUsersStack,
+} from '../redux/usersStack/actions';
 import { AppState } from '../redux/store';
 import { checkAuth } from '../redux/auth/actions';
+import { delay } from '../utils/functions';
 import TabBarIcon from '../components/TabBarIcon';
 import HomeStack from '../stacks/HomeStack';
 import AuthScreen from '../screens/AuthScreen';
@@ -37,6 +46,12 @@ class BottomTabNavigator extends Component<any> {
   }
 
   render() {
+    const {
+      onClearCommentsStack,
+      onClearRepliesStack,
+      onClearUsersStack,
+    } = this.props;
+
     return (
       <BottomTab.Navigator
         initialRouteName="Home"
@@ -55,13 +70,24 @@ class BottomTabNavigator extends Component<any> {
               <TabBarIcon icon={Foundation} focused={focused} name="home" />
             ),
           }}
-          listeners={{
-            tabPress: (e) => {
-              this.props.onSetCurrentTabForCommentsStack('homeTabStack');
-              // this.props.onSetCurrentTabForRepliesStack('homeTabStack');
-              // this.props.onSetCurrentTabForUsersStack('homeTabStack');
+          // listeners={{
+          //   tabPress: (e) => {
+          //     this.props.onSetCurrentTabForCommentsStack('homeTabStack');
+          //     // this.props.onSetCurrentTabForRepliesStack('homeTabStack');
+          //     // this.props.onSetCurrentTabForUsersStack('homeTabStack');
+          //   },
+          // }}
+
+          listeners={({ route }) => ({
+            state: (_) => {
+              if (route.state && route.state.index === 0) {
+                console.log('ok clear');
+                onClearCommentsStack();
+                onClearRepliesStack();
+                onClearUsersStack();
+              }
             },
-          }}
+          })}
         />
         <BottomTab.Screen
           name="Map"
@@ -149,6 +175,9 @@ const mapDispatchToProps = {
   onSetCurrentTabForCommentsStack: setCurrentTabForCommentsStack,
   onSetCurrentTabForRepliesStack: setCurrentTabForRepliesStack,
   onSetCurrentTabForUsersStack: setCurrentTabForUsersStack,
+  onClearCommentsStack: clearCommentsStack,
+  onClearRepliesStack: clearRepliesStack,
+  onClearUsersStack: clearUsersStack,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(BottomTabNavigator);
