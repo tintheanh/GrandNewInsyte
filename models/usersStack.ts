@@ -1,11 +1,19 @@
 import UsersStackLayer from './usersStackLayer';
 
+/**
+ * Stack for user screen navigation.
+ * Each user screen has a user layer
+ */
 export default class UsersStack {
   private stack: Array<UsersStackLayer>;
   constructor() {
     this.stack = [];
   }
 
+  /**
+   * Method push a new layer when navigating
+   * @param postLayer New layer to push
+   */
   push = (postLayer: UsersStackLayer) => {
     this.stack.push(postLayer);
   };

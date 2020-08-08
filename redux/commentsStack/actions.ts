@@ -500,14 +500,14 @@ export const decreaseRepliesBy = (
   });
 };
 
-// export const clearCommentsStack = () => (
-//   dispatch: (action: CommentsStackAction) => void,
-// ) => {
-//   dispatch({
-//     type: CLEAR_STACK,
-//     payload: null,
-//   });
-// };
+export const clearCommentsStack = () => (
+  dispatch: (action: CommentsStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_STACK,
+    payload: null,
+  });
+};
 
 // /* ----------------- comment dispatches ----------------- */
 

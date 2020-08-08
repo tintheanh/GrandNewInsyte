@@ -1,4 +1,9 @@
-import { RepliesStack, Reply, CurrentTabScreen } from '../../models';
+import {
+  Reply,
+  CurrentTabScreen,
+  NavigationStack,
+  RepliesStackLayer,
+} from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
 
 export enum DispatchTypes {
@@ -64,7 +69,7 @@ export interface RepliesStackAction {
 }
 
 export interface RepliesStackState {
-  homeTabStack: RepliesStack;
-  userTabStack: RepliesStack;
+  homeTabStack: NavigationStack<RepliesStackLayer>;
+  userTabStack: NavigationStack<RepliesStackLayer>;
   currentTab: CurrentTabScreen;
 }

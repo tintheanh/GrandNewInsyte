@@ -1,4 +1,9 @@
-import { CommentsStack, Comment, CurrentTabScreen } from '../../models';
+import {
+  Comment,
+  CurrentTabScreen,
+  NavigationStack,
+  CommentsStackLayer,
+} from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
 
 export enum DispatchTypes {
@@ -76,7 +81,7 @@ export interface CommentsStackAction {
 // every navigation layer is an object of post detail pushed onto
 // the current view comments stack
 export interface CommentsStackState {
-  homeTabStack: CommentsStack;
-  userTabStack: CommentsStack;
+  homeTabStack: NavigationStack<CommentsStackLayer>;
+  userTabStack: NavigationStack<CommentsStackLayer>;
   currentTab: CurrentTabScreen;
 }

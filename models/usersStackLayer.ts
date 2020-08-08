@@ -11,9 +11,11 @@ export default interface UsersStackLayer {
   followers: number;
   totalPosts: number;
   isFollowed: boolean;
-  error: Error | null;
-  followError: Error | null;
-  unfollowError: Error | null;
+  errors: {
+    fetchError: Error | null;
+    followError: Error | null;
+    unfollowError: Error | null;
+  };
   loading: boolean;
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
   currentViewableIndex: number;
