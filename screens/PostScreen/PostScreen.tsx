@@ -185,11 +185,11 @@ interface PostScreenProps {
    * Method push new user layer when navigating to user screen
    */
   onPushUsersLayer: ({
-    id,
+    userID,
     username,
     avatar,
   }: {
-    id: string;
+    userID: string;
     username: string;
     avatar: string;
   }) => void;
@@ -322,28 +322,26 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     this.focusUnsubcriber();
   }
 
-  toUserScreen = (user: {
+  navigateToUserScreen = (user: {
     id: string;
     username: string;
     avatar: string;
   }) => () => {
-    // const { currentUID, navigation } = this.props;
-    // if (currentUID !== user.id) {
-    //   this.props.onPushUsersLayer({
-    //     id: user.id,
-    //     username: user.username,
-    //     avatar: user.avatar,
-    //   });
-    //   navigation.push('UserScreen', {
-    //     title: user.username,
-    //     user,
-    //   });
-    // } else {
-    //   navigation.push('ProfileScreen', {
-    //     title: user.username,
-    //     user,
-    //   });
-    // }
+    const { currentUID, navigation, onPushUsersLayer } = this.props;
+    if (currentUID !== user.id) {
+      onPushUsersLayer({
+        userID: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      });
+      navigation.push('UserScreen', {
+        user,
+      });
+    } else {
+      navigation.navigate('ProfileScreen', {
+        title: user.username,
+      });
+    }
   };
 
   /**
@@ -608,16 +606,66 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
         likeComment={this.performLikeComment(item.id)}
         unlikeComment={this.performUnlikeComment(item.id)}
         navigateToReplyScreen={this.navigateToReplyScreen(item)}
-        navigateToUserScreen={this.toUserScreen(item.user)}
+        navigateToUserScreen={this.navigateToUserScreen(item.user)}
       />
     );
+  };
+
+  renderPostSection = () => {
+    const { post, shouldPlayMedia } = this.state;
+    return (
+      <PostSection
+        post={post}
+        likePost={this.performLikePost}
+        unLikePost={this.performUnlikePost}
+        navigateWhenPressOnUsernameOrAvatar={this.navigateToUserScreen(
+          post.user,
+        )}
+        userControl={
+          post.user.id === this.props.currentUID
+            ? this.userControlForPost
+            : undefined
+        }
+        shouldPlayMedia={shouldPlayMedia}
+      />
+    );
+  };
+
+  renderCommentInput = () => {
+    return (
+      <CommentInput
+        postID={this.state.post.id}
+        increaseCommentsForPostScreenBy={this.increaseCommentsForPostScreenBy}
+        increaseCommentsForHomeScreen={
+          this.props.onIncreaseCommentsForHomeScreen
+        }
+      />
+    );
+  };
+
+  renderEmptyListComponent = () => {
+    const { fetchError, loading, comments } = this.props;
+    if (fetchError) {
+      return (
+        <View style={styles.emptyWrapper}>
+          <ErrorView errorText={fetchError.message} />
+        </View>
+      );
+    }
+    if (loading && comments.length === 0) {
+      return (
+        <View style={styles.emptyWrapper}>
+          <Loading />
+        </View>
+      );
+    }
+    return undefined;
   };
 
   render() {
     const { post, shouldPlayMedia } = this.state;
     const {
       comments,
-      fetchError,
       loading,
       currentUID,
       createCommentError,
@@ -627,6 +675,8 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
       onClearLikeCommentError,
       onClearUnlikeCommentError,
     } = this.props;
+
+    console.log(loading);
 
     if (createCommentError) {
       alertDialog(
@@ -650,51 +700,11 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
       alertDialog(unlikeCommentError.message, onClearUnlikeCommentError);
     }
 
-    const postSection = (
-      <PostSection
-        post={post}
-        likePost={this.performLikePost}
-        unLikePost={this.performUnlikePost}
-        navigateWhenPressOnUsernameOrAvatar={this.toUserScreen(post.user)}
-        userControl={
-          post.user.id === currentUID ? this.userControlForPost : undefined
-        }
-        shouldPlayMedia={this.state.shouldPlayMedia}
-      />
-    );
-
-    const commentInput = (
-      <CommentInput
-        postID={post.id}
-        increaseCommentsForPostScreenBy={this.increaseCommentsForPostScreenBy}
-        increaseCommentsForHomeScreen={
-          this.props.onIncreaseCommentsForHomeScreen
-        }
-      />
-    );
-
-    let emptyListComponent = null;
-    if (fetchError) {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <ErrorView errorText={fetchError.message} />
-        </View>
-      );
-    } else if (loading && comments.length === 0) {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <Loading />
-        </View>
-      );
-    } else {
-      emptyListComponent = undefined;
-    }
-
     return (
       <KeyboardAvoidingView behavior="padding" style={styles.container}>
         <List
-          listHeaderComponent={postSection}
-          listEmptyComponent={emptyListComponent}
+          listHeaderComponent={this.renderPostSection()}
+          listEmptyComponent={this.renderEmptyListComponent()}
           data={comments}
           renderItem={this.renderItem}
           onEndReached={this.fetchMoreComments}
@@ -706,7 +716,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
           listFooterComponent={<View style={{ height: 136 }} />}
           extraData={{ post, shouldPlayMedia }}
         />
-        {currentUID !== undefined ? commentInput : null}
+        {currentUID !== undefined ? this.renderCommentInput() : null}
         {comments.length > 0 ? (
           <View style={styles.loadingWrapper}>
             <FooterLoading loading={loading} />
@@ -768,7 +778,6 @@ const mapStateToProps = (state: AppState, ownProps: PostScreenProps) => {
 
 const mapDispatchToProps = {
   onFetchNewComments: fetchNewComments,
-  // onFetchTopComments: fetchTopComments,
   onLikePost: likePost,
   onUnlikePost: unlikePost,
   onDeletePost: deletePost,

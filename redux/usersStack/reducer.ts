@@ -1,32 +1,16 @@
+import { DispatchTypes, UsersStackAction, UsersStackState } from './types';
 import {
-  POP_USERS_LAYER,
-  PUSH_USERS_LAYER,
-  SET_CURRENT_TAB,
-  FETCH_USER_FAILURE,
-  FETCH_USER_STARTED,
-  FETCH_USER_SUCCESS,
-  SET_CURRENT_VIEWABLE_POST_INDEX,
-  FETCH_MORE_POSTS_FROM_USER_FAILURE,
-  FETCH_MORE_POSTS_FROM_USER_STARTED,
-  FETCH_MORE_POSTS_FROM_USER_SUCCESS,
-  FOLLOW_USER_FAILURE,
-  FOLLOW_USER_STARTED,
-  FOLLOW_USER_SUCCESS,
-  UNFOLLOW_USER_FAILURE,
-  UNFOLLOW_USER_STARTED,
-  UNFOLLOW_USER_SUCCESS,
-  CLEAR_STACK,
-  CurrentTab,
-  UsersStackAction,
-  UsersStackState,
-} from './types';
-import { UsersStack, Post } from '../../models';
+  Post,
+  CurrentTabScreen,
+  NavigationStack,
+  UsersStackLayer,
+} from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
 import { removeDuplicatesFromArray } from '../../utils/functions';
 
 const initialState: UsersStackState = {
-  homeTabStack: new UsersStack(),
-  userTabStack: new UsersStack(),
+  homeTabStack: new NavigationStack<UsersStackLayer>(),
+  userTabStack: new NavigationStack<UsersStackLayer>(),
   currentTab: 'homeTabStack',
 };
 
@@ -35,12 +19,12 @@ export default function commentsStackReducer(
   action: UsersStackAction,
 ): UsersStackState {
   switch (action.type) {
-    case SET_CURRENT_TAB: {
+    case DispatchTypes.SET_CURRENT_TAB: {
       const newState = { ...state };
-      newState.currentTab = action.payload as CurrentTab;
+      newState.currentTab = action.payload as CurrentTabScreen;
       return newState;
     }
-    case SET_CURRENT_VIEWABLE_POST_INDEX: {
+    case DispatchTypes.SET_CURRENT_VIEWABLE_POST_INDEX: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const topLayer = state[currentTab].top();
@@ -50,16 +34,16 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case PUSH_USERS_LAYER: {
+    case DispatchTypes.PUSH_USERS_LAYER: {
       const newState = { ...state };
       const payload = action.payload as {
-        id: string;
+        userID: string;
         username: string;
         avatar: string;
       };
       const currentTab = state.currentTab;
       const usersLayer = {
-        id: payload.id,
+        userID: payload.userID,
         username: payload.username,
         name: '',
         avatar: payload.avatar,
@@ -68,40 +52,47 @@ export default function commentsStackReducer(
         followers: 0,
         totalPosts: 0,
         isFollowed: false,
-        error: null,
-        followError: null,
-        unfollowError: null,
+        errors: {
+          fetchError: null,
+          followError: null,
+          unfollowError: null,
+        },
         loading: false,
         lastVisible: null,
         currentViewableIndex: 0,
         posts: [],
       };
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       newStack.push(usersLayer);
       newState[currentTab] = newStack;
       return newState;
     }
-    case FETCH_USER_STARTED: {
+    case DispatchTypes.FETCH_USER_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = true;
-        topLayer.error = null;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case FETCH_USER_SUCCESS: {
+    case DispatchTypes.FETCH_USER_SUCCESS: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = false;
-        topLayer.error = null;
+        topLayer.errors.fetchError = null;
         topLayer.name = action.payload.name;
         topLayer.bio = action.payload.bio;
         topLayer.followers = action.payload.followers;
@@ -115,72 +106,78 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case FETCH_USER_FAILURE: {
+    case DispatchTypes.FETCH_USER_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = false;
-        topLayer.error = action.payload as Error;
+        topLayer.errors.fetchError = action.payload as Error;
       }
       return newState;
     }
-    case FETCH_MORE_POSTS_FROM_USER_STARTED: {
+    case DispatchTypes.FETCH_MORE_POSTS_FROM_USER_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = true;
-        topLayer.error = null;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case FETCH_MORE_POSTS_FROM_USER_SUCCESS: {
+    case DispatchTypes.FETCH_MORE_POSTS_FROM_USER_SUCCESS: {
       const newState = { ...state };
       const payload = action.payload as {
         posts: Array<Post>;
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
       };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = false;
-        topLayer.error = null;
-        const removedDuplicates = removeDuplicatesFromArray(
-          topLayer.posts.concat(payload.posts),
-        );
-        topLayer.posts = removedDuplicates;
+        topLayer.errors.fetchError = null;
+        topLayer.posts = topLayer.posts.concat(payload.posts);
         topLayer.lastVisible = payload.lastVisible;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case FETCH_MORE_POSTS_FROM_USER_FAILURE: {
+    case DispatchTypes.FETCH_MORE_POSTS_FROM_USER_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loading = false;
-        topLayer.error = action.payload as Error;
+        topLayer.errors.fetchError = action.payload as Error;
+        topLayer.posts = [];
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
-    case FOLLOW_USER_STARTED: {
+    case DispatchTypes.FOLLOW_USER_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.followError = null;
         topLayer.isFollowed = true;
         topLayer.followers += 1;
         newStack.updateTop(topLayer);
@@ -188,16 +185,18 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case FOLLOW_USER_SUCCESS: {
+    case DispatchTypes.FOLLOW_USER_SUCCESS: {
       return state;
     }
-    case FOLLOW_USER_FAILURE: {
+    case DispatchTypes.FOLLOW_USER_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.followError = action.payload as Error;
+        topLayer.errors.followError = action.payload as Error;
         topLayer.isFollowed = false;
         topLayer.followers -= 1;
         newStack.updateTop(topLayer);
@@ -205,13 +204,14 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case UNFOLLOW_USER_STARTED: {
+    case DispatchTypes.UNFOLLOW_USER_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.followError = null;
         topLayer.isFollowed = false;
         topLayer.followers -= 1;
         newStack.updateTop(topLayer);
@@ -219,16 +219,18 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case UNFOLLOW_USER_SUCCESS: {
+    case DispatchTypes.UNFOLLOW_USER_SUCCESS: {
       return state;
     }
-    case UNFOLLOW_USER_FAILURE: {
+    case DispatchTypes.UNFOLLOW_USER_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
-        topLayer.unfollowError = action.payload as Error;
+        topLayer.errors.unfollowError = action.payload as Error;
         topLayer.isFollowed = true;
         topLayer.followers += 1;
         newStack.updateTop(topLayer);
@@ -236,18 +238,20 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case POP_USERS_LAYER: {
+    case DispatchTypes.POP_USERS_LAYER: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = UsersStack.clone(state[currentTab]);
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<UsersStackLayer>;
       newStack.pop();
       newState[currentTab] = newStack;
       return newState;
     }
-    case CLEAR_STACK: {
+    case DispatchTypes.CLEAR_STACK: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      newState[currentTab] = new UsersStack();
+      newState[currentTab] = new NavigationStack<UsersStackLayer>();
       return newState;
     }
     default:

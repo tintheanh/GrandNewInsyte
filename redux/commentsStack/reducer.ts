@@ -43,21 +43,24 @@ export default function commentsStackReducer(
         lastVisible: null,
         commentList: [],
       };
-      const newStack = NavigationStack.clone(
-        state[currentTab],
-      ) as NavigationStack<CommentsStackLayer>;
-      newStack.push(commentsLayer);
-      newState[currentTab] = newStack;
+      // const newStack = NavigationStack.clone(
+      //   state[currentTab],
+      // ) as NavigationStack<CommentsStackLayer>;
+      // newStack.push(commentsLayer);
+      // newState[currentTab] = newStack;
+      // return newState;
+
+      newState[currentTab].push(commentsLayer);
       return newState;
     }
     case DispatchTypes.POP_COMMENTS_LAYER: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = NavigationStack.clone(
-        state[currentTab],
-      ) as NavigationStack<CommentsStackLayer>;
-      newStack.pop();
-      newState[currentTab] = newStack;
+      // const newStack = NavigationStack.clone(
+      //   state[currentTab],
+      // ) as NavigationStack<CommentsStackLayer>;
+      // newStack.pop();
+      newState[currentTab].pop();
       return newState;
     }
     /* ---------------- fetch comments cases ---------------- */
@@ -70,28 +73,52 @@ export default function commentsStackReducer(
     case DispatchTypes.FETCH_NEW_COMMENTS_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const newStack = NavigationStack.clone(
-        state[currentTab],
-      ) as NavigationStack<CommentsStackLayer>;
-      const topLayer = newStack.top();
+      // const newStack = NavigationStack.clone(
+      //   state[currentTab],
+      // ) as NavigationStack<CommentsStackLayer>;
+      // const topLayer = newStack.top();
+      // if (topLayer) {
+      //   topLayer.loadings.fetchLoading = true;
+      //   newStack.updateTop(topLayer);
+      //   newState[currentTab] = newStack;
+      // }
+      // return newState;
+      const topLayer = state[currentTab].top();
       if (topLayer) {
         topLayer.loadings.fetchLoading = true;
-        newStack.updateTop(topLayer);
-        newState[currentTab] = newStack;
+        newState[currentTab].updateTop(topLayer);
       }
       return newState;
     }
     case DispatchTypes.FETCH_NEW_COMMENTS_SUCCESS: {
+      // const newState = { ...state };
+      // const currentTab = state.currentTab;
+      // const payload = action.payload as {
+      //   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot;
+      //   commentList: Array<Comment>;
+      // };
+      // const newStack = NavigationStack.clone(
+      //   state[currentTab],
+      // ) as NavigationStack<CommentsStackLayer>;
+      // const topLayer = newStack.top();
+      // if (topLayer) {
+      //   topLayer.loadings.fetchLoading = false;
+      //   const newCommentList = topLayer.commentList.concat(payload.commentList);
+      //   const removedDuplicates = removeDuplicatesFromArray(newCommentList);
+      //   topLayer.commentList = removedDuplicates;
+      //   topLayer.lastVisible = payload.lastVisible;
+      //   topLayer.errors.fetchError = null;
+      //   newStack.updateTop(topLayer);
+      //   newState[currentTab] = newStack;
+      // }
+      // return newState;
       const newState = { ...state };
       const currentTab = state.currentTab;
       const payload = action.payload as {
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot;
         commentList: Array<Comment>;
       };
-      const newStack = NavigationStack.clone(
-        state[currentTab],
-      ) as NavigationStack<CommentsStackLayer>;
-      const topLayer = newStack.top();
+      const topLayer = newState[currentTab].top();
       if (topLayer) {
         topLayer.loadings.fetchLoading = false;
         const newCommentList = topLayer.commentList.concat(payload.commentList);
@@ -99,9 +126,9 @@ export default function commentsStackReducer(
         topLayer.commentList = removedDuplicates;
         topLayer.lastVisible = payload.lastVisible;
         topLayer.errors.fetchError = null;
-        newStack.updateTop(topLayer);
-        newState[currentTab] = newStack;
+        newState[currentTab].updateTop(topLayer);
       }
+
       return newState;
     }
     case DispatchTypes.FETCH_NEW_COMMENTS_FAILURE: {

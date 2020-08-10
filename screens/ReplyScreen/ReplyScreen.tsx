@@ -640,11 +640,57 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     );
   };
 
+  renderCommentSection = () => {
+    const { comment } = this.state;
+    return (
+      <CommentSectionForReplyScreen
+        comment={comment}
+        likeComment={this.performLikeComment}
+        unlikeComment={this.performUnlikeComment}
+        userControl={
+          comment.user.id === this.props.currentUID
+            ? this.userControlForComment
+            : undefined
+        }
+      />
+    );
+  };
+
+  renderEmptyListComponent = () => {
+    const { fetchError, loading, replies } = this.props;
+    if (fetchError) {
+      return (
+        <View style={styles.emptyWrapper}>
+          <ErrorView errorText={fetchError.message} />
+        </View>
+      );
+    }
+    if (loading && replies.length === 0) {
+      return (
+        <View style={styles.emptyWrapper}>
+          <Loading />
+        </View>
+      );
+    }
+    return undefined;
+  };
+
+  renderReplyInput = () => {
+    return (
+      <ReplyInput
+        commentID={this.state.comment.id}
+        increaseRepliesForReplyScreenBy={this.increaseRepliesForReplyScreenBy}
+        increaseRepliesForPostScreen={this.increaseRepliesForPostScreen}
+        increaseCommentsForPostScreen={this.increaseCommentsForPostScreen}
+        increaseCommentsForHomeScreen={this.increaseCommentsForHomeScreen}
+      />
+    );
+  };
+
   render() {
     const { comment } = this.state;
     const {
       replies,
-      fetchError,
       createReplyError,
       deleteReplyError,
       likeCommentError,
@@ -683,51 +729,11 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
       alertDialog(unlikeReplyError.message, onClearUnlikeReplyError);
     }
 
-    const commentSection = (
-      <CommentSectionForReplyScreen
-        comment={comment}
-        likeComment={this.performLikeComment}
-        unlikeComment={this.performUnlikeComment}
-        userControl={
-          comment.user.id === this.props.currentUID
-            ? this.userControlForComment
-            : undefined
-        }
-      />
-    );
-
-    const replyInput = (
-      <ReplyInput
-        commentID={comment.id}
-        increaseRepliesForReplyScreenBy={this.increaseRepliesForReplyScreenBy}
-        increaseRepliesForPostScreen={this.increaseRepliesForPostScreen}
-        increaseCommentsForPostScreen={this.increaseCommentsForPostScreen}
-        increaseCommentsForHomeScreen={this.increaseCommentsForHomeScreen}
-      />
-    );
-
-    let emptyListComponent = null;
-    if (fetchError) {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <ErrorView errorText={fetchError.message} />
-        </View>
-      );
-    } else if (loading && replies.length === 0) {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <Loading />
-        </View>
-      );
-    } else {
-      emptyListComponent = undefined;
-    }
-
     return (
       <KeyboardAvoidingView behavior="padding" style={styles.container}>
         <List
-          listHeaderComponent={commentSection}
-          listEmptyComponent={emptyListComponent}
+          listHeaderComponent={this.renderCommentSection()}
+          listEmptyComponent={this.renderEmptyListComponent()}
           data={replies}
           renderItem={this.renderItem}
           onEndReached={this.fetchMoreReplies}
@@ -739,7 +745,7 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
           listFooterComponent={<View style={{ height: 136 }} />}
           extraData={{ comment, loading }}
         />
-        {currentUID !== undefined ? replyInput : null}
+        {currentUID !== undefined ? this.renderReplyInput() : null}
         {replies.length > 0 ? (
           <View style={styles.loadingWrapper}>
             <FooterLoading loading={loading} />

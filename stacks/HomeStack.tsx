@@ -21,14 +21,15 @@ export type HomeStackParamList = {
   PostScreen: { post: Post; currentTabScreen: CurrentTabScreen };
   ReplyScreen: { currentTabScreen: CurrentTabScreen };
   UserScreen: {
-    id: string;
-    username: string;
-    avatar: string;
+    user: {
+      id: string;
+      username: string;
+      avatar: string;
+    };
+    currentTabScreen: CurrentTabScreen;
   };
   ProfileScreen: {
-    id: string;
-    username: string;
-    avatar: string;
+    title: string;
   };
 };
 
@@ -95,8 +96,9 @@ export default connect(
       <Stack.Screen
         name="UserScreen"
         component={UserScreen}
+        initialParams={{ currentTabScreen: 'homeTabStack' }}
         options={({ route }) => ({
-          title: route.params.username,
+          title: route.params.user.username,
           headerBackTitle: '',
         })}
       />
@@ -104,7 +106,7 @@ export default connect(
         name="ProfileScreen"
         component={ProfileScreen}
         options={({ route }) => ({
-          title: route.params.username,
+          title: route.params.title,
         })}
       />
     </Stack.Navigator>
