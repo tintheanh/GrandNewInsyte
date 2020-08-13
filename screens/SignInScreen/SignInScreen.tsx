@@ -20,6 +20,9 @@ import {
   BigButton,
 } from '../../components';
 import { signin } from '../../redux/auth/actions';
+import { resetAllCommentStacks } from '../../redux/comment_stack/actions';
+import { resetAllReplyStacks } from '../../redux/reply_stack/actions';
+import { resetAllUserStacks } from '../../redux/user_stack/actions';
 import { AppState } from '../../redux/store';
 
 const screenHeight = Layout.window.height;
@@ -45,6 +48,21 @@ interface SignInScreenProps {
    * successfully sign in
    */
   onClearPosts: () => void;
+
+  /**
+   * Method clear comment stack when successfully sign in
+   */
+  onResetAllCommentStacks: () => void;
+
+  /**
+   * Method clear reply stack when successfully sign in
+   */
+  onResetAllReplyStacks: () => void;
+
+  /**
+   * Method clear user stack when successfully sign in
+   */
+  onResetAllUserStacks: () => void;
 }
 
 /**
@@ -130,7 +148,13 @@ class SignInScreen extends Component<SignInScreenProps, SignInScreenState> {
   performSetPassword = (password: string) => this.setState({ password });
 
   performSignIn = async () => {
-    const { onSignIn, navigation } = this.props;
+    const {
+      navigation,
+      onSignIn,
+      onResetAllCommentStacks,
+      onResetAllReplyStacks,
+      onResetAllUserStacks,
+    } = this.props;
     const { email, password } = this.state;
 
     this.moveDown();
@@ -139,6 +163,11 @@ class SignInScreen extends Component<SignInScreenProps, SignInScreenState> {
     await onSignIn(email, password);
 
     if (this.props.error === null) {
+      // clear all stacks after successfully sign in
+      onResetAllCommentStacks();
+      onResetAllReplyStacks();
+      onResetAllUserStacks();
+
       // forcefully navigate to Home after successfully sign in
       navigation.dangerouslyGetParent()!.dispatch(
         CommonActions.navigate({
@@ -223,6 +252,9 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = {
   onSignIn: signin,
+  onResetAllCommentStacks: resetAllCommentStacks,
+  onResetAllReplyStacks: resetAllReplyStacks,
+  onResetAllUserStacks: resetAllUserStacks,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(SignInScreen);

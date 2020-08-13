@@ -1,7 +1,7 @@
 import Comment from './comment';
 import { FirebaseFirestoreTypes } from '../config';
 
-export default interface CommentsStackLayer {
+export default interface CommentStackLayer {
   postID: string;
   errors: {
     fetchError: Error | null;
@@ -15,5 +15,5 @@ export default interface CommentsStackLayer {
     createCommentLoading: boolean;
   };
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
-  commentList: Array<Comment>;
+  comments: Array<Comment>;
 }

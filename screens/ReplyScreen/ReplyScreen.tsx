@@ -3,7 +3,7 @@ import { View, StyleSheet, KeyboardAvoidingView, Alert } from 'react-native';
 import { connect } from 'react-redux';
 import { CommentSectionForReplyScreen, ReplyInput } from './private_components';
 import {
-  popRepliesLayer,
+  popReplyLayer,
   fetchReplies,
   deleteReply,
   likeReply,
@@ -12,7 +12,7 @@ import {
   clearDeleteReplyError,
   clearLikeReplyError,
   clearUnlikeReplyError,
-} from '../../redux/repliesStack/actions';
+} from '../../redux/reply_stack/actions';
 import {
   decreaseCommentsBy,
   increaseCommentsBy,
@@ -25,7 +25,7 @@ import {
   decreaseRepliesBy,
   clearLikeCommentError,
   clearUnlikeCommentError,
-} from '../../redux/commentsStack/actions';
+} from '../../redux/comment_stack/actions';
 import { AppState } from '../../redux/store';
 import { Reply, Comment, CurrentTabScreen } from '../../models';
 import {
@@ -124,7 +124,7 @@ interface ReplyScreenProps {
   /**
    * Method pop replies stack when screen going back
    */
-  onPopRepliesLayer: () => void;
+  onPopReplyLayer: () => void;
 
   /**
    * Method fetch replies from database
@@ -323,12 +323,12 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
   }
 
   async componentDidMount() {
-    const { navigation, onPopRepliesLayer, onFetchReplies } = this.props;
+    const { navigation, onPopReplyLayer, onFetchReplies } = this.props;
     const { comment } = this.state;
     this.detectScreenGoBackUnsubscriber = navigation.addListener(
       'beforeRemove',
       () => {
-        onPopRepliesLayer();
+        onPopReplyLayer();
       },
     );
 
@@ -409,13 +409,13 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
       postID,
       navigation,
       route,
-      onPopRepliesLayer,
+      onPopReplyLayer,
       onDeleteComment,
       onDecreaseCommentsForHomeScreenBy,
     } = this.props;
     const { comment } = this.state;
     navigation.goBack();
-    onPopRepliesLayer();
+    onPopReplyLayer();
     await delay(500);
 
     // perform delete comment
@@ -782,35 +782,31 @@ const mapStateToProps = (state: AppState, ownProps: ReplyScreenProps) => {
   const { currentTabScreen } = ownProps.route.params;
   return {
     currentUID: state.auth.user?.id,
-    postID: state.commentsStack[currentTabScreen].top()?.postID ?? '',
-    replies: state.repliesStack[currentTabScreen].top()?.replyList ?? [],
+    postID: state.commentStack[currentTabScreen].top()?.postID ?? '',
+    replies: state.replyStack[currentTabScreen].top()?.replies ?? [],
     loading:
-      state.repliesStack[currentTabScreen].top()?.loadings.fetchLoading ??
-      false,
+      state.replyStack[currentTabScreen].top()?.loadings.fetchLoading ?? false,
     fetchError:
-      state.repliesStack[currentTabScreen].top()?.errors.fetchError ?? null,
+      state.replyStack[currentTabScreen].top()?.errors.fetchError ?? null,
     createReplyError:
-      state.repliesStack[currentTabScreen].top()?.errors.createReplyError ??
-      null,
+      state.replyStack[currentTabScreen].top()?.errors.createReplyError ?? null,
     deleteReplyError:
-      state.repliesStack[currentTabScreen].top()?.errors.deleteReplyError ??
-      null,
+      state.replyStack[currentTabScreen].top()?.errors.deleteReplyError ?? null,
     likeReplyError:
-      state.repliesStack[currentTabScreen].top()?.errors.likeReplyError ?? null,
+      state.replyStack[currentTabScreen].top()?.errors.likeReplyError ?? null,
     unlikeReplyError:
-      state.repliesStack[currentTabScreen].top()?.errors.unlikeReplyError ??
-      null,
+      state.replyStack[currentTabScreen].top()?.errors.unlikeReplyError ?? null,
     likeCommentError:
-      state.commentsStack[currentTabScreen].top()?.errors.likeCommentError ??
+      state.commentStack[currentTabScreen].top()?.errors.likeCommentError ??
       null,
     unlikeCommentError:
-      state.commentsStack[currentTabScreen].top()?.errors.unlikeCommentError ??
+      state.commentStack[currentTabScreen].top()?.errors.unlikeCommentError ??
       null,
   };
 };
 
 const mapDispatchToProps = {
-  onPopRepliesLayer: popRepliesLayer,
+  onPopReplyLayer: popReplyLayer,
   onFetchReplies: fetchReplies,
   onLikeComment: likeComment,
   onUnlikeComment: unlikeComment,

@@ -88,6 +88,24 @@
         }
       ]
     },
+    {
+      "collectionGroup": "posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "privacy",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "date_posted",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "likes",
+          "order": "DESCENDING"
+        }
+      ]
+    }
   ],
   "fieldOverrides": []
 }

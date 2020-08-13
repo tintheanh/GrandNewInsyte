@@ -26,8 +26,8 @@ import {
   unlikePost,
 } from '../../../../redux/posts/actions';
 import { decreaseTotalPostsByOne } from '../../../../redux/auth/actions';
-import { pushCommentsLayer } from '../../../../redux/commentsStack/actions';
-import { pushUsersLayer } from '../../../../redux/usersStack/actions';
+import { pushCommentLayer } from '../../../../redux/comment_stack/actions';
+import { pushUserLayer } from '../../../../redux/user_stack/actions';
 import { checkPostListChanged } from '../../../../utils/functions';
 import { AppState } from '../../../../redux/store';
 import {
@@ -117,7 +117,7 @@ interface HomePublicPostListProps {
    * @param postID Each comments layer is a post screen
    * using postID to identify from other layers
    */
-  onPushCommentsLayer: (postID: string) => void;
+  onPushCommentLayer: (postID: string) => void;
 
   /**
    * Method push a new users layer when
@@ -125,7 +125,7 @@ interface HomePublicPostListProps {
    * @param user Hard data passed to user screen
    * so that it doesn't need to refetch them
    */
-  onPushUsersLayer: (user: {
+  onPushUserLayer: (user: {
     id: string;
     username: string;
     avatar: string;
@@ -234,8 +234,8 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
    * comments layer and pass to post screen
    */
   navigateToPostScreen = (data: Post) => () => {
-    const { navigation, onPushCommentsLayer } = this.props;
-    onPushCommentsLayer(data.id);
+    const { navigation, onPushCommentLayer } = this.props;
+    onPushCommentLayer(data.id);
     navigation.push('PostScreen', { post: data });
   };
 
@@ -252,9 +252,9 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
     username: string;
     avatar: string;
   }) => () => {
-    const { currentUID, navigation, onPushUsersLayer } = this.props;
+    const { currentUID, navigation, onPushUserLayer } = this.props;
     if (currentUID !== data.id) {
-      onPushUsersLayer(data);
+      onPushUserLayer(data);
       navigation.push('UserScreen', data);
     } else {
       navigation.push('ProfileScreen', data);
@@ -545,8 +545,8 @@ const mapDispatchToProps = {
   onFetchPublicHotPosts: fetchPublicHotPosts,
   onPullToFetchPublicNewPosts: pullToFetchPublicNewPosts,
   onPullToFetchPublicHotPosts: pullToFetchPublicHotPosts,
-  onPushCommentsLayer: pushCommentsLayer,
-  onPushUsersLayer: pushUsersLayer,
+  onPushCommentLayer: pushCommentLayer,
+  onPushUserLayer: pushUserLayer,
   onSetPublicFeedChoice: setPublicFeedChoice,
   onSetPublicHotTime: setPublicHotTime,
   onDeletePost: deletePost,

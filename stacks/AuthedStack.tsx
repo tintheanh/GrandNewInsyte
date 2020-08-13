@@ -12,6 +12,9 @@ import { UserSettingScreen } from '../screens';
 import ProfileStack from './ProfileStack';
 import { signout } from '../redux/auth/actions';
 import { clearAllPosts } from '../redux/posts/actions';
+import { resetAllCommentStacks } from '../redux/comment_stack/actions';
+import { resetAllReplyStacks } from '../redux/reply_stack/actions';
+import { resetAllUserStacks } from '../redux/user_stack/actions';
 import { delay } from '../utils/functions';
 
 const Drawer = createDrawerNavigator();
@@ -19,6 +22,9 @@ const Drawer = createDrawerNavigator();
 interface AuthedStackProps {
   onSignOut: () => void;
   onClearPosts: () => void;
+  onResetAllCommentStacks: () => void;
+  onResetAllReplyStacks: () => void;
+  onResetAllUserStacks: () => void;
 }
 
 const CustomDrawerContent = (props: AuthedStackProps, navigation: any) => {
@@ -32,6 +38,9 @@ const CustomDrawerContent = (props: AuthedStackProps, navigation: any) => {
     );
     props.onSignOut();
     props.onClearPosts();
+    props.onResetAllCommentStacks();
+    props.onResetAllReplyStacks();
+    props.onResetAllUserStacks();
   };
   return (
     <DrawerContentScrollView {...props}>
@@ -67,6 +76,9 @@ const CustomDrawerContent = (props: AuthedStackProps, navigation: any) => {
 const mapDispatchToProps = {
   onSignOut: signout,
   onClearPosts: clearAllPosts,
+  onResetAllCommentStacks: resetAllCommentStacks,
+  onResetAllReplyStacks: resetAllReplyStacks,
+  onResetAllUserStacks: resetAllUserStacks,
 };
 
 function AuthedStack(props: AuthedStackProps) {

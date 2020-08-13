@@ -3,10 +3,9 @@ import User from './user';
 import UserResult from './userResult';
 import Comment from './comment';
 import Reply from './reply';
-import CommentsStackLayer from './comment_stack_layer';
-import RepliesStackLayer from './reply_stack_layer';
-import UsersStack from './usersStack';
-import UsersStackLayer from './user_stack_layer';
+import CommentStackLayer from './comment_stack_layer';
+import ReplyStackLayer from './reply_stack_layer';
+import UserStackLayer from './user_stack_layer';
 import MyError, { MyErrorCodes } from './my_error';
 import { CurrentTabScreen } from './current_tab_screen';
 import NavigationStack from './navigation_stack';
@@ -19,10 +18,9 @@ export {
   UserResult,
   Comment,
   Reply,
-  CommentsStackLayer,
-  RepliesStackLayer,
-  UsersStack,
-  UsersStackLayer,
+  CommentStackLayer,
+  ReplyStackLayer,
+  UserStackLayer,
   MyError,
   MyErrorCodes,
 };

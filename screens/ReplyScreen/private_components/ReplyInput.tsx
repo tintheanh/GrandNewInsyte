@@ -14,7 +14,7 @@ import {
   bottomTabHeight,
   MaterialCommunityIcons,
 } from '../../../constants';
-import { createReply } from '../../../redux/repliesStack/actions';
+import { createReply } from '../../../redux/reply_stack/actions';
 import { AppState } from '../../../redux/store';
 import { alertDialog } from '../../../utils/functions';
 
@@ -258,11 +258,10 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: AppState) => {
-  const { currentTab } = state.repliesStack;
+  const { currentTab } = state.replyStack;
   return {
     loading:
-      state.repliesStack[currentTab].top()?.loadings.createReplyLoading ??
-      false,
+      state.replyStack[currentTab].top()?.loadings.createReplyLoading ?? false,
   };
 };
 

@@ -1,7 +1,7 @@
 import Reply from './reply';
 import { FirebaseFirestoreTypes } from '../config';
 
-export default interface RepliesStackLayer {
+export default interface ReplyStackLayer {
   commentID: string;
   loadings: {
     fetchLoading: boolean;
@@ -15,5 +15,5 @@ export default interface RepliesStackLayer {
     unlikeReplyError: Error | null;
   };
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
-  replyList: Array<Reply>;
+  replies: Array<Reply>;
 }

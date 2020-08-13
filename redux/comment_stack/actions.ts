@@ -1,4 +1,4 @@
-import { DispatchTypes, CommentsStackAction } from './types';
+import { DispatchTypes, CommentStackAction } from './types';
 import { pendingCommentID, pendingDeleteCommentFlag } from '../../constants';
 import { fsDB, FirebaseFirestoreTypes, commentsPerBatch } from '../../config';
 import { Comment, MyError, CurrentTabScreen, MyErrorCodes } from '../../models';
@@ -9,21 +9,155 @@ import {
 } from '../../utils/functions';
 import { AppState } from '../store';
 
-/* --------------- fetch comments methods --------------- */
+/* ---------------------- utilities --------------------- */
 
-export const fetchNewComments = (postID: string) => async (
-  dispatch: (action: CommentsStackAction) => void,
+/**
+ * Method clear create comment error
+ */
+export const clearCreateCommentError = () => (
+  dispatch: (action: CommentStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_CREATE_COMMENT_ERROR,
+    payload: null,
+  });
+};
+
+/**
+ * Method set current focused tab screen
+ * @param tab Tab screen to set focus
+ */
+export const setCurrentTabForCommentStack = (tab: CurrentTabScreen) => (
+  dispatch: (action: CommentStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.SET_CURRENT_TAB,
+    payload: tab,
+  });
+};
+
+/**
+ * Method clear delete comment error
+ */
+export const clearDeleteCommentError = () => (
+  dispatch: (action: CommentStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_DELETE_COMMENT_ERROR,
+    payload: null,
+  });
+};
+
+/**
+ * Method clear like comment error
+ */
+export const clearLikeCommentError = () => (
+  dispatch: (action: CommentStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_LIKE_COMMENT_ERROR,
+    payload: null,
+  });
+};
+
+/**
+ * Method clear unlike comment error
+ */
+export const clearUnlikeCommentError = () => (
+  dispatch: (action: CommentStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_UNLIKE_COMMENT_ERROR,
+    payload: null,
+  });
+};
+
+/**
+ * Method push new reply layer before navigating to a new post screen
+ * @param postID Comment's ID acts as identifier of each layer
+ */
+export const pushCommentLayer = (postID: string) => (
+  dispatch: (action: CommentStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.PUSH_COMMENT_LAYER,
+    payload: postID,
+  });
+};
+
+/**
+ * Method pop reply layer when going back
+ */
+export const popCommentLayer = () => (
+  dispatch: (action: CommentStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.POP_COMMENT_LAYER,
+    payload: null,
+  });
+};
+
+export const increaseRepliesBy = (
+  commentID: string,
+  numberOfReplies: number,
+) => (dispatch: (action: CommentStackAction) => void) => {
+  dispatch({
+    type: DispatchTypes.INCREASE_REPLIES_BY_NUMBER,
+    payload: { commentID, numberOfReplies },
+  });
+};
+
+export const decreaseRepliesBy = (
+  commentID: string,
+  numberOfReplies: number,
+) => (dispatch: (action: CommentStackAction) => void) => {
+  dispatch({
+    type: DispatchTypes.DECREASE_REPLIES_BY_NUMBER,
+    payload: { commentID, numberOfReplies },
+  });
+};
+
+/**
+ * Method clear the stack when going back to the first screen
+ */
+export const clearCommentStack = () => (
+  dispatch: (action: CommentStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_STACK,
+    payload: null,
+  });
+};
+
+/**
+ * Method reset all stacks after sign in/out
+ */
+export const resetAllCommentStacks = () => (
+  dispatch: (action: CommentStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.RESET_ALL_STACKS,
+    payload: null,
+  });
+};
+
+/* -------------------- end utilities ------------------- */
+
+/* ------------------ comments methods ------------------ */
+
+export const fetchComments = (postID: string) => async (
+  dispatch: (action: CommentStackAction) => void,
   getState: () => AppState,
 ) => {
-  dispatch(fetchNewCommentsStarted());
+  dispatch(fetchCommentsStarted());
   try {
-    const { currentTab } = getState().commentsStack;
-    const postIDinStack = getState().commentsStack[currentTab].top()?.postID;
+    const { currentTab } = getState().commentStack;
+    const postIDinStack = getState().commentStack[currentTab].top()?.postID;
     if (postIDinStack !== postID) {
       throw new Error('Error occurred. Please try again.');
     }
 
-    const lastVisible = getState().commentsStack[currentTab].top()!.lastVisible;
+    const lastVisible = getState().commentStack[currentTab].top()!.lastVisible;
 
     let query: FirebaseFirestoreTypes.Query;
 
@@ -47,7 +181,7 @@ export const fetchNewComments = (postID: string) => async (
     const documentSnapshots = await query.get();
 
     if (documentSnapshots.empty) {
-      return dispatch(fetchNewCommentsSuccess([], lastVisible));
+      return dispatch(fetchCommentsSuccess([], lastVisible));
     }
 
     const { user } = getState().auth;
@@ -66,94 +200,27 @@ export const fetchNewComments = (postID: string) => async (
     );
 
     if (comments.length === 0) {
-      return dispatch(fetchNewCommentsSuccess([], lastVisible));
+      return dispatch(fetchCommentsSuccess([], lastVisible));
     }
 
     const newLastVisible =
       documentSnapshots.docs[documentSnapshots.docs.length - 1];
-    dispatch(fetchNewCommentsSuccess(comments, newLastVisible));
+    dispatch(fetchCommentsSuccess(comments, newLastVisible));
   } catch (err) {
     dispatch(
-      fetchNewCommentsFailure(new Error('Error occurred. Please try again.')),
+      fetchCommentsFailure(new Error('Error occurred. Please try again.')),
     );
   }
 };
 
-// export const fetchTopComments = (postID: string) => async (
-//   dispatch: (action: CommentsStackAction) => void,
-//   getState: () => AppState,
-// ) => {
-//   dispatch(fetchTopCommentsStarted());
-//   try {
-//     // const percent = Math.floor(Math.random() * 100);
-//     // if (percent > 50) {
-//     //   throw new Error('dummy error');
-//     // }
-//     const { user } = getState().auth;
-//     const { currentTab } = getState().commentsStack;
-//     const lastVisible = getState().commentsStack[currentTab].top()?.lastVisible;
-//     let currentUser;
-//     if (user) {
-//       currentUser = {
-//         id: user.id,
-//         avatar: user.avatar,
-//         username: user.username,
-//       };
-//     }
-//     let query: FirebaseFirestoreTypes.Query;
-
-//     if (lastVisible === null) {
-//       query = fsDB
-//         .collection('posts')
-//         .doc(postID)
-//         .collection('comment_list')
-//         .orderBy('likes', 'desc')
-//         .limit(commentsPerBatch);
-//     } else {
-//       query = fsDB
-//         .collection('posts')
-//         .doc(postID)
-//         .collection('comment_list')
-//         .orderBy('likes', 'desc')
-//         .startAfter(lastVisible)
-//         .limit(commentsPerBatch);
-//     }
-
-//     const documentSnapshots = await query.get();
-
-//     if (documentSnapshots.empty) {
-//       return dispatch(fetchTopCommentsEnd());
-//     }
-
-//     const comments = await FSdocsToCommentArray(
-//       postID,
-//       documentSnapshots.docs,
-//       currentUser,
-//     );
-
-//     if (comments.length === 0) {
-//       return dispatch(fetchTopCommentsEnd());
-//     }
-
-//     const newLastVisible =
-//       documentSnapshots.docs[documentSnapshots.docs.length - 1];
-//     dispatch(fetchTopCommentsSuccess(newLastVisible, comments));
-//   } catch (err) {
-//     console.log(err.message);
-//     dispatch(fetchTopCommentsFailure(new Error('Internal server error.')));
-//   }
-// };
-
-// /* ------------- end fetch comments methods ------------- */
-
 export const createComment = (postID: string, content: string) => async (
-  dispatch: (action: CommentsStackAction) => void,
+  dispatch: (action: CommentStackAction) => void,
   getState: () => AppState,
 ) => {
   const { user } = getState().auth;
-  const { currentTab } = getState().commentsStack;
+  const { currentTab } = getState().commentStack;
   const currentTime = getCurrentUnixTime();
-  const postIDinStack = getState().commentsStack[currentTab].top()?.postID;
+  const postIDinStack = getState().commentStack[currentTab].top()?.postID;
   if (!user) {
     return dispatch(
       createCommentFailure(new Error('Unauthenticated. Please sign in.')),
@@ -217,7 +284,7 @@ export const createComment = (postID: string, content: string) => async (
  * @param commentID Comment's ID to like
  */
 export const likeComment = (postID: string, commentID: string) => async (
-  dispatch: (action: CommentsStackAction) => void,
+  dispatch: (action: CommentStackAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(likeCommentStarted(commentID));
@@ -230,8 +297,8 @@ export const likeComment = (postID: string, commentID: string) => async (
       );
     }
 
-    const { currentTab } = getState().commentsStack;
-    const postIDinStack = getState().commentsStack[currentTab].top()?.postID;
+    const { currentTab } = getState().commentStack;
+    const postIDinStack = getState().commentStack[currentTab].top()?.postID;
 
     if (postID !== postIDinStack) {
       throw new Error('Error occurred.');
@@ -286,7 +353,7 @@ export const likeComment = (postID: string, commentID: string) => async (
  * @param commentID Comment's ID to unlike
  */
 export const unlikeComment = (postID: string, commentID: string) => async (
-  dispatch: (action: CommentsStackAction) => void,
+  dispatch: (action: CommentStackAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(unlikeCommentStarted(commentID));
@@ -299,8 +366,8 @@ export const unlikeComment = (postID: string, commentID: string) => async (
       );
     }
 
-    const { currentTab } = getState().commentsStack;
-    const postIDinStack = getState().commentsStack[currentTab].top()?.postID;
+    const { currentTab } = getState().commentStack;
+    const postIDinStack = getState().commentStack[currentTab].top()?.postID;
 
     if (postID !== postIDinStack) {
       throw new Error('Error occurred.');
@@ -356,7 +423,7 @@ export const deleteComment = (
   commentID: string,
   numberOfReplies: number,
 ) => async (
-  dispatch: (action: CommentsStackAction) => void,
+  dispatch: (action: CommentStackAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(deleteCommentStarted(commentID));
@@ -370,8 +437,8 @@ export const deleteComment = (
       );
     }
 
-    const { currentTab } = getState().commentsStack;
-    const postIDinStack = getState().commentsStack[currentTab].top()?.postID;
+    const { currentTab } = getState().commentStack;
+    const postIDinStack = getState().commentStack[currentTab].top()?.postID;
 
     if (postID !== postIDinStack) {
       throw new Error('Error occurred');
@@ -408,157 +475,35 @@ export const deleteComment = (
   }
 };
 
-export const clearCreateCommentError = () => (
-  dispatch: (action: CommentsStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_CREATE_COMMENT_ERROR,
-    payload: null,
-  });
-};
+/* ---------------- end comments methods ---------------- */
 
-export const setCurrentTabForCommentsStack = (tab: CurrentTabScreen) => (
-  dispatch: (action: CommentsStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.SET_CURRENT_TAB,
-    payload: tab,
-  });
-};
+/* ----------------- comment dispatches ----------------- */
 
-export const clearDeleteCommentError = () => (
-  dispatch: (action: CommentsStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_DELETE_COMMENT_ERROR,
-    payload: null,
-  });
-};
+/* --------------- fetch comments actions --------------- */
 
-export const clearLikeCommentError = () => (
-  dispatch: (action: CommentsStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_LIKE_COMMENT_ERROR,
-    payload: null,
-  });
-};
-
-export const clearUnlikeCommentError = () => (
-  dispatch: (action: CommentsStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_UNLIKE_COMMENT_ERROR,
-    payload: null,
-  });
-};
-
-export const pushCommentsLayer = (postID: string) => (
-  dispatch: (action: CommentsStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.PUSH_COMMENTS_LAYER,
-    payload: postID,
-  });
-};
-
-export const popCommentsLayer = () => (
-  dispatch: (action: CommentsStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.POP_COMMENTS_LAYER,
-    payload: null,
-  });
-};
-
-// export const setSortComments = (by: 'new' | 'top') => (
-//   dispatch: (action: CommentsStackAction) => void,
-// ) => {
-//   dispatch({
-//     type: SET_SORT_COMMENTS,
-//     payload: by,
-//   });
-// };
-
-export const increaseRepliesBy = (
-  commentID: string,
-  numberOfReplies: number,
-) => (dispatch: (action: CommentsStackAction) => void) => {
-  dispatch({
-    type: DispatchTypes.INCREASE_REPLIES_BY_NUMBER,
-    payload: { commentID, numberOfReplies },
-  });
-};
-
-export const decreaseRepliesBy = (
-  commentID: string,
-  numberOfReplies: number,
-) => (dispatch: (action: CommentsStackAction) => void) => {
-  dispatch({
-    type: DispatchTypes.DECREASE_REPLIES_BY_NUMBER,
-    payload: { commentID, numberOfReplies },
-  });
-};
-
-export const clearCommentsStack = () => (
-  dispatch: (action: CommentsStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_STACK,
-    payload: null,
-  });
-};
-
-// /* ----------------- comment dispatches ----------------- */
-
-// /* --------------- fetch comments actions --------------- */
-
-const fetchNewCommentsStarted = (): CommentsStackAction => ({
-  type: DispatchTypes.FETCH_NEW_COMMENTS_STARTED,
+const fetchCommentsStarted = (): CommentStackAction => ({
+  type: DispatchTypes.FETCH_COMMENTS_STARTED,
   payload: null,
 });
 
-const fetchNewCommentsSuccess = (
-  commentList: Array<Comment>,
+const fetchCommentsSuccess = (
+  comments: Array<Comment>,
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
-): CommentsStackAction => ({
-  type: DispatchTypes.FETCH_NEW_COMMENTS_SUCCESS,
-  payload: { commentList, lastVisible },
+): CommentStackAction => ({
+  type: DispatchTypes.FETCH_COMMENTS_SUCCESS,
+  payload: { comments, lastVisible },
 });
 
-const fetchNewCommentsFailure = (error: Error): CommentsStackAction => ({
-  type: DispatchTypes.FETCH_NEW_COMMENTS_FAILURE,
+const fetchCommentsFailure = (error: Error): CommentStackAction => ({
+  type: DispatchTypes.FETCH_COMMENTS_FAILURE,
   payload: error,
 });
 
-// const fetchTopCommentsStarted = (): CommentsStackAction => ({
-//   type: FETCH_TOP_COMMENTS_STARTED,
-//   payload: null,
-// });
+/* ------------- end fetch comments actions ------------- */
 
-// const fetchTopCommentsEnd = (): CommentsStackAction => ({
-//   type: FETCH_TOP_COMMENTS_END,
-//   payload: null,
-// });
+/* --------------- create comment actions --------------- */
 
-// const fetchTopCommentsSuccess = (
-//   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot,
-//   commentList: Array<Comment>,
-// ): CommentsStackAction => ({
-//   type: FETCH_TOP_COMMENTS_SUCCESS,
-//   payload: { lastVisible, commentList },
-// });
-
-// const fetchTopCommentsFailure = (error: Error): CommentsStackAction => ({
-//   type: FETCH_TOP_COMMENTS_FAILURE,
-//   payload: error,
-// });
-
-// /* ------------- end fetch comments actions ------------- */
-
-// /* --------------- create comment actions --------------- */
-
-const createCommentStarted = (tempComment: Comment): CommentsStackAction => ({
+const createCommentStarted = (tempComment: Comment): CommentStackAction => ({
   type: DispatchTypes.CREATE_COMMENT_STARTED,
   payload: tempComment,
 });
@@ -566,26 +511,26 @@ const createCommentStarted = (tempComment: Comment): CommentsStackAction => ({
 const createCommentSuccess = (
   newComment: Comment,
   postID: string,
-): CommentsStackAction => ({
+): CommentStackAction => ({
   type: DispatchTypes.CREATE_COMMENT_SUCCESS,
   payload: { newComment, postID },
 });
 
-const createCommentFailure = (error: Error): CommentsStackAction => ({
+const createCommentFailure = (error: Error): CommentStackAction => ({
   type: DispatchTypes.CREATE_COMMENT_FAILURE,
   payload: error,
 });
 
-// /* ------------- end create comment actions ------------- */
+/* ------------- end create comment actions ------------- */
 
-// /* -------------- interact comment actions -------------- */
+/* -------------- interact comment actions -------------- */
 
-const likeCommentStarted = (commentID: string): CommentsStackAction => ({
+const likeCommentStarted = (commentID: string): CommentStackAction => ({
   type: DispatchTypes.LIKE_COMMENT_STARTED,
   payload: commentID,
 });
 
-const likeCommentSuccess = (): CommentsStackAction => ({
+const likeCommentSuccess = (): CommentStackAction => ({
   type: DispatchTypes.LIKE_COMMENT_SUCCESS,
   payload: null,
 });
@@ -593,17 +538,17 @@ const likeCommentSuccess = (): CommentsStackAction => ({
 const likeCommentFailure = (
   commentID: string,
   error: Error,
-): CommentsStackAction => ({
+): CommentStackAction => ({
   type: DispatchTypes.LIKE_COMMENT_FAILURE,
   payload: { commentID, error },
 });
 
-const unlikeCommentStarted = (commentID: string): CommentsStackAction => ({
+const unlikeCommentStarted = (commentID: string): CommentStackAction => ({
   type: DispatchTypes.UNLIKE_COMMENT_STARTED,
   payload: commentID,
 });
 
-const unlikeCommentSuccess = (): CommentsStackAction => ({
+const unlikeCommentSuccess = (): CommentStackAction => ({
   type: DispatchTypes.UNLIKE_COMMENT_SUCCESS,
   payload: null,
 });
@@ -611,23 +556,23 @@ const unlikeCommentSuccess = (): CommentsStackAction => ({
 const unlikeCommentFailure = (
   commentID: string,
   error: Error,
-): CommentsStackAction => ({
+): CommentStackAction => ({
   type: DispatchTypes.UNLIKE_COMMENT_FAILURE,
   payload: { commentID, error },
 });
 
-// /* ------------ end interact comment actions ------------ */
+/* ------------ end interact comment actions ------------ */
 
-// /* --------------- delete comment actions --------------- */
+/* --------------- delete comment actions --------------- */
 
-const deleteCommentStarted = (commentID: string): CommentsStackAction => ({
+const deleteCommentStarted = (commentID: string): CommentStackAction => ({
   type: DispatchTypes.DELETE_COMMENT_STARTED,
   payload: commentID,
 });
 
 const deleteCommentSuccess = (
   commentIDwithFlag: string,
-): CommentsStackAction => ({
+): CommentStackAction => ({
   type: DispatchTypes.DELETE_COMMENT_SUCCESS,
   payload: commentIDwithFlag,
 });
@@ -635,11 +580,11 @@ const deleteCommentSuccess = (
 const deleteCommentFailure = (
   commentIDwithFlag: string,
   error: Error,
-): CommentsStackAction => ({
+): CommentStackAction => ({
   type: DispatchTypes.DELETE_COMMENT_FAILURE,
   payload: { commentIDwithFlag, error },
 });
 
-// /* ------------- end delete comment actions ------------- */
+/* ------------- end delete comment actions ------------- */
 
-// /* --------------- end comment dispatches --------------- */
+/* --------------- end comment dispatches --------------- */

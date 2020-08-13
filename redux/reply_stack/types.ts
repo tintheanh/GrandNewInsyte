@@ -2,14 +2,20 @@ import {
   Reply,
   CurrentTabScreen,
   NavigationStack,
-  RepliesStackLayer,
+  ReplyStackLayer,
 } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
 
 export enum DispatchTypes {
   SET_CURRENT_TAB = 'SET_CURRENT_TAB',
-  PUSH_REPLIES_LAYER = 'PUSH_REPLIES_LAYER',
-  POP_REPLIES_LAYER = 'POP_REPLIES_LAYER',
+  PUSH_REPLY_LAYER = 'PUSH_REPLY_LAYER',
+  POP_REPLY_LAYER = 'POP_REPLY_LAYER',
+  CLEAR_STACK = 'CLEAR_STACK',
+  RESET_ALL_STACKS = 'RESET_ALL_STACKS',
+  CLEAR_CREATE_REPLY_ERROR = 'CLEAR_CREATE_REPLY_ERROR',
+  CLEAR_DELETE_REPLY_ERROR = 'CLEAR_DELETE_REPLY_ERROR',
+  CLEAR_LIKE_REPLY_ERROR = 'CLEAR_LIKE_REPLY_ERROR',
+  CLEAR_UNLIKE_REPLY_ERROR = 'CLEAR_UNLIKE_REPLY_ERROR',
 
   FETCH_REPLIES_STARTED = 'FETCH_REPLIES_STARTED',
   FETCH_REPLIES_SUCCESS = 'FETCH_REPLIES_SUCCESS',
@@ -30,16 +36,9 @@ export enum DispatchTypes {
   UNLIKE_REPLY_STARTED = 'UNLIKE_REPLY_STARTED',
   UNLIKE_REPLY_SUCCESS = 'UNLIKE_REPLY_SUCCESS',
   UNLIKE_REPLY_FAILURE = 'UNLIKE_REPLY_FAILURE',
-
-  CLEAR_CREATE_REPLY_ERROR = 'CLEAR_CREATE_REPLY_ERROR',
-  CLEAR_DELETE_REPLY_ERROR = 'CLEAR_DELETE_REPLY_ERROR',
-  CLEAR_LIKE_REPLY_ERROR = 'CLEAR_LIKE_REPLY_ERROR',
-  CLEAR_UNLIKE_REPLY_ERROR = 'CLEAR_UNLIKE_REPLY_ERROR',
-
-  CLEAR_STACK = 'CLEAR_STACK',
 }
 
-export interface RepliesStackAction {
+export interface ReplyStackAction {
   type: string;
   payload:
     | string
@@ -47,9 +46,8 @@ export interface RepliesStackAction {
     | Reply
     | {
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
-        replyList: Array<Reply>;
+        replies: Array<Reply>;
       }
-    | { postID: string; commentID: string }
     | { newReply: Reply; commentID: string }
     | {
         newReply: Reply;
@@ -68,8 +66,8 @@ export interface RepliesStackAction {
     | null;
 }
 
-export interface RepliesStackState {
-  homeTabStack: NavigationStack<RepliesStackLayer>;
-  userTabStack: NavigationStack<RepliesStackLayer>;
+export interface ReplyStackState {
+  homeTabStack: NavigationStack<ReplyStackLayer>;
+  userTabStack: NavigationStack<ReplyStackLayer>;
   currentTab: CurrentTabScreen;
 }

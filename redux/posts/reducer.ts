@@ -158,11 +158,7 @@ export default function postsReducer(
         lastVisible: number;
       };
       const newState = { ...state };
-      const newPublicNewPosts = state.public.posts.concat(payload.posts);
-
-      // ensure no duplicates
-      newState.public.posts = removeDuplicatesFromArray(newPublicNewPosts);
-
+      newState.public.posts = state.public.posts.concat(payload.posts);
       newState.public.lastNewVisible = payload.lastVisible;
       newState.public.fetchLoading = false;
       newState.public.pullLoading = false;
@@ -229,7 +225,7 @@ export default function postsReducer(
       const newPublicHotPosts = state.public.posts.concat(payload.posts);
 
       // ensure no duplicates
-      newState.public.posts = removeDuplicatesFromArray(newPublicHotPosts);
+      newState.public.posts = newPublicHotPosts;
       newState.public.lastHotVisible = payload.lastVisible;
       newState.public.fetchLoading = false;
       newState.public.pullLoading = false;

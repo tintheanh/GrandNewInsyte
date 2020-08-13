@@ -3,7 +3,7 @@ import UserStats from './UserStats';
 import UserInfo from './UserInfo';
 import UserListPost from './UserListPost';
 import UserTaggedListPost from './UserTaggedListPost';
-import UserPostCard from './UserPostCard';
+import UserPostCardWrapper from './UserPostCardWrapper';
 
 export {
   UserAvatar,
@@ -11,5 +11,5 @@ export {
   UserInfo,
   UserListPost,
   UserTaggedListPost,
-  UserPostCard,
+  UserPostCardWrapper,
 };

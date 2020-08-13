@@ -1,5 +1,5 @@
-import { RepliesStackAction, DispatchTypes } from './types';
-import { Reply, MyError, MyErrorCodes } from '../../models';
+import { ReplyStackAction, DispatchTypes } from './types';
+import { Reply, MyError, MyErrorCodes, CurrentTabScreen } from '../../models';
 import {
   FSdocsToReplyArray,
   getCurrentUnixTime,
@@ -9,53 +9,142 @@ import { AppState } from '../store';
 import { pendingReplyID, pendingDeleteReplyFlag } from '../../constants';
 import { FirebaseFirestoreTypes, fsDB, repliesPerBatch } from '../../config';
 
-export const pushRepliesLayer = (commentID: string) => (
-  dispatch: (action: RepliesStackAction) => void,
-  getState: () => AppState,
+/* ---------------------- utilities --------------------- */
+
+/**
+ * Method push new reply layer before navigating to a new reply screen
+ * @param commentID Comment's ID acts as identifier of each layer
+ */
+export const pushReplyLayer = (commentID: string) => (
+  dispatch: (action: ReplyStackAction) => void,
 ) => {
-  const { currentTab } = getState().commentsStack;
-  const postID = getState().commentsStack[currentTab].top()?.postID as string;
   dispatch({
-    type: DispatchTypes.PUSH_REPLIES_LAYER,
-    payload: { postID, commentID },
+    type: DispatchTypes.PUSH_REPLY_LAYER,
+    payload: commentID,
   });
 };
 
-export const popRepliesLayer = () => (
-  dispatch: (action: RepliesStackAction) => void,
+/**
+ * Method pop reply layer when going back
+ */
+export const popReplyLayer = () => (
+  dispatch: (action: ReplyStackAction) => void,
 ) => {
   dispatch({
-    type: DispatchTypes.POP_REPLIES_LAYER,
+    type: DispatchTypes.POP_REPLY_LAYER,
     payload: null,
   });
 };
 
-export const setCurrentTabForRepliesStack = (
-  tab: 'homeTabStack' | 'userTabStack',
-) => (dispatch: (action: RepliesStackAction) => void) => {
+/**
+ * Method set current focused tab screen
+ * @param tab Tab screen to set focus
+ */
+export const setCurrentTabForReplyStack = (tab: CurrentTabScreen) => (
+  dispatch: (action: ReplyStackAction) => void,
+) => {
   dispatch({
     type: DispatchTypes.SET_CURRENT_TAB,
     payload: tab,
   });
 };
 
+/**
+ * Method clear create reply error
+ */
+export const clearCreateReplyError = () => (
+  dispatch: (action: ReplyStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_CREATE_REPLY_ERROR,
+    payload: null,
+  });
+};
+
+/**
+ * Method clear delete reply error
+ */
+export const clearDeleteReplyError = () => (
+  dispatch: (action: ReplyStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_DELETE_REPLY_ERROR,
+    payload: null,
+  });
+};
+
+/**
+ * Method clear like reply error
+ */
+export const clearLikeReplyError = () => (
+  dispatch: (action: ReplyStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_LIKE_REPLY_ERROR,
+    payload: null,
+  });
+};
+
+/**
+ * Method clear unlike reply error
+ */
+export const clearUnlikeReplyError = () => (
+  dispatch: (action: ReplyStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_UNLIKE_REPLY_ERROR,
+    payload: null,
+  });
+};
+
+/**
+ * Method clear the stack when going back to the first screen
+ */
+export const clearReplyStack = () => (
+  dispatch: (action: ReplyStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_STACK,
+    payload: null,
+  });
+};
+
+/**
+ * Method reset all stacks after sign in/out
+ */
+export const resetAllReplyStacks = () => (
+  dispatch: (action: ReplyStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.RESET_ALL_STACKS,
+    payload: null,
+  });
+};
+
+/* -------------------- end utilities ------------------- */
+
+/* -------------------- reply methods ------------------- */
+
+/**
+ * Method fetch replies
+ * @param commentID Parent comment's ID to which replies belong
+ */
 export const fetchReplies = (commentID: string) => async (
-  dispatch: (action: RepliesStackAction) => void,
+  dispatch: (action: ReplyStackAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(fetchRepliesStarted());
   try {
-    const currentTabForReplies = getState().repliesStack.currentTab;
-    const currentTabForComments = getState().commentsStack.currentTab;
-    const commentIDinStack = getState().repliesStack[currentTabForReplies].top()
+    const currentTabForReplies = getState().replyStack.currentTab;
+    const currentTabForComments = getState().commentStack.currentTab;
+    const commentIDinStack = getState().replyStack[currentTabForReplies].top()
       ?.commentID;
-    const postID = getState().commentsStack[currentTabForComments].top()
-      ?.postID;
+    const postID = getState().commentStack[currentTabForComments].top()?.postID;
     if (commentID !== commentIDinStack || !postID) {
       throw new Error('Error occurred.');
     }
 
-    const lastVisible = getState().repliesStack[currentTabForReplies].top()!
+    const lastVisible = getState().replyStack[currentTabForReplies].top()!
       .lastVisible;
 
     let query: FirebaseFirestoreTypes.Query;
@@ -122,7 +211,7 @@ export const fetchReplies = (commentID: string) => async (
  * @param content Content of new reply
  */
 export const createReply = (commentID: string, content: string) => async (
-  dispatch: (action: RepliesStackAction) => void,
+  dispatch: (action: ReplyStackAction) => void,
   getState: () => AppState,
 ) => {
   const { user } = getState().auth;
@@ -145,12 +234,11 @@ export const createReply = (commentID: string, content: string) => async (
   };
   dispatch(createReplyStarted(tempReply));
   try {
-    const currentTabForComments = getState().commentsStack.currentTab;
-    const currentTabForReplies = getState().repliesStack.currentTab;
+    const currentTabForComments = getState().commentStack.currentTab;
+    const currentTabForReplies = getState().replyStack.currentTab;
 
-    const postID = getState().commentsStack[currentTabForComments].top()
-      ?.postID;
-    const commentIDinStack = getState().repliesStack[currentTabForReplies].top()
+    const postID = getState().commentStack[currentTabForComments].top()?.postID;
+    const commentIDinStack = getState().replyStack[currentTabForReplies].top()
       ?.commentID;
     if (!postID || commentIDinStack !== commentID) {
       throw new Error('Error occurred.');
@@ -195,7 +283,6 @@ export const createReply = (commentID: string, content: string) => async (
       dispatch(createReplySuccess(newReply, commentID));
     });
   } catch (err) {
-    console.log(err.message);
     dispatch(
       createReplyFailure(new Error('Error occurred. Please try again.')),
     );
@@ -208,7 +295,7 @@ export const createReply = (commentID: string, content: string) => async (
  * @param replyID Reply's ID to delete
  */
 export const deleteReply = (commentID: string, replyID: string) => async (
-  dispatch: (action: RepliesStackAction) => void,
+  dispatch: (action: ReplyStackAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(deleteReplyStarted(replyID));
@@ -222,11 +309,10 @@ export const deleteReply = (commentID: string, replyID: string) => async (
       );
     }
 
-    const currentTabForComments = getState().commentsStack.currentTab;
-    const currentTabForReplies = getState().repliesStack.currentTab;
-    const postID = getState().commentsStack[currentTabForComments].top()
-      ?.postID;
-    const commentIDinStack = getState().repliesStack[currentTabForReplies].top()
+    const currentTabForComments = getState().commentStack.currentTab;
+    const currentTabForReplies = getState().replyStack.currentTab;
+    const postID = getState().commentStack[currentTabForComments].top()?.postID;
+    const commentIDinStack = getState().replyStack[currentTabForReplies].top()
       ?.commentID;
 
     if (!postID || commentIDinStack !== commentID) {
@@ -281,7 +367,7 @@ export const deleteReply = (commentID: string, replyID: string) => async (
  * @param replyID Reply ID to like
  */
 export const likeReply = (commentID: string, replyID: string) => async (
-  dispatch: (action: RepliesStackAction) => void,
+  dispatch: (action: ReplyStackAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(likeReplyStarted(replyID));
@@ -294,11 +380,10 @@ export const likeReply = (commentID: string, replyID: string) => async (
       );
     }
 
-    const currentTabForComments = getState().commentsStack.currentTab;
-    const currentTabForReplies = getState().repliesStack.currentTab;
-    const postID = getState().commentsStack[currentTabForComments].top()
-      ?.postID;
-    const commentIDinStack = getState().repliesStack[currentTabForReplies].top()
+    const currentTabForComments = getState().commentStack.currentTab;
+    const currentTabForReplies = getState().replyStack.currentTab;
+    const postID = getState().commentStack[currentTabForComments].top()?.postID;
+    const commentIDinStack = getState().replyStack[currentTabForReplies].top()
       ?.commentID;
     if (!postID || commentIDinStack !== commentID) {
       throw new Error('Error occurred');
@@ -352,7 +437,7 @@ export const likeReply = (commentID: string, replyID: string) => async (
  * @param replyID Reply ID to unlike
  */
 export const unlikeReply = (commentID: string, replyID: string) => async (
-  dispatch: (action: RepliesStackAction) => void,
+  dispatch: (action: ReplyStackAction) => void,
   getState: () => AppState,
 ) => {
   dispatch(unlikeReplyStarted(replyID));
@@ -365,11 +450,10 @@ export const unlikeReply = (commentID: string, replyID: string) => async (
       );
     }
 
-    const currentTabForComments = getState().commentsStack.currentTab;
-    const currentTabForReplies = getState().repliesStack.currentTab;
-    const postID = getState().commentsStack[currentTabForComments].top()
-      ?.postID;
-    const commentIDinStack = getState().repliesStack[currentTabForReplies].top()
+    const currentTabForComments = getState().commentStack.currentTab;
+    const currentTabForReplies = getState().replyStack.currentTab;
+    const postID = getState().commentStack[currentTabForComments].top()?.postID;
+    const commentIDinStack = getState().replyStack[currentTabForReplies].top()
       ?.commentID;
     if (!postID || commentIDinStack !== commentID) {
       throw new Error('Error occurred');
@@ -415,69 +499,26 @@ export const unlikeReply = (commentID: string, replyID: string) => async (
   }
 };
 
-export const clearCreateReplyError = () => (
-  dispatch: (action: RepliesStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_CREATE_REPLY_ERROR,
-    payload: null,
-  });
-};
-
-export const clearDeleteReplyError = () => (
-  dispatch: (action: RepliesStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_DELETE_REPLY_ERROR,
-    payload: null,
-  });
-};
-
-export const clearLikeReplyError = () => (
-  dispatch: (action: RepliesStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_LIKE_REPLY_ERROR,
-    payload: null,
-  });
-};
-
-export const clearUnlikeReplyError = () => (
-  dispatch: (action: RepliesStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_UNLIKE_REPLY_ERROR,
-    payload: null,
-  });
-};
-
-export const clearRepliesStack = () => (
-  dispatch: (action: RepliesStackAction) => void,
-) => {
-  dispatch({
-    type: DispatchTypes.CLEAR_STACK,
-    payload: null,
-  });
-};
+/* ------------------ end reply methods ----------------- */
 
 /* ------------------ reply dispatches ------------------ */
 
 /* -------------- fetch replies actions -------------- */
 
-const fetchRepliesStarted = (): RepliesStackAction => ({
+const fetchRepliesStarted = (): ReplyStackAction => ({
   type: DispatchTypes.FETCH_REPLIES_STARTED,
   payload: null,
 });
 
 const fetchRepliesSuccess = (
-  replyList: Array<Reply>,
+  replies: Array<Reply>,
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
-): RepliesStackAction => ({
+): ReplyStackAction => ({
   type: DispatchTypes.FETCH_REPLIES_SUCCESS,
-  payload: { lastVisible, replyList },
+  payload: { lastVisible, replies },
 });
 
-const fetchRepliesFailure = (error: Error): RepliesStackAction => ({
+const fetchRepliesFailure = (error: Error): ReplyStackAction => ({
   type: DispatchTypes.FETCH_REPLIES_FAILURE,
   payload: error,
 });
@@ -486,7 +527,7 @@ const fetchRepliesFailure = (error: Error): RepliesStackAction => ({
 
 /* ----------- create/delete reply actions ----------- */
 
-const createReplyStarted = (tempRely: Reply): RepliesStackAction => ({
+const createReplyStarted = (tempRely: Reply): ReplyStackAction => ({
   type: DispatchTypes.CREATE_REPLY_STARTED,
   payload: tempRely,
 });
@@ -494,22 +535,22 @@ const createReplyStarted = (tempRely: Reply): RepliesStackAction => ({
 const createReplySuccess = (
   newReply: Reply,
   commentID: string,
-): RepliesStackAction => ({
+): ReplyStackAction => ({
   type: DispatchTypes.CREATE_REPLY_SUCCESS,
   payload: { newReply, commentID },
 });
 
-const createReplyFailure = (error: Error): RepliesStackAction => ({
+const createReplyFailure = (error: Error): ReplyStackAction => ({
   type: DispatchTypes.CREATE_REPLY_FAILURE,
   payload: error,
 });
 
-const deleteReplyStarted = (replyID: string): RepliesStackAction => ({
+const deleteReplyStarted = (replyID: string): ReplyStackAction => ({
   type: DispatchTypes.DELETE_REPLY_STARTED,
   payload: replyID,
 });
 
-const deleteReplySuccess = (replyIDwithFlag: string): RepliesStackAction => ({
+const deleteReplySuccess = (replyIDwithFlag: string): ReplyStackAction => ({
   type: DispatchTypes.DELETE_REPLY_SUCCESS,
   payload: replyIDwithFlag,
 });
@@ -517,7 +558,7 @@ const deleteReplySuccess = (replyIDwithFlag: string): RepliesStackAction => ({
 const deleteReplyFailure = (
   replyIDwithFlag: string,
   error: Error,
-): RepliesStackAction => ({
+): ReplyStackAction => ({
   type: DispatchTypes.DELETE_REPLY_FAILURE,
   payload: { replyIDwithFlag, error },
 });
@@ -526,30 +567,27 @@ const deleteReplyFailure = (
 
 /* -------------- interact reply actions ------------- */
 
-const likeReplyStarted = (replyID: string): RepliesStackAction => ({
+const likeReplyStarted = (replyID: string): ReplyStackAction => ({
   type: DispatchTypes.LIKE_REPLY_STARTED,
   payload: replyID,
 });
 
-const likeReplySuccess = (): RepliesStackAction => ({
+const likeReplySuccess = (): ReplyStackAction => ({
   type: DispatchTypes.LIKE_REPLY_SUCCESS,
   payload: null,
 });
 
-const likeReplyFailure = (
-  replyID: string,
-  error: Error,
-): RepliesStackAction => ({
+const likeReplyFailure = (replyID: string, error: Error): ReplyStackAction => ({
   type: DispatchTypes.LIKE_REPLY_FAILURE,
   payload: { replyID, error },
 });
 
-const unlikeReplyStarted = (replyID: string): RepliesStackAction => ({
+const unlikeReplyStarted = (replyID: string): ReplyStackAction => ({
   type: DispatchTypes.UNLIKE_REPLY_STARTED,
   payload: replyID,
 });
 
-const unlikeReplySuccess = (): RepliesStackAction => ({
+const unlikeReplySuccess = (): ReplyStackAction => ({
   type: DispatchTypes.UNLIKE_REPLY_SUCCESS,
   payload: null,
 });
@@ -557,7 +595,7 @@ const unlikeReplySuccess = (): RepliesStackAction => ({
 const unlikeReplyFailure = (
   replyID: string,
   error: Error,
-): RepliesStackAction => ({
+): ReplyStackAction => ({
   type: DispatchTypes.UNLIKE_REPLY_FAILURE,
   payload: { replyID, error },
 });

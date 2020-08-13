@@ -47,21 +47,6 @@ exports.checkUsername = functions.https.onCall((data, context) => {
     });
 });
 
-// exports.deleteUser = functions.https.onCall((data, context) => {
-//   const { uid } = data;
-
-//   if (!(typeof username === 'string') || uid.length === 0) {
-//     throw new functions.https.HttpsError('invalid-argument', 'Invalid UID.');
-//   }
-
-//   return admin
-//     .auth()
-//     .deleteUser(uid)
-//     .catch((err) => {
-//       throw new functions.https.HttpsError(err.code, err.message);
-//     });
-// });
-
 exports.handleCreatePostForFollowers = functions.firestore
   .document('posts/{postId}')
   .onCreate((snapshot, context) => {
@@ -72,29 +57,31 @@ exports.handleCreatePostForFollowers = functions.firestore
     const uid = newPost.posted_by;
 
     if (privacy !== 'private') {
+      // put user's own post to their following post list
       return admin
         .database()
         .ref(`users/${uid}/following_posts`)
         .child(postID)
         .set({ date_posted, posted_by: uid })
-        .then(() =>
+        .then(() => {
+          // add post reference to all following post lists of user's followers
           admin
-            .database()
-            .ref(`users/${uid}/follower_list`)
-            .once('value')
-            .then((followerListSnapshot) => {
-              followerListSnapshot.forEach((doc) => {
-                const followerID = doc.key;
-                admin
-                  .database()
-                  .ref(`users/${followerID}/following_posts`)
-                  .child(postID)
+            .firestore()
+            .collection('users')
+            .doc(uid)
+            .collection('follower_list')
+            .listDocuments()
+            .then((followerListRef) => {
+              const usersRef = admin.database().ref('users');
+              followerListRef.forEach((it) => {
+                usersRef
+                  .child(`${it.id}/${postID}`)
                   .set({ date_posted, posted_by: uid })
                   .catch((err) => {});
               });
             })
-            .catch((err) => console.log(err.code, err.message)),
-        );
+            .catch((err) => {});
+        });
     }
     return Promise.resolve();
   });
@@ -143,7 +130,7 @@ exports.handleDeletePost = functions.firestore
         .catch((err) => {});
     }
 
-    // delete post from followers
+    // delete post from followers' following post lists
     if (privacy !== 'private') {
       admin
         .database()
@@ -152,15 +139,16 @@ exports.handleDeletePost = functions.firestore
         .remove()
         .then(() => {
           admin
-            .database()
-            .ref(`users/${uid}/follower_list`)
-            .once('value')
-            .then((followerListSnapshot) => {
-              followerListSnapshot.forEach((doc) => {
-                const followerID = doc.key;
-                admin
-                  .database()
-                  .ref(`users/${followerID}/following_posts`)
+            .firestore()
+            .collection('users')
+            .doc(uid)
+            .collection('follower_list')
+            .listDocuments()
+            .then((followerListRef) => {
+              const usersRef = admin.database().ref('users');
+              followerListRef.forEach((it) => {
+                usersRef
+                  .child(`${it.id}/following_posts`)
                   .child(postID)
                   .remove()
                   .catch((err) => {});
@@ -215,33 +203,50 @@ exports.handleFollow = functions.firestore
   .onCreate((snapshot, context) => {
     const uid = context.params.userId;
     const followedUID = context.params.followingId;
+
+    const followerdGuyRef = admin
+      .firestore()
+      .collection('users')
+      .doc(followedUID);
+    const myselfRef = admin.firestore().collection('users').doc(uid);
+    admin.firestore().runTransaction(async (trans) => {
+      const userDoc = await trans.get(followerdGuyRef);
+      const myself = await trans.get(myselfRef);
+
+      // update new follower number of followed guy
+      const newFollowers = userDoc.data().followers + 1;
+      trans.update(followerdGuyRef, { followers: newFollowers });
+
+      // add myself to followed guy's follower list
+      const myselfAboutToAddedRef = followerdGuyRef
+        .collection('follower_list')
+        .doc(uid);
+      const myselfUsername = myself.data().username;
+      trans.set(myselfAboutToAddedRef, {
+        for_search: generateSubstringForUsername(myselfUsername),
+      });
+    });
+
+    // add all followed guy's posts to myself's following posts
     return admin
-      .database()
-      .ref(`users/${followedUID}/follower_list`)
-      .child(uid)
-      .set(1)
-      .then(async () => {
-        try {
-          const postSnapshots = await admin
-            .firestore()
-            .collection('posts')
-            .where('posted_by', '==', followedUID)
-            .where('privacy', 'in', ['followers', 'public'])
-            .get();
-          postSnapshots.forEach((doc) => {
-            admin
-              .database()
-              .ref(`users/${uid}/following_posts`)
-              .child(doc.id)
-              .set({
-                posted_by: followedUID,
-                date_posted: doc.data().date_posted,
-              })
-              .catch((err) => {});
-          });
-        } catch (err) {
-          console.log(err.code, err.message);
-        }
+      .firestore()
+      .collection('posts')
+      .where('posted_by', '==', followedUID)
+      .where('privacy', 'in', ['followers', 'public'])
+      .get()
+      .then((postSnapshots) => {
+        const followingPostsRef = admin
+          .database()
+          .ref(`users/${uid}/following_posts`);
+        postSnapshots.forEach((doc) => {
+          followingPostsRef
+            .child(doc.id)
+            .set({
+              posted_by: followedUID,
+              date_posted: doc.data().date_posted,
+            })
+            .catch((err) => {});
+        });
       })
       .catch((err) => console.log(err.code, err.message));
   });
@@ -251,34 +256,45 @@ exports.handleUnfollow = functions.firestore
   .onDelete((snapshot, context) => {
     const uid = context.params.userId;
     const unfollowedUID = context.params.followingId;
+
+    const unfollowerdGuyRef = admin
+      .firestore()
+      .collection('users')
+      .doc(unfollowedUID);
+    admin.firestore().runTransaction(async (trans) => {
+      const userDoc = await trans.get(unfollowerdGuyRef);
+      const newFollowers = userDoc.data().followers - 1;
+      // update new follower number of the unfollowed guy
+      trans.update(unfollowerdGuyRef, { followers: newFollowers });
+
+      // remove myself from unfollowed guy's follower list
+      const myselfAboutToDeletedRef = unfollowerdGuyRef
+        .collection('follower_list')
+        .doc(uid);
+      trans.delete(myselfAboutToDeletedRef);
+    });
+
+    // remove all unfollowed guy's posts from myself's following posts
     return admin
       .database()
-      .ref(`users/${unfollowedUID}/follower_list`)
-      .child(uid)
-      .remove()
-      .then(async () => {
-        try {
-          const postSnapshots = await admin
-            .database()
-            .ref(`users/${uid}/following_posts`)
-            .once('value');
-          const postIDs = [];
-          postSnapshots.forEach((doc) => {
-            if (doc.val().posted_by === unfollowedUID) {
-              postIDs.push(doc.key);
-            }
-          });
-          postIDs.forEach((id) =>
-            admin
-              .database()
-              .ref(`users/${uid}/following_posts`)
-              .child(id)
-              .remove()
-              .catch((err) => {}),
-          );
-        } catch (err) {
-          console.log(err.code, err.message);
-        }
+      .ref(`users/${uid}/following_posts`)
+      .once('value')
+      .then((postSnapshots) => {
+        const postIDs = [];
+        postSnapshots.forEach((doc) => {
+          if (doc.val().posted_by === unfollowedUID) {
+            postIDs.push(doc.key);
+          }
+        });
+        const followingPostsRef = admin
+          .database()
+          .ref(`users/${uid}/following_posts`);
+        postIDs.forEach((id) =>
+          followingPostsRef
+            .child(id)
+            .remove()
+            .catch((err) => {}),
+        );
       })
       .catch((err) => console.log(err.code, err.message));
   });

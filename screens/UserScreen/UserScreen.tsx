@@ -1,11 +1,5 @@
 import React, { Component } from 'react';
-import {
-  View,
-  StyleSheet,
-  Text,
-  ActivityIndicator,
-  TouchableWithoutFeedback,
-} from 'react-native';
+import { View, StyleSheet, Text, TouchableWithoutFeedback } from 'react-native';
 import { connect } from 'react-redux';
 import {
   BigAvatar,
@@ -16,28 +10,72 @@ import {
   ErrorView,
   Loading,
 } from '../../components';
-import { UserPostCard } from './private_components';
+import { UserPostCardWrapper } from './private_components';
 import { Colors, Layout, MaterialCommunityIcons } from '../../constants';
 import { AppState } from '../../redux/store';
 import {
   fetchUser,
-  popUsersLayer,
+  popUserLayer,
   setCurrentViewableListIndex,
   fetchMorePostsFromUser,
   followUser,
   unfollowUser,
-} from '../../redux/usersStack/actions';
+  clearFollowError,
+  clearUnfollowError,
+} from '../../redux/user_stack/actions';
 import {
   increaseFollowingByOne,
   decreaseFollowingByOne,
 } from '../../redux/auth/actions';
-import { delay, checkPostListChanged } from '../../utils/functions';
+import {
+  delay,
+  checkPostListChanged,
+  alertDialog,
+} from '../../utils/functions';
 import { Post, CurrentTabScreen } from '../../models';
 
-class UserScreen extends Component<any, any> {
-  private unsubscribeDetectScreenGoBack: any;
+interface UserScreenProps {
+  navigation: any;
+
+  route: {
+    params: {
+      user: {
+        id: string;
+        username: string;
+        avatar: string;
+      };
+      currentTabScreen: CurrentTabScreen;
+    };
+  };
+  isAuthed: boolean;
+  name: string;
+  bio: string;
+  following: number;
+  followers: number;
+  totalPosts: number;
+  isFollowed: boolean;
+  fetchError: Error | null;
+  followError: Error | null;
+  unfollowError: Error | null;
+  loading: boolean;
+  posts: Array<Post>;
+
+  onFetchUser: (userID: string) => void;
+  onPopUserLayer: () => void;
+  onSetCurrentViewableListIndex: (index: number) => void;
+  onFetchMorePostsFromUser: (userID: string, isFollowed: boolean) => void;
+  onFollowUser: (followingUserID: string) => void;
+  onUnfollowUser: (unfollowingUserID: string) => void;
+  onIncreaseFollowingByOneForMyself: () => void;
+  onDecreaseFollowingByOneForMyself: () => void;
+  onClearFollowError: () => void;
+  onClearUnfollowError: () => void;
+}
+
+class UserScreen extends Component<UserScreenProps> {
+  private detectScreenGoBackUnsubscriber: () => void = () => {};
   private viewabilityConfig: {};
-  constructor(props: any) {
+  constructor(props: UserScreenProps) {
     super(props);
     this.viewabilityConfig = {
       minimumViewTime: 0,
@@ -45,44 +83,54 @@ class UserScreen extends Component<any, any> {
     };
   }
 
-  shouldComponentUpdate(nextProps: any) {
-    const { userLayer } = this.props;
-    if (userLayer && nextProps.userLayer) {
-      if (userLayer.loading !== nextProps.userLayer.loading) {
-        return true;
-      }
-      if (userLayer.loading !== nextProps.userLayer.loading) {
-        return true;
-      }
-      if (userLayer.isFollowed !== nextProps.userLayer.isFollowed) {
-        return true;
-      }
-      if (userLayer.followers !== nextProps.userLayer.followers) {
-        return true;
-      }
-      if (checkPostListChanged(userLayer.posts, nextProps.userLayer.posts)) {
-        return true;
-      }
-      if (userLayer.error !== nextProps.userLayer.error) {
-        return true;
-      }
+  shouldComponentUpdate(nextProps: UserScreenProps) {
+    const {
+      loading,
+      fetchError,
+      followError,
+      unfollowError,
+      posts,
+      followers,
+      isFollowed,
+    } = this.props;
+    if (loading !== nextProps.loading) {
+      return true;
+    }
+    if (isFollowed !== nextProps.isFollowed) {
+      return true;
+    }
+    if (followers !== nextProps.followers) {
+      return true;
+    }
+    if (checkPostListChanged(posts, nextProps.posts)) {
+      return true;
+    }
+    if (fetchError !== nextProps.fetchError) {
+      return true;
+    }
+    if (followError !== nextProps.followError) {
+      return true;
+    }
+    if (unfollowError !== nextProps.unfollowError) {
+      return true;
     }
     return false;
   }
 
   async componentDidMount() {
-    this.unsubscribeDetectScreenGoBack = this.props.navigation.addListener(
+    const { navigation, route, onPopUserLayer, onFetchUser } = this.props;
+    this.detectScreenGoBackUnsubscriber = navigation.addListener(
       'beforeRemove',
       () => {
-        this.props.onPopUsersLayer();
+        onPopUserLayer();
       },
     );
     await delay(500);
-    this.props.onFetchUser(this.props.route.params.user.id);
+    onFetchUser(route.params.user.id);
   }
 
   componentWillUnmount() {
-    this.unsubscribeDetectScreenGoBack();
+    this.detectScreenGoBackUnsubscriber();
   }
 
   onViewableItemsChanged = ({ viewableItems, _ }: any) => {
@@ -92,100 +140,112 @@ class UserScreen extends Component<any, any> {
   };
 
   performFetchMorePosts = () => {
-    const { user } = this.props.route.params;
-    this.props.onFetchMorePostsFromUser(
-      user.id,
-      this.props.userLayer.isFollowed,
-    );
+    const { route, isFollowed, onFetchMorePostsFromUser } = this.props;
+    onFetchMorePostsFromUser(route.params.user.id, isFollowed);
   };
 
   renderItem = ({ item, index }: { item: Post; index: number }) => {
-    return <UserPostCard index={index} data={item} />;
-  };
-
-  emptyHandler = () => {
-    const user = this.props.route.params;
-    this.props.onFetchMorePostsFromUser(
-      user.id,
-      this.props.userLayer.isFollowed,
+    const { route, navigation } = this.props;
+    return (
+      <UserPostCardWrapper
+        index={index}
+        currentTabScreen={route.params.currentTabScreen}
+        data={item}
+        addScreenListener={navigation.addListener}
+      />
     );
   };
 
-  pullLoading = () => {
-    this.props.onFetchUser(this.props.route.params.id);
-  };
-
   performFollow = () => {
-    this.props.onFollowUser(this.props.route.params.id);
-    this.props.onIncreaseFollowingByOne();
+    const {
+      route,
+      onFollowUser,
+      onIncreaseFollowingByOneForMyself,
+    } = this.props;
+    onFollowUser(route.params.user.id);
+    onIncreaseFollowingByOneForMyself();
   };
 
   performUnfollow = () => {
-    this.props.onUnfollowUser(this.props.route.params.id);
-    this.props.onDecreaseFollowingByOne();
+    const {
+      route,
+      onUnfollowUser,
+      onDecreaseFollowingByOneForMyself,
+    } = this.props;
+    onUnfollowUser(route.params.user.id);
+    onDecreaseFollowingByOneForMyself();
   };
 
   renderUserSection = () => {
     const { user } = this.props.route.params;
-    const { userLayer } = this.props;
+    const {
+      isAuthed,
+      name,
+      bio,
+      loading,
+      posts,
+      isFollowed,
+      totalPosts,
+      followers,
+      following,
+    } = this.props;
+
     return (
       <View>
         <View style={styles.header}>
           <View style={styles.avatarAndStats}>
             <BigAvatar avatar={user.avatar} />
 
-            {userLayer.loading && userLayer.posts.length === 0 ? (
+            {loading && posts.length === 0 ? (
               <View style={styles.statWrapper}>
                 <UserStats postNum={0} followersNum={0} followingNum={0} />
-                <TouchableWithoutFeedback disabled>
-                  <View
-                    style={[
-                      styles.followBtn,
-                      {
-                        backgroundColor: userLayer.isFollowed
-                          ? Colors.brightColor
-                          : Colors.btnColor,
-                      },
-                    ]}>
-                    <Text style={styles.followBtnLabel}>Follow</Text>
-                  </View>
-                </TouchableWithoutFeedback>
+                {isAuthed ? (
+                  <TouchableWithoutFeedback disabled>
+                    <View
+                      style={[
+                        styles.followBtn,
+                        {
+                          backgroundColor: isFollowed
+                            ? Colors.brightColor
+                            : Colors.btnColor,
+                        },
+                      ]}>
+                      <Text style={styles.followBtnLabel}>Follow</Text>
+                    </View>
+                  </TouchableWithoutFeedback>
+                ) : null}
               </View>
             ) : (
               <View style={styles.statWrapper}>
                 <UserStats
-                  postNum={userLayer.totalPosts}
-                  followersNum={userLayer.followers}
-                  followingNum={userLayer.following}
+                  postNum={totalPosts}
+                  followersNum={followers}
+                  followingNum={following}
                 />
-                <TouchableWithoutFeedback
-                  onPress={
-                    userLayer.isFollowed
-                      ? this.performUnfollow
-                      : this.performFollow
-                  }>
-                  <View
-                    style={[
-                      styles.followBtn,
-                      {
-                        backgroundColor: userLayer.isFollowed
-                          ? Colors.brightColor
-                          : Colors.btnColor,
-                      },
-                    ]}>
-                    <Text style={styles.followBtnLabel}>
-                      {userLayer.isFollowed ? 'Unfollow' : 'Follow'}
-                    </Text>
-                  </View>
-                </TouchableWithoutFeedback>
+                {isAuthed ? (
+                  <TouchableWithoutFeedback
+                    onPress={
+                      isFollowed ? this.performUnfollow : this.performFollow
+                    }>
+                    <View
+                      style={[
+                        styles.followBtn,
+                        {
+                          backgroundColor: isFollowed
+                            ? Colors.brightColor
+                            : Colors.btnColor,
+                        },
+                      ]}>
+                      <Text style={styles.followBtnLabel}>
+                        {isFollowed ? 'Unfollow' : 'Follow'}
+                      </Text>
+                    </View>
+                  </TouchableWithoutFeedback>
+                ) : null}
               </View>
             )}
           </View>
-
-          {/* {userLayer.loading && userLayer.posts.length === 0 ? null : (
-            <UserInfo name={userLayer.name} bio={userLayer.bio} />
-          )} */}
-          <UserInfo name={userLayer.name} bio={userLayer.bio} />
+          <UserInfo name={name} bio={bio} />
         </View>
         <View style={styles.divider}>
           <MaterialCommunityIcons
@@ -199,15 +259,15 @@ class UserScreen extends Component<any, any> {
   };
 
   renderEmptyListComponent = () => {
-    const { userLayer } = this.props;
-    if (userLayer.fetchError) {
+    const { fetchError, loading, posts } = this.props;
+    if (fetchError) {
       return (
         <View style={styles.emptyWrapper}>
-          <ErrorView errorText={userLayer.fetchError.message} />
+          <ErrorView errorText={fetchError.message} />
         </View>
       );
     }
-    if (userLayer.loading && userLayer.posts.length === 0) {
+    if (loading && posts.length === 0) {
       return (
         <View style={styles.emptyWrapper}>
           <Loading />
@@ -217,114 +277,45 @@ class UserScreen extends Component<any, any> {
     return undefined;
   };
 
+  performClearFollowError = () => {
+    const {
+      onClearFollowError,
+      onDecreaseFollowingByOneForMyself,
+    } = this.props;
+    onClearFollowError();
+    onDecreaseFollowingByOneForMyself();
+  };
+
+  performClearUnfollowError = () => {
+    const {
+      onClearUnfollowError,
+      onIncreaseFollowingByOneForMyself,
+    } = this.props;
+    onClearUnfollowError();
+    onIncreaseFollowingByOneForMyself();
+  };
+
   render() {
-    const { user } = this.props.route.params;
-    const { userLayer } = this.props;
-    // console.log('user screen render', userLayer.posts);
-    if (!userLayer) {
-      return <View style={styles.container} />;
+    const {
+      posts,
+      loading,
+      followers,
+      followError,
+      unfollowError,
+    } = this.props;
+
+    if (followError) {
+      alertDialog(followError.message, this.performClearFollowError);
     }
 
-    // const header = (
-    //   <View>
-    //     <View style={styles.header}>
-    //       <View style={styles.avatarAndStats}>
-    //         <BigAvatar avatar={user.avatar} />
-    //         <View style={styles.statWrapper}>
-    //           <UserStats
-    //             postNum={userLayer.totalPosts}
-    //             followersNum={userLayer.followers}
-    //             followingNum={userLayer.following}
-    //           />
-    //           <TouchableWithoutFeedback
-    //             onPress={
-    //               userLayer.isFollowed
-    //                 ? this.performUnfollow
-    //                 : this.performFollow
-    //             }>
-    //             <View
-    //               style={[
-    //                 styles.followBtn,
-    //                 {
-    //                   backgroundColor: userLayer.isFollowed
-    //                     ? Colors.brightColor
-    //                     : Colors.btnColor,
-    //                 },
-    //               ]}>
-    //               <Text style={styles.followBtnLabel}>
-    //                 {userLayer.isFollowed ? 'Unfollow' : 'Follow'}
-    //               </Text>
-    //             </View>
-    //           </TouchableWithoutFeedback>
-    //         </View>
-    //       </View>
-    //       <UserInfo name={userLayer.name} bio={userLayer.bio} />
-    //     </View>
-    //     <View style={styles.divider}>
-    //       <MaterialCommunityIcons
-    //         name="card-text-outline"
-    //         size={20}
-    //         color="white"
-    //       />
-    //     </View>
-    //   </View>
-    // );
-
-    // if (userLayer.loading && userLayer.posts.length === 0) {
-    //   return (
-    //     <View style={styles.container}>
-    //       <View>
-    //         <View style={styles.header}>
-    //           <View style={styles.avatarAndStats}>
-    //             <BigAvatar avatar={user.avatar} />
-    //             <View style={styles.statWrapper}>
-    //               <UserStats postNum={0} followersNum={0} followingNum={0} />
-    //               <TouchableWithoutFeedback disabled>
-    //                 <View
-    //                   style={[
-    //                     styles.followBtn,
-    //                     {
-    //                       backgroundColor: userLayer.isFollowed
-    //                         ? Colors.brightColor
-    //                         : Colors.btnColor,
-    //                     },
-    //                   ]}>
-    //                   <Text style={styles.followBtnLabel}>Follow</Text>
-    //                 </View>
-    //               </TouchableWithoutFeedback>
-    //             </View>
-    //           </View>
-    //           <ActivityIndicator
-    //             size="small"
-    //             color="white"
-    //             style={{ marginTop: 14 }}
-    //           />
-    //         </View>
-    //         <View style={styles.divider}>
-    //           <MaterialCommunityIcons
-    //             name="card-text-outline"
-    //             size={20}
-    //             color="white"
-    //           />
-    //         </View>
-    //       </View>
-    //     </View>
-    //   );
-    // }
-
-    // if (userLayer.posts.length === 0) {
-    //   return (
-    //     <View style={styles.container}>
-    //       {header}
-    //       <NothingView handle={this.emptyHandler} />
-    //     </View>
-    //   );
-    // }
+    if (unfollowError) {
+      alertDialog(unfollowError.message, this.performClearUnfollowError);
+    }
 
     return (
       <View style={styles.container}>
         <List
-          data={userLayer.posts}
+          data={posts}
           renderItem={this.renderItem}
           onViewableItemsChanged={this.onViewableItemsChanged}
           onEndReached={this.performFetchMorePosts}
@@ -334,14 +325,12 @@ class UserScreen extends Component<any, any> {
           listFooterComponent={
             <View style={{ paddingBottom: Layout.window.height / 10 }} />
           }
-          // refreshing={userLayer.loading}
-          // onRefresh={this.pullLoading}
           checkChangesToUpdate={checkPostListChanged}
-          extraData={userLayer}
+          extraData={{ loading, followers }}
         />
-        {userLayer.posts.length > 0 ? (
+        {posts.length > 0 ? (
           <View style={styles.loadingWrapper}>
-            <FooterLoading loading={userLayer.loading} />
+            <FooterLoading loading={loading} />
           </View>
         ) : null}
       </View>
@@ -409,23 +398,38 @@ const styles = StyleSheet.create({
   },
 });
 
-const mapStateToProps = (state: AppState, ownProps: any) => {
-  const currentTabScreen = ownProps.route.params
-    .currentTabScreen as CurrentTabScreen;
+const mapStateToProps = (state: AppState, ownProps: UserScreenProps) => {
+  const { currentTabScreen } = ownProps.route.params;
   return {
-    userLayer: state.usersStack[currentTabScreen].top(),
+    isAuthed: state.auth.user ? true : false,
+    name: state.usersStack[currentTabScreen].top()?.name ?? '',
+    bio: state.usersStack[currentTabScreen].top()?.bio ?? '',
+    following: state.usersStack[currentTabScreen].top()?.following ?? 0,
+    followers: state.usersStack[currentTabScreen].top()?.followers ?? 0,
+    totalPosts: state.usersStack[currentTabScreen].top()?.totalPosts ?? 0,
+    isFollowed: state.usersStack[currentTabScreen].top()?.isFollowed ?? false,
+    fetchError:
+      state.usersStack[currentTabScreen].top()?.errors.fetchError ?? null,
+    followError:
+      state.usersStack[currentTabScreen].top()?.errors.followError ?? null,
+    unfollowError:
+      state.usersStack[currentTabScreen].top()?.errors.unfollowError ?? null,
+    loading: state.usersStack[currentTabScreen].top()?.loading ?? false,
+    posts: state.usersStack[currentTabScreen].top()?.posts ?? [],
   };
 };
 
 const mapDispatchToProps = {
   onFetchUser: fetchUser,
-  onPopUsersLayer: popUsersLayer,
+  onPopUserLayer: popUserLayer,
   onSetCurrentViewableListIndex: setCurrentViewableListIndex,
   onFetchMorePostsFromUser: fetchMorePostsFromUser,
   onFollowUser: followUser,
   onUnfollowUser: unfollowUser,
-  onIncreaseFollowingByOne: increaseFollowingByOne,
-  onDecreaseFollowingByOne: decreaseFollowingByOne,
+  onIncreaseFollowingByOneForMyself: increaseFollowingByOne,
+  onDecreaseFollowingByOneForMyself: decreaseFollowingByOne,
+  onClearFollowError: clearFollowError,
+  onClearUnfollowError: clearUnfollowError,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(UserScreen);

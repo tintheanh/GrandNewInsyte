@@ -1,6 +1,6 @@
-import RepliesStackLayer from './reply_stack_layer';
-import CommentsStackLayer from './comment_stack_layer';
-import UsersStackLayer from './user_stack_layer';
+import ReplyStackLayer from './reply_stack_layer';
+import CommentStackLayer from './comment_stack_layer';
+import UserStackLayer from './user_stack_layer';
 import Reply from './reply';
 import Comment from './comment';
 
@@ -76,11 +76,11 @@ export default class NavigationStack<T> {
 
     let newStack = null;
     if ('postID' in layer) {
-      newStack = new NavigationStack<CommentsStackLayer>();
+      newStack = new NavigationStack<CommentStackLayer>();
     } else if ('commentID' in layer) {
-      newStack = new NavigationStack<RepliesStackLayer>();
+      newStack = new NavigationStack<ReplyStackLayer>();
     } else if ('userID' in layer) {
-      newStack = new NavigationStack<UsersStackLayer>();
+      newStack = new NavigationStack<UserStackLayer>();
     } else {
       throw new Error('Invalid arguments.');
     }
@@ -120,7 +120,7 @@ export default class NavigationStack<T> {
             createCommentLoading: oneLayer.loadings.createCommentLoading,
           },
           lastVisible: oneLayer.lastVisible,
-          commentList: oneLayer.commentList.map((comment: Comment) => ({
+          comments: oneLayer.comments.map((comment: Comment) => ({
             ...comment,
           })),
         };
@@ -154,7 +154,7 @@ export default class NavigationStack<T> {
             fetchLoading: oneLayer.loadings.fetchLoading,
             createReplyLoading: oneLayer.loadings.createReplyLoading,
           },
-          replyList: oneLayer.replyList.map((reply: Reply) => ({ ...reply })),
+          replies: oneLayer.replies.map((reply: Reply) => ({ ...reply })),
         };
       } else {
         const fetchErrorClone = oneLayer.errors.fetchError

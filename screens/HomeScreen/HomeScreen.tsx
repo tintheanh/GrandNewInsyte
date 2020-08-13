@@ -5,9 +5,6 @@ import { Loading } from '../../components';
 import { AppState } from '../../redux/store';
 import HomeAuth from './private_components/HomeAuth';
 import HomeNotAuth from './private_components/HomeNotAuth';
-import { clearCommentsStack } from '../../redux/commentsStack/actions';
-import { clearRepliesStack } from '../../redux/repliesStack/actions';
-import { clearUsersStack } from '../../redux/usersStack/actions';
 import { fsDB } from '../../config';
 import { generateSubstringForUsername } from '../../utils/functions';
 
@@ -44,13 +41,11 @@ class HomeScreen extends Component<any> {
     // }
   }
 
-  
-
   async componentDidMount() {
     // this.screenFocus = this.props.navigation.addListener('focus', (e) => {
-    //   // this.props.onClearCommentsStack();
-    //   // this.props.onClearRepliesStack();
-    //   // this.props.onClearUsersStack();
+    //   // this.props.onClearCommentStack();
+    //   // this.props.onClearReplyStack();
+    //   // this.props.onClearUserStack();
     // });
 
     // try {
@@ -205,9 +200,9 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 // const mapDispatchToProps = {
-//   onClearCommentsStack: clearCommentsStack,
-//   onClearRepliesStack: clearRepliesStack,
-//   onClearUsersStack: clearUsersStack,
+//   onClearCommentStack: clearCommentStack,
+//   onClearReplyStack: clearReplyStack,
+//   onClearUserStack: clearUserStack,
 // };
 
 export default connect(mapStateToProps)(HomeScreen);

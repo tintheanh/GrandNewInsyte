@@ -13,7 +13,7 @@ import {
 } from '../screens';
 import { Colors } from '../constants';
 import SearchBar from '../screens/HomeScreen/private_components/SearchBar';
-import { popCommentsLayer } from '../redux/commentsStack/actions';
+import { popCommentLayer } from '../redux/comment_stack/actions';
 import { Post, CurrentTabScreen } from '../models';
 
 export type HomeStackParamList = {
@@ -36,7 +36,7 @@ export type HomeStackParamList = {
 const Stack = createStackNavigator<HomeStackParamList>();
 
 const mapDispatchToProps = {
-  onPopCommentsLayer: popCommentsLayer,
+  onPopCommentLayer: popCommentLayer,
 };
 
 export default connect(

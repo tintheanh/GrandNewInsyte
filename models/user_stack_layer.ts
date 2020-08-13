@@ -1,7 +1,7 @@
 import Post from './post';
 import { FirebaseFirestoreTypes } from '../config';
 
-export default interface UsersStackLayer {
+export default interface UserStackLayer {
   userID: string;
   username: string;
   name: string;

@@ -1,8 +1,10 @@
 import {
   NavigationStack,
   CurrentTabScreen,
-  UsersStackLayer,
+  UserStackLayer,
+  Post,
 } from '../../models';
+import { FirebaseFirestoreTypes } from '../../config';
 
 export enum DispatchTypes {
   SET_CURRENT_TAB = 'SET_CURRENT_TAB',
@@ -10,6 +12,9 @@ export enum DispatchTypes {
   PUSH_USERS_LAYER = 'PUSH_USERS_LAYER',
   POP_USERS_LAYER = 'POP_USERS_LAYER',
   CLEAR_STACK = 'CLEAR_STACK',
+  RESET_ALL_STACKS = 'RESET_ALL_STACKS',
+  CLEAR_FOLLOW_ERROR = 'CLEAR_FOLLOW_ERROR',
+  CLEAR_UNFOLLOW_ERROR = 'CLEAR_UNFOLLOW_ERROR',
 
   FETCH_USER_STARTED = 'FETCH_USER_STARTED',
   FETCH_USER_SUCCESS = 'FETCH_USER_SUCCESS',
@@ -28,13 +33,37 @@ export enum DispatchTypes {
   UNFOLLOW_USER_FAILURE = 'UNFOLLOW_USER_FAILURE',
 }
 
-export interface UsersStackAction {
+export interface UserStackAction {
   type: string;
-  payload: any;
+  payload:
+    | {
+        posts: Array<Post>;
+        lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
+      }
+    | {
+        userID: string;
+        username: string;
+        avatar: string;
+      }
+    | {
+        name: string;
+        bio: string;
+        following: number;
+        followers: number;
+        totalPosts: number;
+        isFollowed: boolean;
+        lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
+        posts: Array<Post>;
+      }
+    | number
+    | Error
+    | CurrentTabScreen
+    | null;
 }
 
-export interface UsersStackState {
-  homeTabStack: NavigationStack<UsersStackLayer>;
-  userTabStack: NavigationStack<UsersStackLayer>;
+export interface UserStackState {
+  homeTabStack: NavigationStack<UserStackLayer>;
+  userTabStack: NavigationStack<UserStackLayer>;
   currentTab: CurrentTabScreen;
+  currentLoadingInTab: CurrentTabScreen | '';
 }

@@ -1,36 +1,43 @@
-import { RepliesStackState, RepliesStackAction, DispatchTypes } from './types';
+import { ReplyStackState, ReplyStackAction, DispatchTypes } from './types';
 import {
   Reply,
   CurrentTabScreen,
   NavigationStack,
-  RepliesStackLayer,
+  ReplyStackLayer,
 } from '../../models';
 import { FirebaseFirestoreTypes } from '../../config';
 import { pendingReplyID, pendingDeleteReplyFlag } from '../../constants';
 import { removeDuplicatesFromArray } from '../../utils/functions';
 
-const initialState: RepliesStackState = {
-  homeTabStack: new NavigationStack<RepliesStackLayer>(),
-  userTabStack: new NavigationStack<RepliesStackLayer>(),
+const initialState: ReplyStackState = {
+  homeTabStack: new NavigationStack<ReplyStackLayer>(),
+  userTabStack: new NavigationStack<ReplyStackLayer>(),
   currentTab: 'homeTabStack',
 };
 
-export default function commentsStackReducer(
+const untouchedState: ReplyStackState = {
+  homeTabStack: new NavigationStack<ReplyStackLayer>(),
+  userTabStack: new NavigationStack<ReplyStackLayer>(),
+  currentTab: 'homeTabStack',
+};
+
+export default function replyStackReducer(
   state = initialState,
-  action: RepliesStackAction,
-): RepliesStackState {
+  action: ReplyStackAction,
+): ReplyStackState {
   switch (action.type) {
+    /* ------------------- ultility cases ------------------- */
+
     case DispatchTypes.SET_CURRENT_TAB: {
       const newState = { ...state };
       newState.currentTab = action.payload as CurrentTabScreen;
       return newState;
     }
-    case DispatchTypes.PUSH_REPLIES_LAYER: {
+    case DispatchTypes.PUSH_REPLY_LAYER: {
       const newState = { ...state };
-      const payload = action.payload as { postID: string; commentID: string };
       const currentTab = state.currentTab;
       const repliesLayer = {
-        commentID: payload.commentID,
+        commentID: action.payload as string,
         loadings: {
           fetchLoading: false,
           createReplyLoading: false,
@@ -43,31 +50,100 @@ export default function commentsStackReducer(
           unlikeReplyError: null,
         },
         lastVisible: null,
-        replyList: [],
+        replies: [],
       };
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       newStack.push(repliesLayer);
       newState[currentTab] = newStack;
       return newState;
     }
-    case DispatchTypes.POP_REPLIES_LAYER: {
+    case DispatchTypes.POP_REPLY_LAYER: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       newStack.pop();
       newState[currentTab] = newStack;
       return newState;
     }
+    case DispatchTypes.CLEAR_CREATE_REPLY_ERROR: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<ReplyStackLayer>;
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.errors.createReplyError = null;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DispatchTypes.CLEAR_DELETE_REPLY_ERROR: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<ReplyStackLayer>;
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.errors.deleteReplyError = null;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DispatchTypes.CLEAR_LIKE_REPLY_ERROR: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<ReplyStackLayer>;
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.errors.likeReplyError = null;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DispatchTypes.CLEAR_UNLIKE_REPLY_ERROR: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const newStack = NavigationStack.clone(
+        state[currentTab],
+      ) as NavigationStack<ReplyStackLayer>;
+      const topLayer = newStack.top();
+      if (topLayer) {
+        topLayer.errors.unlikeReplyError = null;
+        newStack.updateTop(topLayer);
+        newState[currentTab] = newStack;
+      }
+      return newState;
+    }
+    case DispatchTypes.CLEAR_STACK: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      newState[currentTab] = new NavigationStack<ReplyStackLayer>();
+      return newState;
+    }
+    case DispatchTypes.RESET_ALL_STACKS:
+      return untouchedState;
+
+    /* ----------------- end ultility cases ----------------- */
+
+    /* ----------------- fetch replies cases ---------------- */
+
     case DispatchTypes.FETCH_REPLIES_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loadings.fetchLoading = true;
@@ -81,18 +157,17 @@ export default function commentsStackReducer(
       const currentTab = state.currentTab;
       const payload = action.payload as {
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot;
-        replyList: Array<Reply>;
+        replies: Array<Reply>;
       };
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loadings.fetchLoading = false;
-        const newCommentList = topLayer.replyList.concat(payload.replyList);
-        const removedDuplicates = removeDuplicatesFromArray(newCommentList);
-        removedDuplicates.sort((a, b) => a.datePosted - b.datePosted);
-        topLayer.replyList = removedDuplicates;
+        topLayer.replies = removeDuplicatesFromArray(
+          topLayer.replies.concat(payload.replies),
+        );
         topLayer.lastVisible = payload.lastVisible;
         topLayer.errors.fetchError = null;
         newStack.updateTop(topLayer);
@@ -105,11 +180,11 @@ export default function commentsStackReducer(
       const currentTab = state.currentTab;
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loadings.fetchLoading = false;
-        topLayer.replyList = [];
+        topLayer.replies = [];
         topLayer.lastVisible = null;
         topLayer.errors.fetchError = action.payload as Error;
         newStack.updateTop(topLayer);
@@ -117,20 +192,25 @@ export default function commentsStackReducer(
       }
       return newState;
     }
+
+    /* --------------- end fetch replies cases -------------- */
+
+    /* ----------------- create reply cases ----------------- */
+
     case DispatchTypes.CREATE_REPLY_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loadings.createReplyLoading = true;
-        const filteredPending = topLayer.replyList.filter(
+        const filteredPending = topLayer.replies.filter(
           (reply) => reply.id !== pendingReplyID,
         );
         filteredPending.push(action.payload as Reply);
-        topLayer.replyList = filteredPending;
+        topLayer.replies = filteredPending;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
@@ -145,22 +225,22 @@ export default function commentsStackReducer(
       };
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer && topLayer.commentID === payload.commentID) {
         topLayer.loadings.createReplyLoading = false;
         topLayer.errors.createReplyError = null;
-        const index = topLayer.replyList.findIndex(
+        const index = topLayer.replies.findIndex(
           (reply) => reply.id === pendingReplyID,
         );
         if (index !== -1) {
-          topLayer.replyList[index] = payload.newReply;
+          topLayer.replies[index] = payload.newReply;
         }
-        const filteredPending = topLayer.replyList.filter(
+        const filteredPending = topLayer.replies.filter(
           (reply) => reply.id !== pendingReplyID,
         );
         const removedDuplicates = removeDuplicatesFromArray(filteredPending);
-        topLayer.replyList = removedDuplicates;
+        topLayer.replies = removedDuplicates;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
@@ -171,33 +251,38 @@ export default function commentsStackReducer(
       const currentTab = state.currentTab;
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.loadings.createReplyLoading = false;
         topLayer.errors.createReplyError = action.payload as Error;
-        const filteredPending = topLayer.replyList.filter(
+        const filteredPending = topLayer.replies.filter(
           (reply) => reply.id !== pendingReplyID,
         );
-        topLayer.replyList = filteredPending;
+        topLayer.replies = filteredPending;
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
+
+    /* --------------- end create reply cases --------------- */
+
+    /* ----------------- delete reply cases ----------------- */
+
     case DispatchTypes.DELETE_REPLY_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
-        const index = topLayer.replyList.findIndex(
+        const index = topLayer.replies.findIndex(
           (reply) => reply.id === (action.payload as string),
         );
         if (index !== -1) {
-          topLayer.replyList[index].id += pendingDeleteReplyFlag;
+          topLayer.replies[index].id += pendingDeleteReplyFlag;
         }
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
@@ -209,15 +294,15 @@ export default function commentsStackReducer(
       const currentTab = state.currentTab;
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.errors.deleteReplyError = null;
-        const index = topLayer.replyList.findIndex(
+        const index = topLayer.replies.findIndex(
           (reply) => reply.id === (action.payload as string),
         );
         if (index !== -1) {
-          topLayer.replyList.splice(index, 1);
+          topLayer.replies.splice(index, 1);
         }
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
@@ -233,38 +318,43 @@ export default function commentsStackReducer(
       };
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         topLayer.errors.deleteReplyError = payload.error;
-        const index = topLayer.replyList.findIndex(
+        const index = topLayer.replies.findIndex(
           (reply) => reply.id === payload.replyIDwithFlag,
         );
         if (index !== -1) {
-          const splitted = topLayer.replyList[index].id.split(
+          const splitted = topLayer.replies[index].id.split(
             pendingDeleteReplyFlag,
           );
-          topLayer.replyList[index].id = splitted[0];
+          topLayer.replies[index].id = splitted[0];
         }
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
       }
       return newState;
     }
+
+    /* --------------- end delete reply cases --------------- */
+
+    /* ------------------ like reply cases ------------------ */
+
     case DispatchTypes.LIKE_REPLY_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
-        const index = topLayer.replyList.findIndex(
+        const index = topLayer.replies.findIndex(
           (reply) => reply.id === (action.payload as string),
         );
         if (index !== -1) {
-          topLayer.replyList[index].likes += 1;
-          topLayer.replyList[index].isLiked = true;
+          topLayer.replies[index].likes += 1;
+          topLayer.replies[index].isLiked = true;
         }
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
@@ -283,16 +373,16 @@ export default function commentsStackReducer(
       };
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         if (payload.replyID.length) {
-          const index = topLayer.replyList.findIndex(
+          const index = topLayer.replies.findIndex(
             (reply) => reply.id === payload.replyID,
           );
           if (index !== -1) {
-            topLayer.replyList[index].likes -= 1;
-            topLayer.replyList[index].isLiked = false;
+            topLayer.replies[index].likes -= 1;
+            topLayer.replies[index].isLiked = false;
           }
         }
         topLayer.errors.likeReplyError = payload.error;
@@ -301,20 +391,25 @@ export default function commentsStackReducer(
       }
       return newState;
     }
+
+    /* ---------------- end like reply cases ---------------- */
+
+    /* ----------------- unlike reply cases ----------------- */
+
     case DispatchTypes.UNLIKE_REPLY_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
-        const index = topLayer.replyList.findIndex(
+        const index = topLayer.replies.findIndex(
           (reply) => reply.id === (action.payload as string),
         );
         if (index !== -1) {
-          topLayer.replyList[index].likes -= 1;
-          topLayer.replyList[index].isLiked = false;
+          topLayer.replies[index].likes -= 1;
+          topLayer.replies[index].isLiked = false;
         }
         newStack.updateTop(topLayer);
         newState[currentTab] = newStack;
@@ -333,16 +428,16 @@ export default function commentsStackReducer(
       };
       const newStack = NavigationStack.clone(
         state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
+      ) as NavigationStack<ReplyStackLayer>;
       const topLayer = newStack.top();
       if (topLayer) {
         if (payload.replyID.length) {
-          const index = topLayer.replyList.findIndex(
+          const index = topLayer.replies.findIndex(
             (reply) => reply.id === payload.replyID,
           );
           if (index !== -1) {
-            topLayer.replyList[index].likes += 1;
-            topLayer.replyList[index].isLiked = true;
+            topLayer.replies[index].likes += 1;
+            topLayer.replies[index].isLiked = true;
           }
         }
         topLayer.errors.unlikeReplyError = payload.error;
@@ -351,68 +446,9 @@ export default function commentsStackReducer(
       }
       return newState;
     }
-    case DispatchTypes.CLEAR_CREATE_REPLY_ERROR: {
-      const newState = { ...state };
-      const currentTab = state.currentTab;
-      const newStack = NavigationStack.clone(
-        state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
-      const topLayer = newStack.top();
-      if (topLayer) {
-        topLayer.errors.createReplyError = null;
-        newStack.updateTop(topLayer);
-        newState[currentTab] = newStack;
-      }
-      return newState;
-    }
-    case DispatchTypes.CLEAR_DELETE_REPLY_ERROR: {
-      const newState = { ...state };
-      const currentTab = state.currentTab;
-      const newStack = NavigationStack.clone(
-        state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
-      const topLayer = newStack.top();
-      if (topLayer) {
-        topLayer.errors.deleteReplyError = null;
-        newStack.updateTop(topLayer);
-        newState[currentTab] = newStack;
-      }
-      return newState;
-    }
-    case DispatchTypes.CLEAR_LIKE_REPLY_ERROR: {
-      const newState = { ...state };
-      const currentTab = state.currentTab;
-      const newStack = NavigationStack.clone(
-        state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
-      const topLayer = newStack.top();
-      if (topLayer) {
-        topLayer.errors.likeReplyError = null;
-        newStack.updateTop(topLayer);
-        newState[currentTab] = newStack;
-      }
-      return newState;
-    }
-    case DispatchTypes.CLEAR_UNLIKE_REPLY_ERROR: {
-      const newState = { ...state };
-      const currentTab = state.currentTab;
-      const newStack = NavigationStack.clone(
-        state[currentTab],
-      ) as NavigationStack<RepliesStackLayer>;
-      const topLayer = newStack.top();
-      if (topLayer) {
-        topLayer.errors.unlikeReplyError = null;
-        newStack.updateTop(topLayer);
-        newState[currentTab] = newStack;
-      }
-      return newState;
-    }
-    case DispatchTypes.CLEAR_STACK: {
-      const newState = { ...state };
-      const currentTab = state.currentTab;
-      newState[currentTab] = new NavigationStack<RepliesStackLayer>();
-      return newState;
-    }
+
+    /* --------------- end unlike reply cases --------------- */
+
     default:
       return state;
   }

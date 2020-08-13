@@ -17,8 +17,8 @@ import {
 } from '../../utils/functions';
 import { PostSection, CommentInput } from './private_components';
 import {
-  fetchNewComments,
-  popCommentsLayer,
+  fetchComments,
+  popCommentLayer,
   likeComment,
   unlikeComment,
   clearCreateCommentError,
@@ -26,8 +26,8 @@ import {
   clearLikeCommentError,
   clearUnlikeCommentError,
   deleteComment,
-} from '../../redux/commentsStack/actions';
-import { pushRepliesLayer } from '../../redux/repliesStack/actions';
+} from '../../redux/comment_stack/actions';
+import { pushReplyLayer } from '../../redux/reply_stack/actions';
 import {
   likePost,
   unlikePost,
@@ -35,7 +35,7 @@ import {
   decreaseCommentsBy,
   increaseCommentsBy,
 } from '../../redux/posts/actions';
-import { pushUsersLayer } from '../../redux/usersStack/actions';
+import { pushUserLayer } from '../../redux/user_stack/actions';
 import { AppState } from '../../redux/store';
 import { Post, Comment, CurrentTabScreen } from '../../models';
 
@@ -117,7 +117,7 @@ interface PostScreenProps {
   /**
    * Method fetch comments
    */
-  onFetchNewComments: (postID: string) => void;
+  onFetchComments: (postID: string) => void;
 
   /**
    * Method like comment
@@ -141,7 +141,7 @@ interface PostScreenProps {
   /**
    * Method pop comments stack when screen going back
    */
-  onPopCommentsLayer: () => void;
+  onPopCommentLayer: () => void;
 
   /**
    * Method clear error from create comment failure
@@ -184,7 +184,7 @@ interface PostScreenProps {
   /**
    * Method push new user layer when navigating to user screen
    */
-  onPushUsersLayer: ({
+  onPushUserLayer: ({
     userID,
     username,
     avatar,
@@ -197,7 +197,7 @@ interface PostScreenProps {
   /**
    * Method push new reply layer when navigating to reply screen
    */
-  onPushRepliesLayer: (commentID: string) => void;
+  onPushReplyLayer: (commentID: string) => void;
 }
 
 /**
@@ -297,11 +297,11 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
   }
 
   async componentDidMount() {
-    const { navigation, onFetchNewComments, onPopCommentsLayer } = this.props;
+    const { navigation, onFetchComments, onPopCommentLayer } = this.props;
     this.detectScreenGoBackUnsubscriber = navigation.addListener(
       'beforeRemove',
       () => {
-        onPopCommentsLayer();
+        onPopCommentLayer();
       },
     );
     this.blurUnsubcriber = navigation.addListener('blur', () => {
@@ -313,7 +313,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
 
     // delay before fetching comments to provide smoother experience
     await delay(500);
-    onFetchNewComments(this.state.post.id);
+    onFetchComments(this.state.post.id);
   }
 
   componentWillUnmount() {
@@ -327,9 +327,9 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     username: string;
     avatar: string;
   }) => () => {
-    const { currentUID, navigation, onPushUsersLayer } = this.props;
+    const { currentUID, navigation, onPushUserLayer } = this.props;
     if (currentUID !== user.id) {
-      onPushUsersLayer({
+      onPushUserLayer({
         userID: user.id,
         username: user.username,
         avatar: user.avatar,
@@ -349,8 +349,8 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
    * @param comment Comment payload passed to reply screen
    */
   navigateToReplyScreen = (comment: Comment) => () => {
-    const { onPushRepliesLayer, navigation } = this.props;
-    onPushRepliesLayer(comment.id);
+    const { onPushReplyLayer, navigation } = this.props;
+    onPushReplyLayer(comment.id);
     navigation.push('ReplyScreen', {
       comment,
       decreaseCommentsForPostScreenBy: this.decreaseCommentsForPostScreenBy,
@@ -422,9 +422,9 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
    * Method perform delete post
    */
   performDeletePost = async () => {
-    const { navigation, onPopCommentsLayer, onDeletePost } = this.props;
+    const { navigation, onPopCommentLayer, onDeletePost } = this.props;
     navigation.goBack();
-    onPopCommentsLayer();
+    onPopCommentLayer();
     await delay(500);
     onDeletePost(this.state.post.id);
   };
@@ -530,7 +530,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
   };
 
   fetchMoreComments = () => {
-    this.props.onFetchNewComments(this.state.post.id);
+    this.props.onFetchComments(this.state.post.id);
   };
 
   /**
@@ -676,8 +676,6 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
       onClearUnlikeCommentError,
     } = this.props;
 
-    console.log(loading);
-
     if (createCommentError) {
       alertDialog(
         createCommentError.message,
@@ -753,35 +751,35 @@ const mapStateToProps = (state: AppState, ownProps: PostScreenProps) => {
   const { currentTabScreen } = ownProps.route.params;
   return {
     currentUID: state.auth.user?.id,
-    comments: state.commentsStack[currentTabScreen].top()?.commentList ?? [],
+    comments: state.commentStack[currentTabScreen].top()?.comments ?? [],
     loading:
-      state.commentsStack[currentTabScreen].top()?.loadings.fetchLoading ??
+      state.commentStack[currentTabScreen].top()?.loadings.fetchLoading ??
       false,
     fetchError:
-      state.commentsStack[currentTabScreen].top()?.errors.fetchError ?? null,
+      state.commentStack[currentTabScreen].top()?.errors.fetchError ?? null,
     likePostError: state.allPosts.likePost.error,
     unlikePostError: state.allPosts.unlikePost.error,
     createCommentError:
-      state.commentsStack[currentTabScreen].top()?.errors.createCommentError ??
+      state.commentStack[currentTabScreen].top()?.errors.createCommentError ??
       null,
     deleteCommentError:
-      state.commentsStack[currentTabScreen].top()?.errors.deleteCommentError ??
+      state.commentStack[currentTabScreen].top()?.errors.deleteCommentError ??
       null,
     likeCommentError:
-      state.commentsStack[currentTabScreen].top()?.errors.likeCommentError ??
+      state.commentStack[currentTabScreen].top()?.errors.likeCommentError ??
       null,
     unlikeCommentError:
-      state.commentsStack[currentTabScreen].top()?.errors.unlikeCommentError ??
+      state.commentStack[currentTabScreen].top()?.errors.unlikeCommentError ??
       null,
   };
 };
 
 const mapDispatchToProps = {
-  onFetchNewComments: fetchNewComments,
+  onFetchComments: fetchComments,
   onLikePost: likePost,
   onUnlikePost: unlikePost,
   onDeletePost: deletePost,
-  onPopCommentsLayer: popCommentsLayer,
+  onPopCommentLayer: popCommentLayer,
   onLikeComment: likeComment,
   onUnlikeComment: unlikeComment,
   onClearCreateCommentError: clearCreateCommentError,
@@ -791,8 +789,8 @@ const mapDispatchToProps = {
   onDeleteComment: deleteComment,
   onDecreaseCommentsForHomeScreenBy: decreaseCommentsBy,
   onIncreaseCommentsForHomeScreen: increaseCommentsBy,
-  onPushUsersLayer: pushUsersLayer,
-  onPushRepliesLayer: pushRepliesLayer,
+  onPushUserLayer: pushUserLayer,
+  onPushReplyLayer: pushReplyLayer,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(PostScreen);

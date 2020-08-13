@@ -11,17 +11,17 @@ import {
   bottomTabHeight,
 } from '../constants';
 import {
-  setCurrentTabForCommentsStack,
-  clearCommentsStack,
-} from '../redux/commentsStack/actions';
+  setCurrentTabForCommentStack,
+  clearCommentStack,
+} from '../redux/comment_stack/actions';
 import {
-  setCurrentTabForRepliesStack,
-  clearRepliesStack,
-} from '../redux/repliesStack/actions';
+  setCurrentTabForReplyStack,
+  clearReplyStack,
+} from '../redux/reply_stack/actions';
 import {
-  setCurrentTabForUsersStack,
-  clearUsersStack,
-} from '../redux/usersStack/actions';
+  setCurrentTabForUserStack,
+  clearUserStack,
+} from '../redux/user_stack/actions';
 import { AppState } from '../redux/store';
 import { checkAuth } from '../redux/auth/actions';
 import { delay } from '../utils/functions';
@@ -47,9 +47,9 @@ class BottomTabNavigator extends Component<any> {
 
   render() {
     const {
-      onClearCommentsStack,
-      onClearRepliesStack,
-      onClearUsersStack,
+      onClearCommentStack,
+      onClearReplyStack,
+      onClearUserStack,
     } = this.props;
 
     return (
@@ -72,19 +72,22 @@ class BottomTabNavigator extends Component<any> {
           }}
           // listeners={{
           //   tabPress: (e) => {
-          //     this.props.onSetCurrentTabForCommentsStack('homeTabStack');
-          //     // this.props.onSetCurrentTabForRepliesStack('homeTabStack');
-          //     // this.props.onSetCurrentTabForUsersStack('homeTabStack');
+          //     this.props.onSetCurrentTabForCommentStack('homeTabStack');
+          //     // this.props.onSetCurrentTabForReplyStack('homeTabStack');
+          //     // this.props.onSetCurrentTabForUserStack('homeTabStack');
           //   },
           // }}
 
           listeners={({ route }) => ({
+            tabPress: (e) => {
+              this.props.onSetCurrentTabForCommentStack('homeTabStack');
+            },
             state: (_) => {
               if (route.state && route.state.index === 0) {
                 console.log('ok clear');
-                onClearCommentsStack();
-                onClearRepliesStack();
-                onClearUsersStack();
+                onClearCommentStack();
+                onClearReplyStack();
+                onClearUserStack();
               }
             },
           })}
@@ -155,9 +158,9 @@ class BottomTabNavigator extends Component<any> {
           }}
           listeners={{
             tabPress: (e) => {
-              this.props.onSetCurrentTabForCommentsStack('userTabStack');
-              // this.props.onSetCurrentTabForRepliesStack('userTabStack');
-              // this.props.onSetCurrentTabForUsersStack('userTabStack');
+              this.props.onSetCurrentTabForCommentStack('userTabStack');
+              // this.props.onSetCurrentTabForReplyStack('userTabStack');
+              // this.props.onSetCurrentTabForUserStack('userTabStack');
             },
           }}
         />
@@ -172,12 +175,12 @@ const mapStateToProps = (state: AppState) => ({
 
 const mapDispatchToProps = {
   onCheckAuth: checkAuth,
-  onSetCurrentTabForCommentsStack: setCurrentTabForCommentsStack,
-  onSetCurrentTabForRepliesStack: setCurrentTabForRepliesStack,
-  onSetCurrentTabForUsersStack: setCurrentTabForUsersStack,
-  onClearCommentsStack: clearCommentsStack,
-  onClearRepliesStack: clearRepliesStack,
-  onClearUsersStack: clearUsersStack,
+  onSetCurrentTabForCommentStack: setCurrentTabForCommentStack,
+  onSetCurrentTabForReplyStack: setCurrentTabForReplyStack,
+  onSetCurrentTabForUserStack: setCurrentTabForUserStack,
+  onClearCommentStack: clearCommentStack,
+  onClearReplyStack: clearReplyStack,
+  onClearUserStack: clearUserStack,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(BottomTabNavigator);
