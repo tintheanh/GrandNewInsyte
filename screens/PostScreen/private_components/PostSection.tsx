@@ -24,6 +24,16 @@ interface PostSectionProps {
    */
   navigateWhenPressOnUsernameOrAvatar: () => void;
 
+  /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag?: (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => void;
+
   likePost: () => void;
   unLikePost: () => void;
 
@@ -39,7 +49,8 @@ export default React.memo(
     post,
     shouldPlayMedia,
     navigateWhenPressOnUsernameOrAvatar,
-    userControl = undefined,
+    navigateWhenPressOnTag,
+    userControl,
     likePost,
     unLikePost,
   }: PostSectionProps) {
@@ -105,13 +116,21 @@ export default React.memo(
           {generateCaptionWithTagsAndUrls(caption).map((element, i) => {
             if (element.type === 'tag') {
               const textChunk = element as {
-                value: { text: string; uid: string };
+                value: { text: string; uid: string; username: string };
               };
               return (
                 <Text
                   key={i}
                   style={{ color: Colors.userTag }}
-                  onPress={() => console.log(textChunk.value.uid)}>
+                  onPress={
+                    navigateWhenPressOnTag
+                      ? navigateWhenPressOnTag({
+                          id: textChunk.value.uid,
+                          username: textChunk.value.username,
+                          avatar: '',
+                        })
+                      : undefined
+                  }>
                   {textChunk.value.text}{' '}
                 </Text>
               );

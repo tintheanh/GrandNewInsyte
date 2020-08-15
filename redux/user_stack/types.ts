@@ -49,6 +49,7 @@ export interface UserStackAction {
         avatar: string;
       }
     | {
+        avatar: string;
         name: string;
         bio: string;
         following: number;

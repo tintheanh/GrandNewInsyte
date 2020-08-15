@@ -268,6 +268,30 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
   };
 
   /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag = (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => {
+    const { currentUID, navigation, onPushUserLayer } = this.props;
+    if (currentUID === user.id) {
+      navigation.navigate('ProfileScreen', {
+        title: user.username,
+      });
+    } else {
+      onPushUserLayer({
+        userID: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      });
+      navigation.push('UserScreen', { user });
+    }
+  };
+
+  /**
    * Method set current scrolling index
    * @param viewableItems Array of items thich are
    * currently visible on the screen
@@ -446,6 +470,43 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
         userPostControl={
           currentUID === item.user.id ? this.userControl(item.id) : undefined
         }
+        navigateWhenPressOnTag={this.navigateWhenPressOnTag}
+      />
+    );
+  };
+
+  renderEmptyComponent = () => {
+    const { error, fetchLoading, posts } = this.props;
+    if (error) {
+      return <ErrorView errorText={error.message} />;
+    }
+    if (fetchLoading && posts.length === 0) {
+      return <Loading />;
+    }
+    return <NothingView />;
+  };
+
+  renderHeaderComponent = () => {
+    const { hotTime, feedChoice } = this.props;
+    let timeLabel = '';
+    switch (hotTime) {
+      case oneWeek:
+        timeLabel = 'this week';
+        break;
+      case oneMonth:
+        timeLabel = 'this month';
+        break;
+      default:
+        timeLabel = 'this year';
+        break;
+    }
+
+    return (
+      <SortPostListHeader
+        sortBy={feedChoice as 'new' | 'hot'}
+        timeLabel={timeLabel as 'this week' | 'this month' | 'this year'}
+        selectPostFilter={this.performSelectPostFilter}
+        selectTimeFilter={this.performSelectTimeFilter}
       />
     );
   };
@@ -465,37 +526,6 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
       onPullToFetchFollowingHotPosts,
     } = this.props;
 
-    let timeLabel = '';
-    switch (hotTime) {
-      case oneWeek:
-        timeLabel = 'this week';
-        break;
-      case oneMonth:
-        timeLabel = 'this month';
-        break;
-      default:
-        timeLabel = 'this year';
-        break;
-    }
-
-    let emptyListComponent = null;
-    if (error) {
-      emptyListComponent = <ErrorView errorText={error.message} />;
-    } else if (fetchLoading && posts.length === 0) {
-      emptyListComponent = <Loading />;
-    } else {
-      emptyListComponent = <NothingView />;
-    }
-
-    const headerListComponent = (
-      <SortPostListHeader
-        sortBy={feedChoice as 'new' | 'hot'}
-        timeLabel={timeLabel as 'this week' | 'this month' | 'this year'}
-        selectPostFilter={this.performSelectPostFilter}
-        selectTimeFilter={this.performSelectTimeFilter}
-      />
-    );
-
     return (
       <View style={styles.container}>
         <View style={{ zIndex: 100 }}>
@@ -505,8 +535,8 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
             onViewableItemsChanged={this.onViewableItemsChanged}
             viewabilityConfig={this.viewabilityConfig}
             refreshing={pullLoading}
-            listEmptyComponent={emptyListComponent}
-            listHeaderComponent={headerListComponent}
+            listEmptyComponent={this.renderEmptyComponent()}
+            listHeaderComponent={this.renderHeaderComponent()}
             listFooterComponent={
               <View style={{ paddingBottom: Layout.window.height / 10 }} />
             }

@@ -40,6 +40,16 @@ interface UserPostCardWrapperProps {
   navigateWhenPressOnPostOrComment: () => void;
 
   /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag?: (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => void;
+
+  /**
    * Method like post
    */
   performLikePost: () => void;

@@ -35,8 +35,8 @@ export const fetchNewUserResults = (tagQuery: string) => async (
     const userSnapshots = await fsDB
       .collection('users')
       .doc(uid)
-      .collection('follower_for_search')
-      .where('prefix', 'array-contains', tagQuery)
+      .collection('follower_list')
+      .where('for_search', 'array-contains', tagQuery)
       .limit(5)
       .get();
 
@@ -92,17 +92,17 @@ export const fetchUserResults = (tagQuery: string) => async (
       userSnapshots = await fsDB
         .collection('users')
         .doc(uid)
-        .collection('follower_for_search')
-        .where('prefix', 'array-contains', tagQuery)
+        .collection('follower_list')
+        .where('for_search', 'array-contains', tagQuery)
         .limit(5)
         .get();
     } else {
       userSnapshots = await fsDB
         .collection('users')
         .doc(uid)
-        .collection('follower_for_search')
+        .collection('follower_list')
         .startAfter(lastVisible)
-        .where('prefix', 'array-contains', tagQuery)
+        .where('for_search', 'array-contains', tagQuery)
         .limit(5)
         .get();
     }

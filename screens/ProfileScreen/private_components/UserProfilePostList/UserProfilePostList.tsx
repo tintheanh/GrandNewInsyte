@@ -23,6 +23,7 @@ import {
   decreaseTotalPostsByOne,
   refreshProfile,
 } from '../../../../redux/auth/actions';
+import { pushUserLayer } from '../../../../redux/user_stack/actions';
 import { pushCommentLayer } from '../../../../redux/comment_stack/actions';
 import UserProfilePostCardWrapper from '../UserProfilePostCardWrapper';
 import { checkPostListChanged } from '../../../../utils/functions';
@@ -160,6 +161,17 @@ interface UserProfilePostListProps {
    * using postID to identify from other layers
    */
   onPushCommentLayer: (postID: string) => void;
+
+  /**
+   * Method push a new user layer when
+   * navigate to user screen
+   * @param user Preloaded user passed to user screen
+   */
+  onPushUserLayer: (user: {
+    userID: string;
+    username: string;
+    avatar: string;
+  }) => void;
 }
 
 class UserProfilePostList extends Component<UserProfilePostListProps> {
@@ -215,6 +227,24 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
     const { navigation, onPushCommentLayer } = this.props;
     onPushCommentLayer(data.id);
     navigation.push('PostScreen', { post: data });
+  };
+
+  /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag = (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => {
+    const { navigation, onPushUserLayer } = this.props;
+    onPushUserLayer({
+      userID: user.id,
+      username: user.username,
+      avatar: user.avatar,
+    });
+    navigation.push('UserScreen', { user });
   };
 
   /**
@@ -302,6 +332,7 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
         performUnlikePost={this.performUnlikePost(item.id)}
         navigateWhenPressOnPostOrComment={this.navigateToPostScreen(item)}
         userPostControl={this.userControl(item.id)}
+        navigateWhenPressOnTag={this.navigateWhenPressOnTag}
       />
     );
   };
@@ -310,6 +341,29 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
     const { onPullToFetchOwnPosts, onRefreshProfile } = this.props;
     onPullToFetchOwnPosts();
     onRefreshProfile();
+  };
+
+  renderEmptyComponent = () => {
+    const { error, fetchLoading, posts } = this.props;
+    if (error) {
+      return (
+        <View style={styles.emptyWrapper}>
+          <ErrorView errorText={error.message} />
+        </View>
+      );
+    }
+    if (fetchLoading && posts.length === 0) {
+      return (
+        <View style={styles.emptyWrapper}>
+          <Loading />
+        </View>
+      );
+    }
+    return (
+      <View style={styles.emptyWrapper}>
+        <NothingView />
+      </View>
+    );
   };
 
   render() {
@@ -330,27 +384,6 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
       onScrollToTop,
     } = this.props;
 
-    let emptyListComponent = null;
-    if (error) {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <ErrorView errorText={error.message} />
-        </View>
-      );
-    } else if (fetchLoading && posts.length === 0) {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <Loading />
-        </View>
-      );
-    } else {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <NothingView />
-        </View>
-      );
-    }
-
     return (
       <View style={styles.container}>
         <View style={{ zIndex: 100 }}>
@@ -359,7 +392,7 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
             renderItem={this.renderItem}
             onGetRef={onGetRef}
             scrollY={scrollY}
-            listEmptyComponent={emptyListComponent}
+            listEmptyComponent={this.renderEmptyComponent()}
             onMomentumScrollBegin={onMomentumScrollBegin}
             onScrollEndDrag={onScrollEndDrag}
             onMomentumScrollEnd={onMomentumScrollEnd}
@@ -423,6 +456,7 @@ const mapDispatchToProps = {
   onUnlikePost: unlikePost,
   onRefreshProfile: refreshProfile,
   onPushCommentLayer: pushCommentLayer,
+  onPushUserLayer: pushUserLayer,
 };
 
 export default connect(

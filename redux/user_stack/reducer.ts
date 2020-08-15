@@ -169,6 +169,7 @@ export default function commentsStackReducer(
       const newState = { ...state };
       const currentTab = state.currentLoadingInTab as CurrentTabScreen;
       const payload = action.payload as {
+        avatar: string;
         name: string;
         bio: string;
         following: number;
@@ -184,6 +185,7 @@ export default function commentsStackReducer(
       if (topLayer) {
         topLayer.loading = false;
         topLayer.errors.fetchError = null;
+        topLayer.avatar = payload.avatar;
         topLayer.name = payload.name;
         topLayer.bio = payload.bio;
         topLayer.followers = payload.followers;

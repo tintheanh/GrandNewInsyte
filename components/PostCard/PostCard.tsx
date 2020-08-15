@@ -70,6 +70,16 @@ interface PostCardProps {
    * appeared in its owner user screen
    */
   navigateWhenPressOnUsernameOrAvatar?: () => void;
+
+  /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag?: (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => void;
 }
 
 export default class PostCard extends Component<PostCardProps> {
@@ -126,6 +136,7 @@ export default class PostCard extends Component<PostCardProps> {
       performUnlikePost,
       navigateWhenPressOnPostOrComment,
       navigateWhenPressOnUsernameOrAvatar,
+      navigateWhenPressOnTag,
     } = this.props;
 
     // console.log('post card', index);
@@ -201,6 +212,7 @@ export default class PostCard extends Component<PostCardProps> {
         <Caption
           caption={data.caption}
           navigateWhenPressOnPostOrComment={navigateWhenPressOnPostOrComment}
+          navigateWhenPressOnTag={navigateWhenPressOnTag}
         />
         {data.media.length ? (
           <Carousel

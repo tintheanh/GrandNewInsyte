@@ -10,39 +10,40 @@ import {
 interface CaptionProps {
   caption: string;
   navigateWhenPressOnPostOrComment?: () => void;
+  navigateWhenPressOnTag?: (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => void;
 }
 
 export default function Caption({
   caption,
   navigateWhenPressOnPostOrComment,
+  navigateWhenPressOnTag,
 }: CaptionProps) {
   return (
     <TouchableWithoutFeedback onPress={navigateWhenPressOnPostOrComment}>
       {caption.length <= 200 ? (
         <Text style={styles.caption}>
-          {/* {generateCaptionTextArray(caption).map((text, i) => {
-            if (text.type === 'url') {
-              return (
-                <Text
-                  key={i}
-                  style={{ color: Colors.tintColor }}
-                  onPress={openURL(text.value)}>
-                  {text.value}
-                </Text>
-              );
-            }
-            return <Text key={i}>{text.value}</Text>;
-          })} */}
           {generateCaptionWithTagsAndUrls(caption).map((element, i) => {
             if (element.type === 'tag') {
               const textChunk = element as {
-                value: { text: string; uid: string };
+                value: { text: string; uid: string; username: string };
               };
               return (
                 <Text
                   key={i}
                   style={{ color: Colors.userTag }}
-                  onPress={() => console.log(textChunk.value.uid)}>
+                  onPress={
+                    navigateWhenPressOnTag
+                      ? navigateWhenPressOnTag({
+                          id: textChunk.value.uid,
+                          username: textChunk.value.username,
+                          avatar: '',
+                        })
+                      : undefined
+                  }>
                   {textChunk.value.text}{' '}
                 </Text>
               );

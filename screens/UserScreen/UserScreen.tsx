@@ -15,6 +15,7 @@ import { Colors, Layout, MaterialCommunityIcons } from '../../constants';
 import { AppState } from '../../redux/store';
 import {
   fetchUser,
+  pushUserLayer,
   popUserLayer,
   setCurrentViewableListIndex,
   fetchMorePostsFromUser,
@@ -56,7 +57,8 @@ interface UserScreenProps {
       currentTabScreen: CurrentTabScreen;
     };
   };
-  isAuthed: boolean;
+  currentUID: string | undefined;
+  avatar: string;
   name: string;
   bio: string;
   following: number;
@@ -72,6 +74,11 @@ interface UserScreenProps {
   posts: Array<Post>;
 
   onFetchUser: (userID: string) => void;
+  onPushUserLayer: (user: {
+    userID: string;
+    username: string;
+    avatar: string;
+  }) => void;
   onPopUserLayer: () => void;
   onSetCurrentViewableListIndex: (index: number) => void;
   onFetchMorePostsFromUser: (userID: string, isFollowed: boolean) => void;
@@ -118,6 +125,7 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
       loading,
       fetchError,
       followError,
+      avatar,
       unfollowError,
       likePostError,
       unlikePostError,
@@ -127,6 +135,9 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
     } = this.props;
     const { likedPostID, unlikedPostID } = this.state;
     if (likedPostID !== nextState.likedPostID) {
+      return true;
+    }
+    if (avatar !== nextProps.avatar) {
       return true;
     }
     if (unlikedPostID !== nextState.unlikedPostID) {
@@ -195,6 +206,30 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
     navigation.push('PostScreen', { post: data });
   };
 
+  /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag = (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => {
+    const { currentUID, navigation, onPushUserLayer } = this.props;
+    if (currentUID === user.id) {
+      navigation.navigate('ProfileScreen', {
+        title: user.username,
+      });
+    } else {
+      onPushUserLayer({
+        userID: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      });
+      navigation.push('UserScreen', { user });
+    }
+  };
+
   performFetchMorePosts = () => {
     const { route, isFollowed, onFetchMorePostsFromUser } = this.props;
     onFetchMorePostsFromUser(route.params.user.id, isFollowed);
@@ -233,6 +268,7 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
         performLikePost={this.performLikePost(item.id)}
         performUnlikePost={this.performUnlikePost(item.id)}
         navigateWhenPressOnPostOrComment={this.navigateToPostScreen(item)}
+        navigateWhenPressOnTag={this.navigateWhenPressOnTag}
       />
     );
   };
@@ -258,9 +294,9 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
   };
 
   renderUserSection = () => {
-    const { user } = this.props.route.params;
     const {
-      isAuthed,
+      avatar,
+      currentUID,
       name,
       bio,
       loading,
@@ -275,12 +311,12 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
       <View>
         <View style={styles.header}>
           <View style={styles.avatarAndStats}>
-            <BigAvatar avatar={user.avatar} />
+            <BigAvatar avatar={avatar} />
 
             {loading && posts.length === 0 ? (
               <View style={styles.statWrapper}>
                 <UserStats postNum={0} followersNum={0} followingNum={0} />
-                {isAuthed ? (
+                {currentUID !== undefined ? (
                   <TouchableWithoutFeedback disabled>
                     <View
                       style={[
@@ -303,7 +339,7 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
                   followersNum={followers}
                   followingNum={following}
                 />
-                {isAuthed ? (
+                {currentUID !== undefined ? (
                   <TouchableWithoutFeedback
                     onPress={
                       isFollowed ? this.performUnfollow : this.performFollow
@@ -391,21 +427,11 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
   };
 
   componentDidUpdate() {
-    if (this.props.likePostError) {
-      this.performClearLikePostError();
-    }
-    if (this.props.unlikePostError) {
-      this.performClearUnlikePostError();
-    }
-  }
-
-  render() {
     const {
-      posts,
-      loading,
-      followers,
       followError,
       unfollowError,
+      likePostError,
+      unlikePostError,
     } = this.props;
 
     if (followError) {
@@ -415,6 +441,16 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
     if (unfollowError) {
       alertDialog(unfollowError.message, this.performClearUnfollowError);
     }
+    if (likePostError) {
+      this.performClearLikePostError();
+    }
+    if (unlikePostError) {
+      this.performClearUnlikePostError();
+    }
+  }
+
+  render() {
+    const { posts, loading, followers } = this.props;
 
     return (
       <View style={styles.container}>
@@ -508,7 +544,8 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: AppState, ownProps: UserScreenProps) => {
   const { currentTabScreen } = ownProps.route.params;
   return {
-    isAuthed: state.auth.user ? true : false,
+    currentUID: state.auth.user?.id,
+    avatar: state.usersStack[currentTabScreen].top()?.avatar ?? '',
     name: state.usersStack[currentTabScreen].top()?.name ?? '',
     bio: state.usersStack[currentTabScreen].top()?.bio ?? '',
     following: state.usersStack[currentTabScreen].top()?.following ?? 0,
@@ -530,6 +567,7 @@ const mapStateToProps = (state: AppState, ownProps: UserScreenProps) => {
 
 const mapDispatchToProps = {
   onFetchUser: fetchUser,
+  onPushUserLayer: pushUserLayer,
   onPopUserLayer: popUserLayer,
   onSetCurrentViewableListIndex: setCurrentViewableListIndex,
   onFetchMorePostsFromUser: fetchMorePostsFromUser,

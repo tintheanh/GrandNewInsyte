@@ -154,6 +154,7 @@ export const fetchUser = (userID: string) => async (
 
     const userData = userRef.data();
     const completeUserLayer = {
+      avatar: userData!.avatar,
       name: userData!.name,
       bio: userData!.bio,
       following: userData!.following,
@@ -400,6 +401,7 @@ const fetchUserStarted = (): UserStackAction => ({
 });
 
 const fetchUserSuccess = (payload: {
+  avatar: string;
   name: string;
   bio: string;
   following: number;

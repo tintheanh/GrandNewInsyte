@@ -90,25 +90,7 @@ class RootStack extends Component<RootStackProps> {
     this.props.onCheckAuth();
   }
 
-  /**
-   * Method clear create post error
-   */
-  performClearCreatePostError = () => {
-    const { onDecreaseTotalPostsByOne, onClearCreatePostError } = this.props;
-    onDecreaseTotalPostsByOne();
-    onClearCreatePostError();
-  };
-
-  /**
-   * Method clear delete post error
-   */
-  performClearDeletePostError = () => {
-    const { onIncreaseTotalPostsByOne, onClearDeletePostError } = this.props;
-    onIncreaseTotalPostsByOne();
-    onClearDeletePostError();
-  };
-
-  render() {
+  componentDidUpdate() {
     const {
       createPostError,
       deletePostError,
@@ -133,7 +115,27 @@ class RootStack extends Component<RootStackProps> {
     if (unlikePostError) {
       alertDialog(unlikePostError.message, onClearUnlikePostError);
     }
+  }
 
+  /**
+   * Method clear create post error
+   */
+  performClearCreatePostError = () => {
+    const { onDecreaseTotalPostsByOne, onClearCreatePostError } = this.props;
+    onDecreaseTotalPostsByOne();
+    onClearCreatePostError();
+  };
+
+  /**
+   * Method clear delete post error
+   */
+  performClearDeletePostError = () => {
+    const { onIncreaseTotalPostsByOne, onClearDeletePostError } = this.props;
+    onIncreaseTotalPostsByOne();
+    onClearDeletePostError();
+  };
+
+  render() {
     if (this.props.user === undefined) {
       return <Loading />;
     }

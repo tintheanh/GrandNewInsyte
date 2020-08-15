@@ -127,7 +127,7 @@ class SignInScreen extends Component<SignInScreenProps, SignInScreenState> {
     }).start();
   };
 
-  moveUp = () => this.move(-screenHeight / 10);
+  moveUp = () => this.move(-screenHeight / 8);
 
   moveDown = () => this.move(0);
 

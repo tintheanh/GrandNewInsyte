@@ -148,7 +148,7 @@ class SignUpScreen extends Component<SignUpScreenProps, SignUpScreenState> {
     }).start();
   };
 
-  moveUp = () => this.move(-screenHeight / 8);
+  moveUp = () => this.move(-screenHeight / 6);
 
   moveDown = () => this.move(0);
 

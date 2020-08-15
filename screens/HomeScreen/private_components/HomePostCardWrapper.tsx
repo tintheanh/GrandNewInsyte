@@ -63,6 +63,16 @@ interface HomePostCardWrapperProps {
    * appeared in its owner user screen
    */
   navigateWhenPressOnUsernameOrAvatar?: () => void;
+
+  /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag?: (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => void;
 }
 
 interface HomePostCardWrapperState {

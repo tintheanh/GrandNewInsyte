@@ -8,6 +8,8 @@ import { setCurrentUserListPostIndex } from '../../../../redux/curentViewableIte
 import {
   fetchTaggedPosts,
   pullToFetchTaggedPosts,
+  likePost,
+  unlikePost,
 } from '../../../../redux/posts/actions';
 import {
   ErrorView,
@@ -16,6 +18,8 @@ import {
   ProfilePostList,
   FooterLoading,
 } from '../../../../components';
+import { pushCommentLayer } from '../../../../redux/comment_stack/actions';
+import { pushUserLayer } from '../../../../redux/user_stack/actions';
 import { refreshProfile } from '../../../../redux/auth/actions';
 import UserProfilePostCardWrapper from '../UserProfilePostCardWrapper';
 import { checkPostListChanged } from '../../../../utils/functions';
@@ -30,6 +34,11 @@ type ProfileScreenNavigationProp = StackNavigationProp<
 
 interface UserProfileTaggedPostListProps {
   navigation: ProfileScreenNavigationProp;
+
+  /**
+   * Current user's id, undefined if no user signed in
+   */
+  currentUID: string | undefined;
 
   /**
    * Posts fetched from database
@@ -118,9 +127,40 @@ interface UserProfileTaggedPostListProps {
   onPullToFetchTaggedPosts: () => void;
 
   /**
+   * Method like a post
+   * @param postID Post's ID to like
+   */
+  onLikePost: (postID: string) => void;
+
+  /**
+   * Method like a post
+   * @param postID Post's ID to like
+   */
+  onUnlikePost: (postID: string) => void;
+
+  /**
    * Method refresh profile when pulling down list
    */
   onRefreshProfile: () => void;
+
+  /**
+   * Method push a new user layer when
+   * navigate to user screen
+   * @param user Preloaded user passed to user screen
+   */
+  onPushUserLayer: (user: {
+    userID: string;
+    username: string;
+    avatar: string;
+  }) => void;
+
+  /**
+   * Method push a new comments layer when
+   * navigate to post screen
+   * @param postID Each comments layer is a post screen
+   * using postID to identify from other layers
+   */
+  onPushCommentLayer: (postID: string) => void;
 }
 
 class UserProfileTaggedPostList extends Component<
@@ -189,6 +229,53 @@ class UserProfileTaggedPostList extends Component<
   };
 
   /**
+   * Method navigate to post screen
+   * @param data Post data used to push new
+   * comments layer and pass to post screen
+   */
+  navigateToPostScreen = (data: Post) => () => {
+    const { navigation, onPushCommentLayer } = this.props;
+    onPushCommentLayer(data.id);
+    navigation.push('PostScreen', { post: data });
+  };
+
+  /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag = (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => {
+    const { currentUID, navigation, onPushUserLayer } = this.props;
+    if (currentUID !== user.id) {
+      onPushUserLayer({
+        userID: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      });
+      navigation.push('UserScreen', { user });
+    }
+  };
+
+  /**
+   * Method perform like post
+   * @param postID post's ID to like
+   */
+  performLikePost = (postID: string) => () => {
+    this.props.onLikePost(postID);
+  };
+
+  /**
+   * Method perform unlike post
+   * @param postID post's ID to unlike
+   */
+  performUnlikePost = (postID: string) => () => {
+    this.props.onUnlikePost(postID);
+  };
+
+  /**
    * Method render list item
    * @param item
    * @param index
@@ -202,9 +289,10 @@ class UserProfileTaggedPostList extends Component<
         data={item}
         addScreenListener={navigation.addListener}
         isTabFocused={isTabFocused}
-        performLikePost={() => console.log('like')}
-        performUnlikePost={() => console.log('unlike')}
-        navigateWhenPressOnPostOrComment={() => console.log('to post screen')}
+        performLikePost={this.performLikePost(item.id)}
+        performUnlikePost={this.performUnlikePost(item.id)}
+        navigateWhenPressOnPostOrComment={this.navigateToPostScreen(item)}
+        navigateWhenPressOnTag={this.navigateWhenPressOnTag}
       />
     );
   };
@@ -213,6 +301,29 @@ class UserProfileTaggedPostList extends Component<
     const { onPullToFetchTaggedPosts, onRefreshProfile } = this.props;
     onPullToFetchTaggedPosts();
     onRefreshProfile();
+  };
+
+  renderEmptyComponent = () => {
+    const { error, fetchLoading, posts } = this.props;
+    if (error) {
+      return (
+        <View style={styles.emptyWrapper}>
+          <ErrorView errorText={error.message} />
+        </View>
+      );
+    }
+    if (fetchLoading && posts.length === 0) {
+      return (
+        <View style={styles.emptyWrapper}>
+          <Loading />
+        </View>
+      );
+    }
+    return (
+      <View style={styles.emptyWrapper}>
+        <NothingView />
+      </View>
+    );
   };
 
   render() {
@@ -233,27 +344,6 @@ class UserProfileTaggedPostList extends Component<
       onScrollToTop,
     } = this.props;
 
-    let emptyListComponent = null;
-    if (error) {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <ErrorView errorText={error.message} />
-        </View>
-      );
-    } else if (fetchLoading && posts.length === 0) {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <Loading />
-        </View>
-      );
-    } else {
-      emptyListComponent = (
-        <View style={styles.emptyWrapper}>
-          <NothingView />
-        </View>
-      );
-    }
-
     return (
       <View style={styles.container}>
         <View style={{ zIndex: 100 }}>
@@ -262,7 +352,7 @@ class UserProfileTaggedPostList extends Component<
             renderItem={this.renderItem}
             onGetRef={onGetRef}
             scrollY={scrollY}
-            listEmptyComponent={emptyListComponent}
+            listEmptyComponent={this.renderEmptyComponent()}
             onMomentumScrollBegin={onMomentumScrollBegin}
             onScrollEndDrag={onScrollEndDrag}
             onMomentumScrollEnd={onMomentumScrollEnd}
@@ -310,6 +400,7 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: AppState) => ({
+  currentUID: state.auth.user?.id,
   posts: state.allPosts.tagged.posts,
   fetchLoading: state.allPosts.tagged.fetchLoading,
   pullLoading: state.allPosts.tagged.pullLoading,
@@ -321,6 +412,10 @@ const mapDispatchToProps = {
   onFetchTaggedPosts: fetchTaggedPosts,
   onPullToFetchTaggedPosts: pullToFetchTaggedPosts,
   onRefreshProfile: refreshProfile,
+  onPushUserLayer: pushUserLayer,
+  onLikePost: likePost,
+  onUnlikePost: unlikePost,
+  onPushCommentLayer: pushCommentLayer,
 };
 
 export default connect(

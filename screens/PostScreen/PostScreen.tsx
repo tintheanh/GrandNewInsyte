@@ -333,6 +333,39 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
     this.focusUnsubcriber();
   }
 
+  componentDidUpdate() {
+    const {
+      createCommentError,
+      deleteCommentError,
+      likeCommentError,
+      unlikeCommentError,
+      onClearLikeCommentError,
+      onClearUnlikeCommentError,
+    } = this.props;
+
+    if (createCommentError) {
+      alertDialog(
+        createCommentError.message,
+        this.performClearCreateCommentError,
+      );
+    }
+
+    if (deleteCommentError) {
+      alertDialog(
+        deleteCommentError.message,
+        this.performClearDeleteCommentError,
+      );
+    }
+
+    if (likeCommentError) {
+      alertDialog(likeCommentError.message, onClearLikeCommentError);
+    }
+
+    if (unlikeCommentError) {
+      alertDialog(unlikeCommentError.message, onClearUnlikeCommentError);
+    }
+  }
+
   navigateToUserScreen = (user: {
     id: string;
     username: string;
@@ -352,6 +385,30 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
       navigation.navigate('ProfileScreen', {
         title: user.username,
       });
+    }
+  };
+
+  /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag = (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => {
+    const { currentUID, navigation, onPushUserLayer } = this.props;
+    if (currentUID === user.id) {
+      navigation.navigate('ProfileScreen', {
+        title: user.username,
+      });
+    } else {
+      onPushUserLayer({
+        userID: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      });
+      navigation.push('UserScreen', { user });
     }
   };
 
@@ -651,6 +708,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
             : undefined
         }
         shouldPlayMedia={shouldPlayMedia}
+        navigateWhenPressOnTag={this.navigateWhenPressOnTag}
       />
     );
   };
@@ -688,39 +746,7 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
 
   render() {
     const { post, shouldPlayMedia } = this.state;
-    const {
-      comments,
-      loading,
-      currentUID,
-      createCommentError,
-      deleteCommentError,
-      likeCommentError,
-      unlikeCommentError,
-      onClearLikeCommentError,
-      onClearUnlikeCommentError,
-    } = this.props;
-
-    if (createCommentError) {
-      alertDialog(
-        createCommentError.message,
-        this.performClearCreateCommentError,
-      );
-    }
-
-    if (deleteCommentError) {
-      alertDialog(
-        deleteCommentError.message,
-        this.performClearDeleteCommentError,
-      );
-    }
-
-    if (likeCommentError) {
-      alertDialog(likeCommentError.message, onClearLikeCommentError);
-    }
-
-    if (unlikeCommentError) {
-      alertDialog(unlikeCommentError.message, onClearUnlikeCommentError);
-    }
+    const { comments, loading, currentUID } = this.props;
 
     return (
       <KeyboardAvoidingView behavior="padding" style={styles.container}>

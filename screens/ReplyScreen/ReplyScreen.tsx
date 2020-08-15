@@ -341,6 +341,45 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
     this.detectScreenGoBackUnsubscriber();
   }
 
+  componentDidUpdate() {
+    const {
+      createReplyError,
+      deleteReplyError,
+      likeCommentError,
+      unlikeCommentError,
+      likeReplyError,
+      unlikeReplyError,
+      onClearLikeCommentError,
+      onClearUnlikeCommentError,
+      onClearLikeReplyError,
+      onClearUnlikeReplyError,
+    } = this.props;
+
+    if (createReplyError) {
+      alertDialog(createReplyError.message, this.performClearCreateReplyError);
+    }
+
+    if (deleteReplyError) {
+      alertDialog(deleteReplyError.message, this.performClearDeleteReplyError);
+    }
+
+    if (likeCommentError) {
+      alertDialog(likeCommentError.message, onClearLikeCommentError);
+    }
+
+    if (unlikeCommentError) {
+      alertDialog(unlikeCommentError.message, onClearUnlikeCommentError);
+    }
+
+    if (likeReplyError) {
+      alertDialog(likeReplyError.message, onClearLikeReplyError);
+    }
+
+    if (unlikeReplyError) {
+      alertDialog(unlikeReplyError.message, onClearUnlikeReplyError);
+    }
+  }
+
   /* ------------------- comment methods ------------------ */
 
   /**
@@ -689,45 +728,7 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
 
   render() {
     const { comment } = this.state;
-    const {
-      replies,
-      createReplyError,
-      deleteReplyError,
-      likeCommentError,
-      unlikeCommentError,
-      likeReplyError,
-      unlikeReplyError,
-      loading,
-      currentUID,
-      onClearLikeCommentError,
-      onClearUnlikeCommentError,
-      onClearLikeReplyError,
-      onClearUnlikeReplyError,
-    } = this.props;
-
-    if (createReplyError) {
-      alertDialog(createReplyError.message, this.performClearCreateReplyError);
-    }
-
-    if (deleteReplyError) {
-      alertDialog(deleteReplyError.message, this.performClearDeleteReplyError);
-    }
-
-    if (likeCommentError) {
-      alertDialog(likeCommentError.message, onClearLikeCommentError);
-    }
-
-    if (unlikeCommentError) {
-      alertDialog(unlikeCommentError.message, onClearUnlikeCommentError);
-    }
-
-    if (likeReplyError) {
-      alertDialog(likeReplyError.message, onClearLikeReplyError);
-    }
-
-    if (unlikeReplyError) {
-      alertDialog(unlikeReplyError.message, onClearUnlikeReplyError);
-    }
+    const { replies, loading, currentUID } = this.props;
 
     return (
       <KeyboardAvoidingView behavior="padding" style={styles.container}>

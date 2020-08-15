@@ -197,12 +197,15 @@ const generateCaptionWithTagsAndUrls = (source: string) => {
       str.includes(separatorForTag)
     ) {
       const noLinkSymbol = str.split(separatorForTag);
+      const username = noLinkSymbol[0].split('@')[1];
+      const uid = noLinkSymbol[1].replace(tokenForTag, '');
 
       return {
         type: 'tag',
         value: {
           text: noLinkSymbol[0],
-          uid: noLinkSymbol[1].replace(tokenForTag, ''),
+          uid,
+          username,
         },
       };
     }

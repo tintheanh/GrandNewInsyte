@@ -268,6 +268,30 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
   };
 
   /**
+   * Method navigate when pressing on user's tag
+   * @param user Preloaded user passed to new screen
+   */
+  navigateWhenPressOnTag = (user: {
+    id: string;
+    username: string;
+    avatar: string;
+  }) => () => {
+    const { currentUID, navigation, onPushUserLayer } = this.props;
+    if (currentUID === user.id) {
+      navigation.navigate('ProfileScreen', {
+        title: user.username,
+      });
+    } else {
+      onPushUserLayer({
+        userID: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      });
+      navigation.push('UserScreen', { user });
+    }
+  };
+
+  /**
    * Method set current scrolling index
    * @param viewableItems Array of items thich are
    * currently visible on the screen
@@ -442,25 +466,24 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
         userPostControl={
           currentUID === item.user.id ? this.userControl(item.id) : undefined
         }
+        navigateWhenPressOnTag={this.navigateWhenPressOnTag}
       />
     );
   };
 
-  render() {
-    const {
-      posts,
-      pullLoading,
-      hotTime,
-      currentTabIndex,
-      fetchLoading,
-      feedChoice,
-      error,
-      onFetchPublicNewPosts,
-      onFetchPublicHotPosts,
-      onPullToFetchPublicNewPosts,
-      onPullToFetchPublicHotPosts,
-    } = this.props;
+  renderEmptyComponent = () => {
+    const { error, fetchLoading, posts } = this.props;
+    if (error) {
+      return <ErrorView errorText={error.message} />;
+    }
+    if (fetchLoading && posts.length === 0) {
+      return <Loading />;
+    }
+    return <NothingView />;
+  };
 
+  renderHeaderComponent = () => {
+    const { hotTime, feedChoice } = this.props;
     let timeLabel = '';
     switch (hotTime) {
       case oneWeek:
@@ -473,17 +496,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
         timeLabel = 'this year';
         break;
     }
-
-    let emptyListComponent = null;
-    if (error) {
-      emptyListComponent = <ErrorView errorText={error.message} />;
-    } else if (fetchLoading && posts.length === 0) {
-      emptyListComponent = <Loading />;
-    } else {
-      emptyListComponent = <NothingView />;
-    }
-
-    const headerListComponent = (
+    return (
       <SortPostListHeader
         sortBy={feedChoice as 'new' | 'hot'}
         timeLabel={timeLabel as 'this week' | 'this month' | 'this year'}
@@ -491,6 +504,21 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
         selectTimeFilter={this.performSelectTimeFilter}
       />
     );
+  };
+
+  render() {
+    const {
+      posts,
+      pullLoading,
+      currentTabIndex,
+      fetchLoading,
+      feedChoice,
+      error,
+      onFetchPublicNewPosts,
+      onFetchPublicHotPosts,
+      onPullToFetchPublicNewPosts,
+      onPullToFetchPublicHotPosts,
+    } = this.props;
 
     return (
       <View style={styles.container}>
@@ -501,8 +529,8 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
             onViewableItemsChanged={this.onViewableItemsChanged}
             viewabilityConfig={this.viewabilityConfig}
             refreshing={pullLoading}
-            listEmptyComponent={emptyListComponent}
-            listHeaderComponent={headerListComponent}
+            listEmptyComponent={this.renderEmptyComponent()}
+            listHeaderComponent={this.renderHeaderComponent()}
             listFooterComponent={
               <View style={{ paddingBottom: Layout.window.height / 10 }} />
             }
