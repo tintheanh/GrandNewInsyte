@@ -103,8 +103,8 @@ class ReplyInput extends Component<ReplyInputProps, ReplyInputState> {
   }
 
   componentWillUnmount() {
-    this.keyboardWillShowListener!.remove();
-    this.keyboardWillHideListener!.remove();
+    this.keyboardWillShowListener?.remove();
+    this.keyboardWillHideListener?.remove();
   }
 
   keyboardWillShow = (event: any) => {

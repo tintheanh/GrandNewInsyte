@@ -137,12 +137,8 @@ export const fetchReplies = (commentID: string) => async (
   try {
     const currentTabForReplies = getState().replyStack.currentTab;
     const currentTabForComments = getState().commentStack.currentTab;
-    const commentIDinStack = getState().replyStack[currentTabForReplies].top()
-      ?.commentID;
+
     const postID = getState().commentStack[currentTabForComments].top()?.postID;
-    if (commentID !== commentIDinStack || !postID) {
-      throw new Error('Error occurred.');
-    }
 
     const lastVisible = getState().replyStack[currentTabForReplies].top()!
       .lastVisible;

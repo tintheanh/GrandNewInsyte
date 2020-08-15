@@ -13,20 +13,27 @@ const initialState: CommentStackState = {
   homeTabStack: new NavigationStack<CommentStackLayer>(),
   userTabStack: new NavigationStack<CommentStackLayer>(),
   currentTab: 'homeTabStack',
-};
-
-const untouchedState: CommentStackState = {
-  homeTabStack: new NavigationStack<CommentStackLayer>(),
-  userTabStack: new NavigationStack<CommentStackLayer>(),
-  currentTab: 'homeTabStack',
+  currentLoadingInTab: '',
 };
 
 export default function commentStackReducer(
   state = initialState,
   action: CommentStackAction,
 ): CommentStackState {
+  const untouchedState: CommentStackState = {
+    homeTabStack: new NavigationStack<CommentStackLayer>(),
+    userTabStack: new NavigationStack<CommentStackLayer>(),
+    currentTab: 'homeTabStack',
+    currentLoadingInTab: '',
+  };
+
   switch (action.type) {
     /* ------------------- ultility cases ------------------- */
+    case DispatchTypes.SET_CURRENT_TAB: {
+      const newState = { ...state };
+      newState.currentTab = action.payload as CurrentTabScreen;
+      return newState;
+    }
 
     case DispatchTypes.PUSH_COMMENT_LAYER: {
       const newState = { ...state };
@@ -64,7 +71,9 @@ export default function commentStackReducer(
         numberOfReplies: number;
       };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         const index = topLayer.comments.findIndex(
           (comment) => comment.id === payload.commentID,
@@ -83,7 +92,9 @@ export default function commentStackReducer(
         numberOfReplies: number;
       };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         const index = topLayer.comments.findIndex(
           (comment) => comment.id === payload.commentID,
@@ -107,7 +118,9 @@ export default function commentStackReducer(
     case DispatchTypes.CLEAR_CREATE_COMMENT_ERROR: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         topLayer.errors.createCommentError = null;
         newState[currentTab].updateTop(topLayer);
@@ -117,7 +130,9 @@ export default function commentStackReducer(
     case DispatchTypes.CLEAR_DELETE_COMMENT_ERROR: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         topLayer.errors.deleteCommentError = null;
         newState[currentTab].updateTop(topLayer);
@@ -127,7 +142,9 @@ export default function commentStackReducer(
     case DispatchTypes.CLEAR_LIKE_COMMENT_ERROR: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         topLayer.errors.likeCommentError = null;
         newState[currentTab].updateTop(topLayer);
@@ -137,7 +154,9 @@ export default function commentStackReducer(
     case DispatchTypes.CLEAR_UNLIKE_COMMENT_ERROR: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         topLayer.errors.unlikeCommentError = null;
         newState[currentTab].updateTop(topLayer);
@@ -149,51 +168,60 @@ export default function commentStackReducer(
 
     /* ---------------- fetch comments cases ---------------- */
 
-    case DispatchTypes.SET_CURRENT_TAB: {
-      const newState = { ...state };
-      newState.currentTab = action.payload as CurrentTabScreen;
-      return newState;
-    }
     case DispatchTypes.FETCH_COMMENTS_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
-      if (topLayer) {
-        topLayer.loadings.fetchLoading = true;
-        newState[currentTab].updateTop(topLayer);
+      if (newState[currentTab]) {
+        const topLayer = newState[
+          currentTab
+        ].getTopClone() as CommentStackLayer | null;
+        if (topLayer) {
+          topLayer.loadings.fetchLoading = true;
+          newState[currentTab].updateTop(topLayer);
+          newState.currentLoadingInTab = currentTab;
+        }
       }
       return newState;
     }
     case DispatchTypes.FETCH_COMMENTS_SUCCESS: {
       const newState = { ...state };
-      const currentTab = state.currentTab;
+      const currentTab = state.currentLoadingInTab as CurrentTabScreen;
       const payload = action.payload as {
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot;
         comments: Array<Comment>;
       };
-      const topLayer = newState[currentTab].top();
-      if (topLayer) {
-        topLayer.loadings.fetchLoading = false;
-        topLayer.comments = removeDuplicatesFromArray(
-          topLayer.comments.concat(payload.comments),
-        );
-        topLayer.lastVisible = payload.lastVisible;
-        topLayer.errors.fetchError = null;
-        newState[currentTab].updateTop(topLayer);
+      if (newState[currentTab]) {
+        const topLayer = newState[
+          currentTab
+        ].getTopClone() as CommentStackLayer | null;
+        if (topLayer) {
+          topLayer.loadings.fetchLoading = false;
+          const newComments = topLayer.comments.concat(payload.comments);
+          newComments.sort((a, b) => a.datePosted - b.datePosted);
+          topLayer.comments = removeDuplicatesFromArray(newComments);
+          topLayer.lastVisible = payload.lastVisible;
+          topLayer.errors.fetchError = null;
+          newState[currentTab].updateTop(topLayer);
+        }
+        newState.currentLoadingInTab = '';
       }
-
       return newState;
     }
     case DispatchTypes.FETCH_COMMENTS_FAILURE: {
       const newState = { ...state };
-      const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
-      if (topLayer) {
-        topLayer.loadings.fetchLoading = false;
-        topLayer.comments = [];
-        topLayer.lastVisible = null;
-        topLayer.errors.fetchError = action.payload as Error;
-        newState[currentTab].updateTop(topLayer);
+      const currentTab = state.currentLoadingInTab as CurrentTabScreen;
+      if (newState[currentTab]) {
+        const topLayer = newState[
+          currentTab
+        ].getTopClone() as CommentStackLayer | null;
+        if (topLayer) {
+          topLayer.loadings.fetchLoading = false;
+          topLayer.comments = [];
+          topLayer.lastVisible = null;
+          topLayer.errors.fetchError = action.payload as Error;
+          newState[currentTab].updateTop(topLayer);
+        }
+        newState.currentLoadingInTab = '';
       }
       return newState;
     }
@@ -205,7 +233,9 @@ export default function commentStackReducer(
     case DispatchTypes.CREATE_COMMENT_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         topLayer.loadings.createCommentLoading = true;
         const filteredPending = topLayer.comments.filter(
@@ -214,17 +244,20 @@ export default function commentStackReducer(
         filteredPending.push(action.payload as Comment);
         topLayer.comments = filteredPending;
         newState[currentTab].updateTop(topLayer);
+        newState.currentLoadingInTab = currentTab;
       }
       return newState;
     }
     case DispatchTypes.CREATE_COMMENT_SUCCESS: {
       const newState = { ...state };
-      const currentTab = state.currentTab;
+      const currentTab = state.currentLoadingInTab as CurrentTabScreen;
       const payload = action.payload as {
         newComment: Comment;
         postID: string;
       };
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer && topLayer.postID === payload.postID) {
         topLayer.loadings.createCommentLoading = false;
         topLayer.errors.createCommentError = null;
@@ -241,12 +274,15 @@ export default function commentStackReducer(
         topLayer.comments = removedDuplicates;
         newState[currentTab].updateTop(topLayer);
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
     case DispatchTypes.CREATE_COMMENT_FAILURE: {
       const newState = { ...state };
-      const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const currentTab = state.currentLoadingInTab as CurrentTabScreen;
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         topLayer.loadings.createCommentLoading = false;
         topLayer.errors.createCommentError = action.payload as Error;
@@ -256,6 +292,7 @@ export default function commentStackReducer(
         topLayer.comments = filteredPending;
         newState[currentTab].updateTop(topLayer);
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
 
@@ -266,7 +303,9 @@ export default function commentStackReducer(
     case DispatchTypes.DELETE_COMMENT_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         const index = topLayer.comments.findIndex(
           (comment) => comment.id === (action.payload as string),
@@ -275,13 +314,16 @@ export default function commentStackReducer(
           topLayer.comments[index].id += pendingDeleteCommentFlag;
         }
         newState[currentTab].updateTop(topLayer);
+        newState.currentLoadingInTab = currentTab;
       }
       return newState;
     }
     case DispatchTypes.DELETE_COMMENT_SUCCESS: {
       const newState = { ...state };
-      const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const currentTab = state.currentLoadingInTab as CurrentTabScreen;
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         topLayer.errors.deleteCommentError = null;
         const index = topLayer.comments.findIndex(
@@ -292,16 +334,19 @@ export default function commentStackReducer(
         }
         newState[currentTab].updateTop(topLayer);
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
     case DispatchTypes.DELETE_COMMENT_FAILURE: {
       const newState = { ...state };
-      const currentTab = state.currentTab;
+      const currentTab = state.currentLoadingInTab as CurrentTabScreen;
       const payload = action.payload as {
         commentIDwithFlag: string;
         error: Error;
       };
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         topLayer.errors.deleteCommentError = payload.error;
         const index = topLayer.comments.findIndex(
@@ -315,6 +360,7 @@ export default function commentStackReducer(
         }
         newState[currentTab].updateTop(topLayer);
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
 
@@ -324,7 +370,9 @@ export default function commentStackReducer(
     case DispatchTypes.LIKE_COMMENT_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         const index = topLayer.comments.findIndex(
           (comment) => comment.id === (action.payload as string),
@@ -334,20 +382,25 @@ export default function commentStackReducer(
           topLayer.comments[index].isLiked = true;
         }
         newState[currentTab].updateTop(topLayer);
+        newState.currentLoadingInTab = currentTab;
       }
       return newState;
     }
     case DispatchTypes.LIKE_COMMENT_SUCCESS: {
-      return state;
+      const newState = { ...state };
+      newState.currentLoadingInTab = '';
+      return newState;
     }
     case DispatchTypes.LIKE_COMMENT_FAILURE: {
       const newState = { ...state };
-      const currentTab = state.currentTab;
+      const currentTab = state.currentLoadingInTab as CurrentTabScreen;
       const payload = action.payload as {
         commentID: string;
         error: Error;
       };
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         if (payload.commentID.length) {
           const index = topLayer.comments.findIndex(
@@ -361,6 +414,7 @@ export default function commentStackReducer(
         topLayer.errors.likeCommentError = payload.error;
         newState[currentTab].updateTop(topLayer);
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
     /* --------------- end like comment cases --------------- */
@@ -370,7 +424,9 @@ export default function commentStackReducer(
     case DispatchTypes.UNLIKE_COMMENT_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         const index = topLayer.comments.findIndex(
           (comment) => comment.id === (action.payload as string),
@@ -380,20 +436,25 @@ export default function commentStackReducer(
           topLayer.comments[index].isLiked = false;
         }
         newState[currentTab].updateTop(topLayer);
+        newState.currentLoadingInTab = currentTab;
       }
       return newState;
     }
     case DispatchTypes.UNLIKE_COMMENT_SUCCESS: {
-      return state;
+      const newState = { ...state };
+      newState.currentLoadingInTab = '';
+      return newState;
     }
     case DispatchTypes.UNLIKE_COMMENT_FAILURE: {
       const newState = { ...state };
-      const currentTab = state.currentTab;
+      const currentTab = state.currentLoadingInTab as CurrentTabScreen;
       const payload = action.payload as {
         commentID: string;
         error: Error | null;
       };
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as CommentStackLayer | null;
       if (topLayer) {
         if (payload.commentID.length) {
           const index = topLayer.comments.findIndex(
@@ -407,6 +468,7 @@ export default function commentStackReducer(
         topLayer.errors.unlikeCommentError = payload.error;
         newState[currentTab].updateTop(topLayer);
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
 

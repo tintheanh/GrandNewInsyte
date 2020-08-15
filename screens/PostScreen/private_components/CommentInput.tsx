@@ -98,8 +98,8 @@ class CommentInput extends Component<CommentInputProps, CommentInputState> {
   }
 
   componentWillUnmount() {
-    this.keyboardWillShowListener!.remove();
-    this.keyboardWillHideListener!.remove();
+    this.keyboardWillShowListener?.remove();
+    this.keyboardWillHideListener?.remove();
   }
 
   keyboardWillShow = (event: any) => {

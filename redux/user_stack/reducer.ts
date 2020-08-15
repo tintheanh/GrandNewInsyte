@@ -14,17 +14,16 @@ const initialState: UserStackState = {
   currentLoadingInTab: '',
 };
 
-const untouchedState: UserStackState = {
-  homeTabStack: new NavigationStack<UserStackLayer>(),
-  userTabStack: new NavigationStack<UserStackLayer>(),
-  currentTab: 'homeTabStack',
-  currentLoadingInTab: '',
-};
-
 export default function commentsStackReducer(
   state = initialState,
   action: UserStackAction,
 ): UserStackState {
+  const untouchedState: UserStackState = {
+    homeTabStack: new NavigationStack<UserStackLayer>(),
+    userTabStack: new NavigationStack<UserStackLayer>(),
+    currentTab: 'homeTabStack',
+    currentLoadingInTab: '',
+  };
   switch (action.type) {
     /* -------------------- utility cases ------------------- */
 
@@ -39,7 +38,7 @@ export default function commentsStackReducer(
       const topLayer = state[currentTab].top();
       if (topLayer) {
         topLayer.currentViewableIndex = action.payload as number;
-        state[currentTab].updateTop(topLayer);
+        newState[currentTab].updateTop(topLayer);
       }
       return newState;
     }
@@ -89,18 +88,60 @@ export default function commentsStackReducer(
     case DispatchTypes.CLEAR_FOLLOW_ERROR: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
       if (topLayer) {
         topLayer.errors.followError = null;
+        newState[currentTab].updateTop(topLayer);
       }
       return newState;
     }
     case DispatchTypes.CLEAR_UNFOLLOW_ERROR: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
       if (topLayer) {
         topLayer.errors.unfollowError = null;
+        newState[currentTab].updateTop(topLayer);
+      }
+      return newState;
+    }
+    case DispatchTypes.INCREASE_LIKES: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
+      if (topLayer) {
+        const postIndex = topLayer.posts.findIndex(
+          (p) => p.id === (action.payload as string),
+        );
+        if (postIndex !== -1) {
+          topLayer.posts[postIndex].likes += 1;
+          topLayer.posts[postIndex].isLiked = true;
+        }
+        newState[currentTab].updateTop(topLayer);
+      }
+      return newState;
+    }
+    case DispatchTypes.DECREASE_LIKES: {
+      const newState = { ...state };
+      const currentTab = state.currentTab;
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
+      if (topLayer) {
+        const postIndex = topLayer.posts.findIndex(
+          (p) => p.id === (action.payload as string),
+        );
+        if (postIndex !== -1) {
+          topLayer.posts[postIndex].likes -= 1;
+          topLayer.posts[postIndex].isLiked = false;
+        }
+        newState[currentTab].updateTop(topLayer);
       }
       return newState;
     }
@@ -114,7 +155,9 @@ export default function commentsStackReducer(
     case DispatchTypes.FETCH_USER_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
       if (topLayer) {
         topLayer.loading = true;
         newState[currentTab].updateTop(topLayer);
@@ -135,7 +178,9 @@ export default function commentsStackReducer(
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
         posts: Array<Post>;
       };
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
       if (topLayer) {
         topLayer.loading = false;
         topLayer.errors.fetchError = null;
@@ -148,20 +193,22 @@ export default function commentsStackReducer(
         topLayer.lastVisible = payload.lastVisible;
         topLayer.posts = payload.posts;
         newState[currentTab].updateTop(topLayer);
-        newState.currentLoadingInTab = '';
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
     case DispatchTypes.FETCH_USER_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentLoadingInTab as CurrentTabScreen;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
       if (topLayer) {
         topLayer.loading = false;
         topLayer.errors.fetchError = action.payload as Error;
         newState[currentTab].updateTop(topLayer);
-        newState.currentLoadingInTab = '';
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
 
@@ -172,11 +219,15 @@ export default function commentsStackReducer(
     case DispatchTypes.FETCH_MORE_POSTS_FROM_USER_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
-      if (topLayer) {
-        topLayer.loading = true;
-        newState[currentTab].updateTop(topLayer);
-        newState.currentLoadingInTab = currentTab;
+      if (newState[currentTab]) {
+        const topLayer = newState[
+          currentTab
+        ].getTopClone() as UserStackLayer | null;
+        if (topLayer) {
+          topLayer.loading = true;
+          newState[currentTab].updateTop(topLayer);
+          newState.currentLoadingInTab = currentTab;
+        }
       }
       return newState;
     }
@@ -187,13 +238,17 @@ export default function commentsStackReducer(
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
       };
       const currentTab = state.currentLoadingInTab as CurrentTabScreen;
-      const topLayer = newState[currentTab].top();
-      if (topLayer) {
-        topLayer.loading = false;
-        topLayer.errors.fetchError = null;
-        topLayer.posts = topLayer.posts.concat(payload.posts);
-        topLayer.lastVisible = payload.lastVisible;
-        newState[currentTab].updateTop(topLayer);
+      if (newState[currentTab]) {
+        const topLayer = newState[
+          currentTab
+        ].getTopClone() as UserStackLayer | null;
+        if (topLayer) {
+          topLayer.loading = false;
+          topLayer.errors.fetchError = null;
+          topLayer.posts = topLayer.posts.concat(payload.posts);
+          topLayer.lastVisible = payload.lastVisible;
+          newState[currentTab].updateTop(topLayer);
+        }
         newState.currentLoadingInTab = '';
       }
       return newState;
@@ -201,13 +256,17 @@ export default function commentsStackReducer(
     case DispatchTypes.FETCH_MORE_POSTS_FROM_USER_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentLoadingInTab as CurrentTabScreen;
-      const topLayer = newState[currentTab].top();
-      if (topLayer) {
-        topLayer.loading = false;
-        topLayer.errors.fetchError = action.payload as Error;
-        topLayer.posts = [];
-        topLayer.lastVisible = null;
-        newState[currentTab].updateTop(topLayer);
+      if (newState[currentTab]) {
+        const topLayer = newState[
+          currentTab
+        ].getTopClone() as UserStackLayer | null;
+        if (topLayer) {
+          topLayer.loading = false;
+          topLayer.errors.fetchError = action.payload as Error;
+          topLayer.posts = [];
+          topLayer.lastVisible = null;
+          newState[currentTab].updateTop(topLayer);
+        }
         newState.currentLoadingInTab = '';
       }
       return newState;
@@ -220,7 +279,9 @@ export default function commentsStackReducer(
     case DispatchTypes.FOLLOW_USER_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
       if (topLayer) {
         topLayer.isFollowed = true;
         topLayer.followers += 1;
@@ -230,19 +291,23 @@ export default function commentsStackReducer(
       return newState;
     }
     case DispatchTypes.FOLLOW_USER_SUCCESS: {
-      return state;
+      const newState = { ...state };
+      newState.currentLoadingInTab = '';
+      return newState;
     }
     case DispatchTypes.FOLLOW_USER_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentLoadingInTab as CurrentTabScreen;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
       if (topLayer) {
         topLayer.errors.followError = action.payload as Error;
         topLayer.isFollowed = false;
         topLayer.followers -= 1;
         newState[currentTab].updateTop(topLayer);
-        newState.currentLoadingInTab = '';
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
 
@@ -253,7 +318,9 @@ export default function commentsStackReducer(
     case DispatchTypes.UNFOLLOW_USER_STARTED: {
       const newState = { ...state };
       const currentTab = state.currentTab;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
       if (topLayer) {
         topLayer.isFollowed = false;
         topLayer.followers -= 1;
@@ -263,19 +330,23 @@ export default function commentsStackReducer(
       return newState;
     }
     case DispatchTypes.UNFOLLOW_USER_SUCCESS: {
-      return state;
+      const newState = { ...state };
+      newState.currentLoadingInTab = '';
+      return newState;
     }
     case DispatchTypes.UNFOLLOW_USER_FAILURE: {
       const newState = { ...state };
       const currentTab = state.currentLoadingInTab as CurrentTabScreen;
-      const topLayer = newState[currentTab].top();
+      const topLayer = newState[
+        currentTab
+      ].getTopClone() as UserStackLayer | null;
       if (topLayer) {
         topLayer.errors.unfollowError = action.payload as Error;
         topLayer.isFollowed = true;
         topLayer.followers += 1;
         newState[currentTab].updateTop(topLayer);
-        newState.currentLoadingInTab = '';
       }
+      newState.currentLoadingInTab = '';
       return newState;
     }
 

@@ -55,61 +55,61 @@ const initialState: PostState = {
   },
 };
 
-const untouchedState: PostState = {
-  public: {
-    posts: [],
-    fetchLoading: false,
-    pullLoading: false,
-    lastNewVisible: 0,
-    lastHotVisible: 0,
-    hotTime: oneWeek,
-    feedChoice: 'new',
-    error: null,
-  },
-  following: {
-    posts: [],
-    fetchLoading: false,
-    pullLoading: false,
-    lastNewVisible: 0,
-    lastHotVisible: 0,
-    hotTime: oneWeek,
-    feedChoice: 'new',
-    error: null,
-  },
-  own: {
-    posts: [],
-    error: null,
-    lastVisible: null,
-    fetchLoading: false,
-    pullLoading: false,
-  },
-  tagged: {
-    posts: [],
-    error: null,
-    lastVisible: null,
-    fetchLoading: false,
-    pullLoading: false,
-  },
-  createPost: {
-    loading: false,
-    error: null,
-  },
-  deletePost: {
-    loading: false,
-    error: null,
-  },
-  likePost: {
-    error: null,
-  },
-  unlikePost: {
-    error: null,
-  },
-};
-
 export default function postsReducer(
   state = initialState,
   action: PostAction,
 ): PostState {
+  const untouchedState: PostState = {
+    public: {
+      posts: [],
+      fetchLoading: false,
+      pullLoading: false,
+      lastNewVisible: 0,
+      lastHotVisible: 0,
+      hotTime: oneWeek,
+      feedChoice: 'new',
+      error: null,
+    },
+    following: {
+      posts: [],
+      fetchLoading: false,
+      pullLoading: false,
+      lastNewVisible: 0,
+      lastHotVisible: 0,
+      hotTime: oneWeek,
+      feedChoice: 'new',
+      error: null,
+    },
+    own: {
+      posts: [],
+      error: null,
+      lastVisible: null,
+      fetchLoading: false,
+      pullLoading: false,
+    },
+    tagged: {
+      posts: [],
+      error: null,
+      lastVisible: null,
+      fetchLoading: false,
+      pullLoading: false,
+    },
+    createPost: {
+      loading: false,
+      error: null,
+    },
+    deletePost: {
+      loading: false,
+      error: null,
+    },
+    likePost: {
+      error: null,
+    },
+    unlikePost: {
+      error: null,
+    },
+  };
+
   switch (action.type) {
     /* ----------------- public posts cases ----------------- */
 
@@ -1132,159 +1132,6 @@ export default function postsReducer(
       newState.tagged.posts = taggedPosts;
       return newState;
     }
-
-    // /* ----------------- end like post cases ---------------- */
-
-    // case SET_PUBLIC_HOTTIME: {
-    //   const newState = { ...state };
-    //   newState.public.hotTime = action.payload as number;
-    //   newState.public.lastHotVisible = 0;
-    //   newState.public.posts = [];
-    //   return newState;
-    // }
-    // case SET_FOLLOWING_HOTTIME: {
-    //   const newState = { ...state };
-    //   newState.following.hotTime = action.payload as number;
-    //   newState.following.lastHotVisible = 0;
-    //   newState.following.posts = [];
-    //   return newState;
-    // }
-    // case SET_PUBLIC_FEED_CHOICE: {
-    //   const newState = { ...state };
-    //   newState.public.feedChoice = action.payload as string;
-    //   newState.public.hotTime = oneWeek;
-    //   newState.public.lastHotVisible = 0;
-    //   newState.public.posts = [];
-    //   return newState;
-    // }
-    // case SET_FOLLOWING_FEED_CHOICE: {
-    //   const newState = { ...state };
-    //   newState.following.feedChoice = action.payload as string;
-    //   newState.following.hotTime = oneWeek;
-    //   newState.following.lastHotVisible = 0;
-    //   newState.following.posts = [];
-    //   return newState;
-    // }
-
-    // case INCREASE_COMMENTS_BY_NUMBER: {
-    //   const newState = { ...state };
-    //   const publicPosts = [...state.public.posts];
-    //   const followingPosts = [...state.following.posts];
-    //   const userPosts = [...state.userPosts.posts];
-    //   const taggedPosts = [...state.taggedPosts.posts];
-    //   const payload = action.payload as { postID: string; by: number };
-    //   newState.likePost.error = null;
-
-    //   const publicPostIndex = publicPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const followingPostIndex = followingPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const userPostIndex = userPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const taggedPostIndex = taggedPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-
-    //   if (publicPostIndex !== -1) {
-    //     const post = { ...publicPosts[publicPostIndex] };
-    //     post.comments += payload.by;
-    //     publicPosts[publicPostIndex] = post;
-    //   }
-    //   if (followingPostIndex !== -1) {
-    //     const post = { ...followingPosts[followingPostIndex] };
-    //     post.comments += payload.by;
-    //     followingPosts[followingPostIndex] = post;
-    //   }
-    //   if (userPostIndex !== -1) {
-    //     const post = { ...userPosts[userPostIndex] };
-    //     post.comments += payload.by;
-    //     userPosts[userPostIndex] = post;
-    //   }
-    //   if (taggedPostIndex !== -1) {
-    //     const post = { ...taggedPosts[taggedPostIndex] };
-    //     post.comments += payload.by;
-    //     taggedPosts[taggedPostIndex] = post;
-    //   }
-
-    //   newState.public.posts = publicPosts;
-    //   newState.following.posts = followingPosts;
-    //   newState.userPosts.posts = userPosts;
-    //   newState.taggedPosts.posts = taggedPosts;
-    //   return newState;
-    // }
-
-    // case DECREASE_COMMENTS_BY_NUMBER: {
-    //   const newState = { ...state };
-    //   const payload = action.payload as { postID: string; by: number };
-    //   const publicPosts = [...state.public.posts];
-    //   const followingPosts = [...state.following.posts];
-    //   const userPosts = [...state.userPosts.posts];
-    //   const taggedPosts = [...state.taggedPosts.posts];
-    //   newState.likePost.error = null;
-
-    //   const publicPostIndex = publicPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const followingPostIndex = followingPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const userPostIndex = userPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-    //   const taggedPostIndex = taggedPosts.findIndex(
-    //     (post) => post.id === payload.postID,
-    //   );
-
-    //   if (publicPostIndex !== -1) {
-    //     const post = { ...publicPosts[publicPostIndex] };
-    //     post.comments -= payload.by;
-    //     publicPosts[publicPostIndex] = post;
-    //   }
-    //   if (followingPostIndex !== -1) {
-    //     const post = { ...followingPosts[followingPostIndex] };
-    //     post.comments -= payload.by;
-    //     followingPosts[followingPostIndex] = post;
-    //   }
-    //   if (userPostIndex !== -1) {
-    //     const post = { ...userPosts[userPostIndex] };
-    //     post.comments -= payload.by;
-    //     userPosts[userPostIndex] = post;
-    //   }
-    //   if (taggedPostIndex !== -1) {
-    //     const post = { ...taggedPosts[taggedPostIndex] };
-    //     post.comments -= payload.by;
-    //     taggedPosts[taggedPostIndex] = post;
-    //   }
-
-    //   newState.public.posts = publicPosts;
-    //   newState.following.posts = followingPosts;
-    //   newState.userPosts.posts = userPosts;
-    //   newState.taggedPosts.posts = taggedPosts;
-    //   return newState;
-    // }
-    // case CLEAR_CREATE_POST_ERROR: {
-    //   const newState = { ...state };
-    //   newState.createPost.error = null;
-    //   return newState;
-    // }
-    // case CLEAR_DELETE_POST_ERROR: {
-    //   const newState = { ...state };
-    //   newState.deletePost.error = null;
-    //   return newState;
-    // }
-    // case CLEAR_LIKE_POST_ERROR: {
-    //   const newState = { ...state };
-    //   newState.likePost.error = null;
-    //   return newState;
-    // }
-    // case CLEAR_UNLIKE_POST_ERROR: {
-    //   const newState = { ...state };
-    //   newState.unlikePost.error = null;
-    //   return newState;
-    // }
     case DispatchTypes.CLEAR:
       return untouchedState;
     default:

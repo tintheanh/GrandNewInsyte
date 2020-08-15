@@ -72,4 +72,5 @@ export interface CommentStackState {
   homeTabStack: NavigationStack<CommentStackLayer>;
   userTabStack: NavigationStack<CommentStackLayer>;
   currentTab: CurrentTabScreen;
+  currentLoadingInTab: CurrentTabScreen | '';
 }

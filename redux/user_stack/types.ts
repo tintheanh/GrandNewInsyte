@@ -24,6 +24,9 @@ export enum DispatchTypes {
   FETCH_MORE_POSTS_FROM_USER_SUCCESS = 'FETCH_MORE_POSTS_FROM_USER_SUCCESS',
   FETCH_MORE_POSTS_FROM_USER_FAILURE = 'FETCH_MORE_POSTS_FROM_USER_FAILURE',
 
+  INCREASE_LIKES = 'INCREASE_LIKES',
+  DECREASE_LIKES = 'DECREASE_LIKES',
+
   FOLLOW_USER_STARTED = 'FOLLOW_USER_STARTED',
   FOLLOW_USER_SUCCESS = 'FOLLOW_USER_SUCCESS',
   FOLLOW_USER_FAILURE = 'FOLLOW_USER_FAILURE',
@@ -56,6 +59,7 @@ export interface UserStackAction {
         posts: Array<Post>;
       }
     | number
+    | string
     | Error
     | CurrentTabScreen
     | null;

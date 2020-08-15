@@ -99,7 +99,6 @@ exports.handleUserSignUp = functions.auth.user().onCreate((user) => {
         .set({
           avatar: '',
           name: '',
-          email,
           username: displayName,
           bio: '',
           total_posts: 0,

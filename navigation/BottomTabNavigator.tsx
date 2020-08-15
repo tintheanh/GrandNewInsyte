@@ -29,7 +29,8 @@ import TabBarIcon from '../components/TabBarIcon';
 import HomeStack from '../stacks/HomeStack';
 import AuthScreen from '../screens/AuthScreen';
 import MapStack from '../stacks/MapStack';
-import Colors from '../constants/Colors';
+import { Colors } from '../constants';
+import { CurrentTabScreen } from '../models';
 
 const BottomTab = createBottomTabNavigator();
 
@@ -38,12 +39,39 @@ const ModalPlaceHolder = () => (
 );
 
 class BottomTabNavigator extends Component<any> {
+  private isAuthTabPressed = false;
+
   shouldComponentUpdate(nextProps: any) {
     if (this.props.user !== nextProps.user) {
       return true;
     }
+    if (this.props.createPostLoading !== nextProps.createPostLoading) {
+      return true;
+    }
     return false;
   }
+
+  setCurrentTabScreen = (currentTabScreen: CurrentTabScreen) => {
+    const {
+      onSetCurrentTabForCommentStack,
+      onSetCurrentTabForReplyStack,
+      onSetCurrentTabForUserStack,
+    } = this.props;
+    onSetCurrentTabForCommentStack(currentTabScreen);
+    onSetCurrentTabForReplyStack(currentTabScreen);
+    onSetCurrentTabForUserStack(currentTabScreen);
+  };
+
+  clearAllStacks = () => {
+    const {
+      onClearCommentStack,
+      onClearReplyStack,
+      onClearUserStack,
+    } = this.props;
+    onClearCommentStack();
+    onClearReplyStack();
+    onClearUserStack();
+  };
 
   render() {
     const {
@@ -70,24 +98,11 @@ class BottomTabNavigator extends Component<any> {
               <TabBarIcon icon={Foundation} focused={focused} name="home" />
             ),
           }}
-          // listeners={{
-          //   tabPress: (e) => {
-          //     this.props.onSetCurrentTabForCommentStack('homeTabStack');
-          //     // this.props.onSetCurrentTabForReplyStack('homeTabStack');
-          //     // this.props.onSetCurrentTabForUserStack('homeTabStack');
-          //   },
-          // }}
-
           listeners={({ route }) => ({
-            tabPress: (e) => {
-              this.props.onSetCurrentTabForCommentStack('homeTabStack');
-            },
+            focus: (_) => this.setCurrentTabScreen('homeTabStack'),
             state: (_) => {
               if (route.state && route.state.index === 0) {
-                console.log('ok clear');
-                onClearCommentStack();
-                onClearReplyStack();
-                onClearUserStack();
+                this.clearAllStacks();
               }
             },
           })}
@@ -156,13 +171,23 @@ class BottomTabNavigator extends Component<any> {
               <TabBarIcon icon={FontAwesome} focused={focused} name="user" />
             ),
           }}
-          listeners={{
-            tabPress: (e) => {
-              this.props.onSetCurrentTabForCommentStack('userTabStack');
-              // this.props.onSetCurrentTabForReplyStack('userTabStack');
-              // this.props.onSetCurrentTabForUserStack('userTabStack');
+          listeners={({ navigation }) => ({
+            focus: (_) => this.setCurrentTabScreen('userTabStack'),
+            blur: (_) => {
+              this.isAuthTabPressed = false;
             },
-          }}
+            tabPress: (_) => {
+              if (!this.isAuthTabPressed) {
+                this.isAuthTabPressed = true;
+              } else {
+                const temp = console.error;
+                console.error = () => {};
+                navigation.popToTop();
+                console.error = temp;
+                this.clearAllStacks();
+              }
+            },
+          })}
         />
       </BottomTab.Navigator>
     );
@@ -170,6 +195,7 @@ class BottomTabNavigator extends Component<any> {
 }
 
 const mapStateToProps = (state: AppState) => ({
+  createPostLoading: state.allPosts.createPost.loading,
   user: state.auth.user,
 });
 

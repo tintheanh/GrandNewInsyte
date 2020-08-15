@@ -28,6 +28,7 @@ import {
   deleteComment,
 } from '../../redux/comment_stack/actions';
 import { pushReplyLayer } from '../../redux/reply_stack/actions';
+import { increaseLikes, decreaseLikes } from '../../redux/user_stack/actions';
 import {
   likePost,
   unlikePost,
@@ -198,6 +199,16 @@ interface PostScreenProps {
    * Method push new reply layer when navigating to reply screen
    */
   onPushReplyLayer: (commentID: string) => void;
+
+  /**
+   * Method increase post's likes for user screen if possible
+   */
+  onIncreaseLikes: (postID: string) => void;
+
+  /**
+   * Method decrease post's likes for user screen if possible
+   */
+  onDecreaseLikes: (postID: string) => void;
 }
 
 /**
@@ -364,6 +375,9 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
    * Method perform like post
    */
   performLikePost = async () => {
+    const { onLikePost, onIncreaseLikes, onDecreaseLikes } = this.props;
+    const postID = this.state.post.id;
+
     // increase post's number of likes
     this.setState((prevState) => ({
       post: {
@@ -373,12 +387,16 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
       },
     }));
 
+    // increase like for user screen
+    onIncreaseLikes(postID);
+
     // perform like post
-    await this.props.onLikePost(this.state.post.id);
+    await onLikePost(postID);
 
     // wait until done
     if (this.props.likePostError !== null) {
       // if there's error, revert post's number of likes back
+      onDecreaseLikes(postID);
       this.setState((prevState) => ({
         post: {
           ...prevState.post,
@@ -393,6 +411,8 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
    * Method perform unlike post
    */
   performUnlikePost = async () => {
+    const { onUnlikePost, onIncreaseLikes, onDecreaseLikes } = this.props;
+    const postID = this.state.post.id;
     // decrease post's number of likes
     this.setState((prevState) => ({
       post: {
@@ -402,12 +422,16 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
       },
     }));
 
+    // decrease like for user screen
+    onDecreaseLikes(postID);
+
     // perform unlike post
-    await this.props.onUnlikePost(this.state.post.id);
+    await onUnlikePost(this.state.post.id);
 
     // wait until done
     if (this.props.unlikePostError !== null) {
       // if there's error, revert post's number of likes back
+      onIncreaseLikes(postID);
       this.setState((prevState) => ({
         post: {
           ...prevState.post,
@@ -708,8 +732,8 @@ class PostScreen extends Component<PostScreenProps, PostScreenState> {
           onEndReached={this.fetchMoreComments}
           checkChangesToUpdate={checkPostCommentListChanged}
           initialNumToRender={5}
-          onEndReachedThreshold={0.1}
-          maxToRenderPerBatch={8}
+          onEndReachedThreshold={0.2}
+          maxToRenderPerBatch={5}
           windowSize={7}
           listFooterComponent={<View style={{ height: 136 }} />}
           extraData={{ post, shouldPlayMedia }}
@@ -791,6 +815,8 @@ const mapDispatchToProps = {
   onIncreaseCommentsForHomeScreen: increaseCommentsBy,
   onPushUserLayer: pushUserLayer,
   onPushReplyLayer: pushReplyLayer,
+  onIncreaseLikes: increaseLikes,
+  onDecreaseLikes: decreaseLikes,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(PostScreen);

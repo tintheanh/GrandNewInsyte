@@ -19,7 +19,11 @@ import {
   ProfilePostList,
   FooterLoading,
 } from '../../../../components';
-import { decreaseTotalPostsByOne } from '../../../../redux/auth/actions';
+import {
+  decreaseTotalPostsByOne,
+  refreshProfile,
+} from '../../../../redux/auth/actions';
+import { pushCommentLayer } from '../../../../redux/comment_stack/actions';
 import UserProfilePostCardWrapper from '../UserProfilePostCardWrapper';
 import { checkPostListChanged } from '../../../../utils/functions';
 import { Colors, Layout } from '../../../../constants';
@@ -143,6 +147,19 @@ interface UserProfilePostListProps {
    * @param postID Post's ID to like
    */
   onUnlikePost: (postID: string) => void;
+
+  /**
+   * Method refresh profile when pulling down list
+   */
+  onRefreshProfile: () => void;
+
+  /**
+   * Method push a new comments layer when
+   * navigate to post screen
+   * @param postID Each comments layer is a post screen
+   * using postID to identify from other layers
+   */
+  onPushCommentLayer: (postID: string) => void;
 }
 
 class UserProfilePostList extends Component<UserProfilePostListProps> {
@@ -188,6 +205,17 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
   componentDidMount() {
     this.props.onFetchOwnPosts();
   }
+
+  /**
+   * Method navigate to post screen
+   * @param data Post data used to push new
+   * comments layer and pass to post screen
+   */
+  navigateToPostScreen = (data: Post) => () => {
+    const { navigation, onPushCommentLayer } = this.props;
+    onPushCommentLayer(data.id);
+    navigation.push('PostScreen', { post: data });
+  };
 
   /**
    * Method set current scrolling index
@@ -272,10 +300,16 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
         isTabFocused={isTabFocused}
         performLikePost={this.performLikePost(item.id)}
         performUnlikePost={this.performUnlikePost(item.id)}
-        navigateWhenPressOnPostOrComment={() => console.log('to post screen')}
+        navigateWhenPressOnPostOrComment={this.navigateToPostScreen(item)}
         userPostControl={this.userControl(item.id)}
       />
     );
+  };
+
+  performRefresh = () => {
+    const { onPullToFetchOwnPosts, onRefreshProfile } = this.props;
+    onPullToFetchOwnPosts();
+    onRefreshProfile();
   };
 
   render() {
@@ -294,7 +328,6 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
       onMomentumScrollEnd,
       onFetchOwnPosts,
       onScrollToTop,
-      onPullToFetchOwnPosts,
     } = this.props;
 
     let emptyListComponent = null;
@@ -341,7 +374,7 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
             onEndReached={onFetchOwnPosts}
             isTabFocused={currentTabIndex === 0}
             refreshing={pullLoading}
-            onRefresh={onPullToFetchOwnPosts}
+            onRefresh={this.performRefresh}
             extraData={{ fetchLoading, error }}
           />
         </View>
@@ -388,6 +421,8 @@ const mapDispatchToProps = {
   onDecreaseTotalPostsByOne: decreaseTotalPostsByOne,
   onLikePost: likePost,
   onUnlikePost: unlikePost,
+  onRefreshProfile: refreshProfile,
+  onPushCommentLayer: pushCommentLayer,
 };
 
 export default connect(

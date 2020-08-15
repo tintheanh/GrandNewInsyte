@@ -152,15 +152,9 @@ export const fetchComments = (postID: string) => async (
   dispatch(fetchCommentsStarted());
   try {
     const { currentTab } = getState().commentStack;
-    const postIDinStack = getState().commentStack[currentTab].top()?.postID;
-    if (postIDinStack !== postID) {
-      throw new Error('Error occurred. Please try again.');
-    }
-
     const lastVisible = getState().commentStack[currentTab].top()!.lastVisible;
 
     let query: FirebaseFirestoreTypes.Query;
-
     if (lastVisible === null) {
       query = fsDB
         .collection('posts')

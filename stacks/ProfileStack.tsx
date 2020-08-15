@@ -3,12 +3,23 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { connect } from 'react-redux';
 import { TouchableOpacity } from 'react-native';
 import { FontAwesome5, Colors } from '../constants';
-import { ProfileScreen } from '../screens';
+import { ProfileScreen, PostScreen, ReplyScreen, UserScreen } from '../screens';
 import { AppState } from '../redux/store';
+import { Post, CurrentTabScreen } from '../models';
 
 export type ProfileStackParamList = {
   ProfileScreen: {
     title: string;
+  };
+  PostScreen: { post: Post; currentTabScreen: CurrentTabScreen };
+  ReplyScreen: { currentTabScreen: CurrentTabScreen };
+  UserScreen: {
+    user: {
+      id: string;
+      username: string;
+      avatar: string;
+    };
+    currentTabScreen: CurrentTabScreen;
   };
 };
 
@@ -33,6 +44,31 @@ function ProfileStack({ username }: { username: string }) {
             </TouchableOpacity>
           ),
           headerRightContainerStyle: { paddingRight: 12 },
+        })}
+      />
+      <Stack.Screen
+        name="PostScreen"
+        component={PostScreen}
+        initialParams={{ currentTabScreen: 'userTabStack' }}
+        options={({ route }) => {
+          return {
+            title: `${route.params.post.user.username}'s post`,
+          };
+        }}
+      />
+      <Stack.Screen
+        name="ReplyScreen"
+        component={ReplyScreen}
+        initialParams={{ currentTabScreen: 'userTabStack' }}
+        options={{ headerTitle: '' }}
+      />
+      <Stack.Screen
+        name="UserScreen"
+        component={UserScreen}
+        initialParams={{ currentTabScreen: 'userTabStack' }}
+        options={({ route }) => ({
+          title: route.params.user.username,
+          headerBackTitle: '',
         })}
       />
     </Stack.Navigator>

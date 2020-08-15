@@ -19,6 +19,9 @@ import {
 } from '../../components';
 import { UsernameTextBox, RetypePasswordTextBox } from './private_components';
 import { signup, clearSignUpError } from '../../redux/auth/actions';
+import { resetAllCommentStacks } from '../../redux/comment_stack/actions';
+import { resetAllReplyStacks } from '../../redux/reply_stack/actions';
+import { resetAllUserStacks } from '../../redux/user_stack/actions';
 import { AppState } from '../../redux/store';
 
 const screenHeight = Layout.window.height;
@@ -52,6 +55,21 @@ interface SignUpScreenProps {
    * when screen going back
    */
   onClearSignUpError: () => void;
+
+  /**
+   * Method clear comment stack when successfully sign in
+   */
+  onResetAllCommentStacks: () => void;
+
+  /**
+   * Method clear reply stack when successfully sign in
+   */
+  onResetAllReplyStacks: () => void;
+
+  /**
+   * Method clear user stack when successfully sign in
+   */
+  onResetAllUserStacks: () => void;
 }
 
 /**
@@ -130,7 +148,7 @@ class SignUpScreen extends Component<SignUpScreenProps, SignUpScreenState> {
     }).start();
   };
 
-  moveUp = () => this.move(-screenHeight / 10);
+  moveUp = () => this.move(-screenHeight / 8);
 
   moveDown = () => this.move(0);
 
@@ -160,7 +178,13 @@ class SignUpScreen extends Component<SignUpScreenProps, SignUpScreenState> {
     this.setState({ retypePassword });
 
   performSignUp = async () => {
-    const { onSignUp } = this.props;
+    const {
+      navigation,
+      onSignUp,
+      onResetAllCommentStacks,
+      onResetAllReplyStacks,
+      onResetAllUserStacks,
+    } = this.props;
     const { username, email, password, retypePassword } = this.state;
 
     this.moveDown();
@@ -168,12 +192,19 @@ class SignUpScreen extends Component<SignUpScreenProps, SignUpScreenState> {
 
     await onSignUp(username, email, password, retypePassword);
 
-    // forcefully navigate to Home after successfully sign up
-    this.props.navigation.dangerouslyGetParent()!.dispatch(
-      CommonActions.navigate({
-        name: 'HomeScreen',
-      }),
-    );
+    if (this.props.error === null) {
+      // clear all stacks after successfully sign in
+      onResetAllCommentStacks();
+      onResetAllReplyStacks();
+      onResetAllUserStacks();
+
+      // forcefully navigate to Home after successfully sign in
+      navigation.dangerouslyGetParent()!.dispatch(
+        CommonActions.navigate({
+          name: 'HomeScreen',
+        }),
+      );
+    }
   };
 
   renderErrorText = () => {
@@ -246,6 +277,9 @@ const mapStateToProps = (state: AppState) => ({
 const mapDispatchToProps = {
   onSignUp: signup,
   onClearSignUpError: clearSignUpError,
+  onResetAllCommentStacks: resetAllCommentStacks,
+  onResetAllReplyStacks: resetAllReplyStacks,
+  onResetAllUserStacks: resetAllUserStacks,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(SignUpScreen);

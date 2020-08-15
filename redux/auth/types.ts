@@ -22,6 +22,8 @@ export enum DispatchTypes {
   EDIT_PROFILE_SUCCESS = 'EDIT_PROFILE_SUCCESS',
   EDIT_PROFILE_FAILURE = 'EDIT_PROFILE_FAILURE',
 
+  REFRESH_PROFILE_SUCCESS = 'REFRESH_PROFILE_SUCCESS',
+
   INCREASE_TOTAL_POSTS_BY_ONE = 'INCREASE_TOTAL_POSTS_BY_ONE',
   DECREASE_TOTAL_POSTS_BY_ONE = 'DECREASE_TOTAL_POSTS_BY_ONE',
 
@@ -73,31 +75,3 @@ export interface AuthState {
     error: Error | null;
   };
 }
-
-// export interface AuthState {
-//   signin: {
-//     email: string;
-//     password: string;
-//     loading: boolean;
-//     error: Error | null;
-//   };
-//   signup: {
-//     username: string;
-//     email: string;
-//     password: string;
-//     retypePassword: string;
-//     loading: boolean;
-//     error: Error | null;
-//   };
-//   signout: {
-//     loading: boolean;
-//     error: Error | null;
-//   };
-//   loading: boolean;
-//   update: {
-//     loading: boolean;
-//     error: Error | null;
-//   };
-//   user: User | null;
-//   error: Error | null;
-// }

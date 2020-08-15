@@ -111,6 +111,30 @@ export const clearUnfollowError = () => (
   });
 };
 
+/**
+ * Method increase likes
+ */
+export const increaseLikes = (postID: string) => (
+  dispatch: (action: UserStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.INCREASE_LIKES,
+    payload: postID,
+  });
+};
+
+/**
+ * Method decrease likes
+ */
+export const decreaseLikes = (postID: string) => (
+  dispatch: (action: UserStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.DECREASE_LIKES,
+    payload: postID,
+  });
+};
+
 /* ------------------- end ultilities ------------------- */
 
 /**
@@ -142,6 +166,7 @@ export const fetchUser = (userID: string) => async (
 
     // check if the current user follows the fetched user
     const myself = getState().auth.user;
+    let currentUser = null;
     if (myself) {
       const followingRef = await fsDB
         .collection('users')
@@ -152,6 +177,11 @@ export const fetchUser = (userID: string) => async (
       if (followingRef.exists) {
         completeUserLayer.isFollowed = true;
       }
+      currentUser = {
+        id: myself.id,
+        username: myself.username,
+        avatar: myself.avatar,
+      };
     }
 
     // fetch user's posts
@@ -177,7 +207,7 @@ export const fetchUser = (userID: string) => async (
       return dispatch(fetchUserSuccess(completeUserLayer));
     }
 
-    const posts = await FSdocsToPostArray(documentSnapshots.docs);
+    const posts = await FSdocsToPostArray(documentSnapshots.docs, currentUser);
 
     if (posts.length === 0) {
       return dispatch(fetchUserSuccess(completeUserLayer));
@@ -243,7 +273,16 @@ export const fetchMorePostsFromUser = (
       return dispatch(fetchMorePostsFromUserSuccess([], lastVisible));
     }
 
-    const posts = await FSdocsToPostArray(documentSnapshots.docs);
+    let currentUser = null;
+    const { user } = getState().auth;
+    if (user) {
+      currentUser = {
+        id: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      };
+    }
+    const posts = await FSdocsToPostArray(documentSnapshots.docs, currentUser);
 
     if (posts.length === 0) {
       return dispatch(fetchMorePostsFromUserSuccess([], lastVisible));

@@ -22,7 +22,16 @@ import {
   unfollowUser,
   clearFollowError,
   clearUnfollowError,
+  increaseLikes,
+  decreaseLikes,
 } from '../../redux/user_stack/actions';
+import {
+  likePost,
+  unlikePost,
+  clearLikePostError,
+  clearUnlikePostError,
+} from '../../redux/posts/actions';
+import { pushCommentLayer } from '../../redux/comment_stack/actions';
 import {
   increaseFollowingByOne,
   decreaseFollowingByOne,
@@ -57,6 +66,8 @@ interface UserScreenProps {
   fetchError: Error | null;
   followError: Error | null;
   unfollowError: Error | null;
+  likePostError: Error | null;
+  unlikePostError: Error | null;
   loading: boolean;
   posts: Array<Post>;
 
@@ -70,29 +81,57 @@ interface UserScreenProps {
   onDecreaseFollowingByOneForMyself: () => void;
   onClearFollowError: () => void;
   onClearUnfollowError: () => void;
+  onPushCommentLayer: (postID: string) => void;
+  onLikePost: (postID: string) => void;
+  onUnlikePost: (postID: string) => void;
+  onIncreaseLikes: (postID: string) => void;
+  onDecreaseLikes: (postID: string) => void;
+  onClearLikePostError: () => void;
+  onClearUnlikePostError: () => void;
 }
 
-class UserScreen extends Component<UserScreenProps> {
+interface UserScreenState {
+  likedPostID: string;
+  unlikedPostID: string;
+}
+
+class UserScreen extends Component<UserScreenProps, UserScreenState> {
   private detectScreenGoBackUnsubscriber: () => void = () => {};
   private viewabilityConfig: {};
   constructor(props: UserScreenProps) {
     super(props);
+    this.state = {
+      likedPostID: '',
+      unlikedPostID: '',
+    };
     this.viewabilityConfig = {
       minimumViewTime: 0,
       itemVisiblePercentThreshold: 80,
     };
   }
 
-  shouldComponentUpdate(nextProps: UserScreenProps) {
+  shouldComponentUpdate(
+    nextProps: UserScreenProps,
+    nextState: UserScreenState,
+  ) {
     const {
       loading,
       fetchError,
       followError,
       unfollowError,
+      likePostError,
+      unlikePostError,
       posts,
       followers,
       isFollowed,
     } = this.props;
+    const { likedPostID, unlikedPostID } = this.state;
+    if (likedPostID !== nextState.likedPostID) {
+      return true;
+    }
+    if (unlikedPostID !== nextState.unlikedPostID) {
+      return true;
+    }
     if (loading !== nextProps.loading) {
       return true;
     }
@@ -112,6 +151,12 @@ class UserScreen extends Component<UserScreenProps> {
       return true;
     }
     if (unfollowError !== nextProps.unfollowError) {
+      return true;
+    }
+    if (likePostError !== nextProps.likePostError) {
+      return true;
+    }
+    if (unlikePostError !== nextProps.unlikePostError) {
       return true;
     }
     return false;
@@ -139,9 +184,42 @@ class UserScreen extends Component<UserScreenProps> {
     }
   };
 
+  /**
+   * Method navigate to post screen
+   * @param data Post data used to push new
+   * comments layer and pass to post screen
+   */
+  navigateToPostScreen = (data: Post) => () => {
+    const { navigation, onPushCommentLayer } = this.props;
+    onPushCommentLayer(data.id);
+    navigation.push('PostScreen', { post: data });
+  };
+
   performFetchMorePosts = () => {
     const { route, isFollowed, onFetchMorePostsFromUser } = this.props;
     onFetchMorePostsFromUser(route.params.user.id, isFollowed);
+  };
+
+  /**
+   * Method perform like post
+   * @param postID post's ID to like
+   */
+  performLikePost = (postID: string) => () => {
+    const { onLikePost, onIncreaseLikes } = this.props;
+    onLikePost(postID);
+    onIncreaseLikes(postID);
+    this.setState({ likedPostID: postID });
+  };
+
+  /**
+   * Method perform unlike post
+   * @param postID post's ID to unlike
+   */
+  performUnlikePost = (postID: string) => () => {
+    const { onUnlikePost, onDecreaseLikes } = this.props;
+    onUnlikePost(postID);
+    onDecreaseLikes(postID);
+    this.setState({ unlikedPostID: postID });
   };
 
   renderItem = ({ item, index }: { item: Post; index: number }) => {
@@ -152,6 +230,9 @@ class UserScreen extends Component<UserScreenProps> {
         currentTabScreen={route.params.currentTabScreen}
         data={item}
         addScreenListener={navigation.addListener}
+        performLikePost={this.performLikePost(item.id)}
+        performUnlikePost={this.performUnlikePost(item.id)}
+        navigateWhenPressOnPostOrComment={this.navigateToPostScreen(item)}
       />
     );
   };
@@ -295,6 +376,29 @@ class UserScreen extends Component<UserScreenProps> {
     onIncreaseFollowingByOneForMyself();
   };
 
+  performClearLikePostError = () => {
+    const { onClearLikePostError, onDecreaseLikes } = this.props;
+    onClearLikePostError();
+    onDecreaseLikes(this.state.likedPostID);
+    this.setState({ likedPostID: '' });
+  };
+
+  performClearUnlikePostError = () => {
+    const { onClearUnlikePostError, onIncreaseLikes } = this.props;
+    onClearUnlikePostError();
+    onIncreaseLikes(this.state.unlikedPostID);
+    this.setState({ unlikedPostID: '' });
+  };
+
+  componentDidUpdate() {
+    if (this.props.likePostError) {
+      this.performClearLikePostError();
+    }
+    if (this.props.unlikePostError) {
+      this.performClearUnlikePostError();
+    }
+  }
+
   render() {
     const {
       posts,
@@ -325,6 +429,9 @@ class UserScreen extends Component<UserScreenProps> {
           listFooterComponent={
             <View style={{ paddingBottom: Layout.window.height / 10 }} />
           }
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          onEndReachedThreshold={0.1}
           checkChangesToUpdate={checkPostListChanged}
           extraData={{ loading, followers }}
         />
@@ -414,6 +521,8 @@ const mapStateToProps = (state: AppState, ownProps: UserScreenProps) => {
       state.usersStack[currentTabScreen].top()?.errors.followError ?? null,
     unfollowError:
       state.usersStack[currentTabScreen].top()?.errors.unfollowError ?? null,
+    likePostError: state.allPosts.likePost.error,
+    unlikePostError: state.allPosts.unlikePost.error,
     loading: state.usersStack[currentTabScreen].top()?.loading ?? false,
     posts: state.usersStack[currentTabScreen].top()?.posts ?? [],
   };
@@ -430,6 +539,13 @@ const mapDispatchToProps = {
   onDecreaseFollowingByOneForMyself: decreaseFollowingByOne,
   onClearFollowError: clearFollowError,
   onClearUnfollowError: clearUnfollowError,
+  onPushCommentLayer: pushCommentLayer,
+  onLikePost: likePost,
+  onUnlikePost: unlikePost,
+  onIncreaseLikes: increaseLikes,
+  onDecreaseLikes: decreaseLikes,
+  onClearLikePostError: clearLikePostError,
+  onClearUnlikePostError: clearUnlikePostError,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(UserScreen);

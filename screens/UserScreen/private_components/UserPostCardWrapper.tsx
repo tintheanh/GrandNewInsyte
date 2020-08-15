@@ -40,12 +40,6 @@ interface UserPostCardWrapperProps {
   navigateWhenPressOnPostOrComment: () => void;
 
   /**
-   * Optional props detect if current tab is focused
-   * Some lists in certain screens may not have tabs
-   */
-  isTabFocused?: boolean;
-
-  /**
    * Method like post
    */
   performLikePost: () => void;

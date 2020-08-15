@@ -6,7 +6,7 @@ import { AppState } from '../redux/store';
 import { User } from '../models';
 
 interface AuthScreenProps {
-  user: User | null;
+  user: User | null | undefined;
   loading: boolean;
 }
 

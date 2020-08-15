@@ -21,30 +21,30 @@ const initialState: AuthState = {
   },
 };
 
-const untouchedState: AuthState = {
-  user: null,
-  loadings: {
-    checkAuthLoading: false,
-    signinLoading: false,
-    signoutLoading: false,
-    signupLoading: false,
-  },
-  errors: {
-    checkAuthError: null,
-    signinError: null,
-    signoutError: null,
-    signupError: null,
-  },
-  update: {
-    loading: false,
-    error: null,
-  },
-};
-
 export default function authReducer(
   state = initialState,
   action: AuthAction,
 ): AuthState {
+  const untouchedState: AuthState = {
+    user: null,
+    loadings: {
+      checkAuthLoading: false,
+      signinLoading: false,
+      signoutLoading: false,
+      signupLoading: false,
+    },
+    errors: {
+      checkAuthError: null,
+      signinError: null,
+      signoutError: null,
+      signupError: null,
+    },
+    update: {
+      loading: false,
+      error: null,
+    },
+  };
+
   switch (action.type) {
     case DispatchTypes.CHECK_AUTH_STARTED: {
       const newState = { ...state };
@@ -140,6 +140,11 @@ export default function authReducer(
       const newState = { ...state };
       newState.update.loading = false;
       newState.update.error = action.payload as Error;
+      return newState;
+    }
+    case DispatchTypes.REFRESH_PROFILE_SUCCESS: {
+      const newState = { ...state };
+      newState.user = action.payload as User;
       return newState;
     }
     case DispatchTypes.INCREASE_TOTAL_POSTS_BY_ONE: {

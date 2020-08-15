@@ -259,6 +259,40 @@ export const editProfile = (
   }
 };
 
+export const refreshProfile = () => async (
+  dispatch: (action: AuthAction) => void,
+  getState: () => AppState,
+) => {
+  try {
+    const { user } = getState().auth;
+    if (!user) {
+      throw new MyError(
+        'Unauthenticated. Please sign in.',
+        MyErrorCodes.NotAuthenticated,
+      );
+    }
+
+    const userRef = await fsDB.collection('users').doc(user.id).get();
+    if (!userRef.exists) {
+      throw new MyError('Cannot find user.', MyErrorCodes.DataNotFound);
+    }
+    const userData = userRef.data();
+    const newUser = {
+      id: user.id,
+      avatar: userData!.avatar as string,
+      email: user.email,
+      username: userData!.username as string,
+      name: userData!.name as string,
+      bio: userData!.bio as string,
+      followers: userData!.followers as number,
+      following: userData!.following as number,
+      totalPosts: userData!.total_posts as number,
+    };
+
+    dispatch(refreshProfileSuccess(newUser));
+  } catch (err) {}
+};
+
 /**
  * Method increase total posts when done creating a new post
  */
@@ -385,6 +419,11 @@ const editProfileSuccess = ({
 const editProfileFailure = (error: Error): AuthAction => ({
   type: DispatchTypes.EDIT_PROFILE_FAILURE,
   payload: error,
+});
+
+const refreshProfileSuccess = (user: User): AuthAction => ({
+  type: DispatchTypes.REFRESH_PROFILE_SUCCESS,
+  payload: user,
 });
 
 /* ---------------- end action dispatches --------------- */

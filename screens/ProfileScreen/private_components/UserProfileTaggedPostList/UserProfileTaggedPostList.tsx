@@ -16,6 +16,7 @@ import {
   ProfilePostList,
   FooterLoading,
 } from '../../../../components';
+import { refreshProfile } from '../../../../redux/auth/actions';
 import UserProfilePostCardWrapper from '../UserProfilePostCardWrapper';
 import { checkPostListChanged } from '../../../../utils/functions';
 import { Colors, Layout } from '../../../../constants';
@@ -115,6 +116,11 @@ interface UserProfileTaggedPostListProps {
    * Method pull down list to refresh the list
    */
   onPullToFetchTaggedPosts: () => void;
+
+  /**
+   * Method refresh profile when pulling down list
+   */
+  onRefreshProfile: () => void;
 }
 
 class UserProfileTaggedPostList extends Component<
@@ -203,6 +209,12 @@ class UserProfileTaggedPostList extends Component<
     );
   };
 
+  performRefresh = () => {
+    const { onPullToFetchTaggedPosts, onRefreshProfile } = this.props;
+    onPullToFetchTaggedPosts();
+    onRefreshProfile();
+  };
+
   render() {
     const {
       scrollY,
@@ -219,7 +231,6 @@ class UserProfileTaggedPostList extends Component<
       onMomentumScrollEnd,
       onFetchTaggedPosts,
       onScrollToTop,
-      onPullToFetchTaggedPosts,
     } = this.props;
 
     let emptyListComponent = null;
@@ -266,7 +277,7 @@ class UserProfileTaggedPostList extends Component<
             onEndReached={onFetchTaggedPosts}
             isTabFocused={currentTabIndex === 1}
             refreshing={pullLoading}
-            onRefresh={onPullToFetchTaggedPosts}
+            onRefresh={this.performRefresh}
             extraData={{ fetchLoading, error }}
           />
         </View>
@@ -309,6 +320,7 @@ const mapDispatchToProps = {
   onSetCurrentViewableIndex: setCurrentUserListPostIndex,
   onFetchTaggedPosts: fetchTaggedPosts,
   onPullToFetchTaggedPosts: pullToFetchTaggedPosts,
+  onRefreshProfile: refreshProfile,
 };
 
 export default connect(

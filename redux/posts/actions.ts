@@ -808,6 +808,7 @@ export const fetchOwnPosts = () => async (
     }
 
     const documentSnapshots = await query.get();
+
     if (documentSnapshots.empty) {
       return dispatch(fetchOwnPostsSuccess([], lastVisible));
     }
@@ -1334,6 +1335,7 @@ export const likePost = (postID: string) => async (
         .doc(postID)
         .collection('like_list')
         .doc(user.id);
+
       const like = await likeRef.get();
 
       // user already liked the post

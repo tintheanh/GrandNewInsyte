@@ -70,4 +70,5 @@ export interface ReplyStackState {
   homeTabStack: NavigationStack<ReplyStackLayer>;
   userTabStack: NavigationStack<ReplyStackLayer>;
   currentTab: CurrentTabScreen;
+  currentLoadingInTab: CurrentTabScreen | '';
 }

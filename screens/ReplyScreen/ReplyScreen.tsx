@@ -739,8 +739,8 @@ class ReplyScreen extends Component<ReplyScreenProps, ReplyScreenState> {
           onEndReached={this.fetchMoreReplies}
           checkChangesToUpdate={checkPostReplyListChanged}
           initialNumToRender={5}
-          onEndReachedThreshold={0.1}
-          maxToRenderPerBatch={8}
+          onEndReachedThreshold={0.2}
+          maxToRenderPerBatch={5}
           windowSize={7}
           listFooterComponent={<View style={{ height: 136 }} />}
           extraData={{ comment, loading }}

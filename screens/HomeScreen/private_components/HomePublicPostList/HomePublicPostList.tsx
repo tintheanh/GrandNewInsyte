@@ -126,7 +126,7 @@ interface HomePublicPostListProps {
    * so that it doesn't need to refetch them
    */
   onPushUserLayer: (user: {
-    id: string;
+    userID: string;
     username: string;
     avatar: string;
   }) => void;
@@ -247,17 +247,23 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
    * @param data Simplied user data used to pass to
    * user/profile screen
    */
-  navigateToUserScreen = (data: {
+  navigateToUserScreen = (user: {
     id: string;
     username: string;
     avatar: string;
   }) => () => {
     const { currentUID, navigation, onPushUserLayer } = this.props;
-    if (currentUID !== data.id) {
-      onPushUserLayer(data);
-      navigation.push('UserScreen', data);
+    if (currentUID !== user.id) {
+      onPushUserLayer({
+        userID: user.id,
+        username: user.username,
+        avatar: user.avatar,
+      });
+      navigation.push('UserScreen', { user });
     } else {
-      navigation.push('ProfileScreen', data);
+      navigation.navigate('ProfileScreen', {
+        title: user.username,
+      });
     }
   };
 
