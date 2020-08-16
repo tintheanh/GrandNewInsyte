@@ -191,7 +191,6 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
 
   shouldComponentUpdate(nextProps: HomeFollowingPostListProps) {
     const {
-      posts,
       currentTabIndex,
       fetchLoading,
       pullLoading,
@@ -200,9 +199,6 @@ class HomeFollowingPostList extends Component<HomeFollowingPostListProps> {
       error,
     } = this.props;
 
-    if (checkPostListChanged(posts, nextProps.posts)) {
-      return true;
-    }
     if (currentTabIndex !== nextProps.currentTabIndex) {
       return true;
     }

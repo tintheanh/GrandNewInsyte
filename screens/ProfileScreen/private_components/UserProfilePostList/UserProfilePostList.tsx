@@ -26,7 +26,6 @@ import {
 import { pushUserLayer } from '../../../../redux/user_stack/actions';
 import { pushCommentLayer } from '../../../../redux/comment_stack/actions';
 import UserProfilePostCardWrapper from '../UserProfilePostCardWrapper';
-import { checkPostListChanged } from '../../../../utils/functions';
 import { Colors, Layout } from '../../../../constants';
 import { AppState } from '../../../../redux/store';
 import { Post } from '../../../../models';
@@ -189,16 +188,12 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
 
   shouldComponentUpdate(nextProps: UserProfilePostListProps) {
     const {
-      posts,
       currentTabIndex,
       fetchLoading,
       pullLoading,
       error,
     } = this.props;
 
-    if (checkPostListChanged(posts, nextProps.posts)) {
-      return true;
-    }
     if (currentTabIndex !== nextProps.currentTabIndex) {
       return true;
     }

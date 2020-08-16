@@ -35,14 +35,11 @@ class CreatePostUserResultList extends Component<
   }
 
   shouldComponentUpdate(nextProps: CreatePostUserResultListProps) {
-    const { searchQuery, loading, userTags } = this.props;
+    const { searchQuery, loading } = this.props;
     if (searchQuery !== nextProps.searchQuery) {
       return true;
     }
     if (loading !== nextProps.loading) {
-      return true;
-    }
-    if (checkUserResultListChanged(userTags, nextProps.userTags)) {
       return true;
     }
     return false;

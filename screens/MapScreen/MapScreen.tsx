@@ -1,31 +1,44 @@
 import React, { Component } from 'react';
-import { Text, View, TextInput, StyleSheet, ScrollView } from 'react-native';
-// import MapView, { Marker } from 'react-native-maps';
+import faker from 'faker';
+import Geolocation from '@react-native-community/geolocation';
+import {
+  Text,
+  View,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  StatusBar,
+} from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 import { Loading, PlaceCard } from '../../components';
 import { Colors, FontAwesome5 } from '../../constants';
 
-// const LOCATION = [
-//   {
-//     id: faker.random.uuid(),
-//     thumbnail: faker.image.nightlife(),
-//     name: faker.company.companyName(),
-//     distance: 2,
-//   },
-// ];
+const LOCATION = [
+  {
+    id: faker.random.uuid(),
+    thumbnail: faker.image.nightlife(),
+    name: faker.company.companyName(),
+    distance: 2,
+  },
+];
 
 export default class MapScreen extends Component<any, any> {
-  // constructor(props: any) {
-  //   super(props);
-  //   this.state = { location: null, search: false };
-  //   for (let i = 0; i < 5; i++) {
-  //     LOCATION.push({
-  //       id: faker.random.uuid(),
-  //       thumbnail: faker.image.nightlife(),
-  //       name: faker.company.companyName(),
-  //       distance: i,
-  //     });
-  //   }
-  // }
+  constructor(props: any) {
+    super(props);
+    this.state = { location: null, search: false };
+    for (let i = 0; i < 5; i++) {
+      LOCATION.push({
+        id: faker.random.uuid(),
+        thumbnail: faker.image.nightlife(),
+        name: faker.company.companyName(),
+        distance: i,
+      });
+    }
+  }
+
+  componentDidMount() {
+    Geolocation.getCurrentPosition((info) => this.setState({ location: info }));
+  }
 
   // async componentDidMount() {
   //   const { status } = await Location.requestPermissionsAsync();
@@ -37,10 +50,10 @@ export default class MapScreen extends Component<any, any> {
   // }
 
   render() {
-    // if (this.state.location) {
-    return (
-      <View style={styles.container}>
-        {/* <View style={styles.searchWrapper}>
+    if (this.state.location) {
+      return (
+        <View style={styles.container}>
+          <View style={styles.searchWrapper}>
             <FontAwesome5
               name="search-location"
               size={14}
@@ -77,8 +90,7 @@ export default class MapScreen extends Component<any, any> {
               scrollEventThrottle={1}
               showsHorizontalScrollIndicator={false}
               style={styles.placeResults}
-              contentContainerStyle={styles.endPadding}
-            >
+              contentContainerStyle={styles.endPadding}>
               {LOCATION.map((location) => (
                 <PlaceCard
                   key={location.id}
@@ -88,12 +100,11 @@ export default class MapScreen extends Component<any, any> {
                 />
               ))}
             </ScrollView>
-          ) : null} */}
-        <Text>Map</Text>
-      </View>
-    );
-    // }
-    // return <Loading />;
+          ) : null}
+        </View>
+      );
+    }
+    return <Loading />;
   }
 }
 

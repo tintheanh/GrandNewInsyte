@@ -22,7 +22,6 @@ import { pushCommentLayer } from '../../../../redux/comment_stack/actions';
 import { pushUserLayer } from '../../../../redux/user_stack/actions';
 import { refreshProfile } from '../../../../redux/auth/actions';
 import UserProfilePostCardWrapper from '../UserProfilePostCardWrapper';
-import { checkPostListChanged } from '../../../../utils/functions';
 import { Colors, Layout } from '../../../../constants';
 import { AppState } from '../../../../redux/store';
 import { Post } from '../../../../models';
@@ -179,17 +178,8 @@ class UserProfileTaggedPostList extends Component<
   }
 
   shouldComponentUpdate(nextProps: UserProfileTaggedPostListProps) {
-    const {
-      posts,
-      currentTabIndex,
-      fetchLoading,
-      pullLoading,
-      error,
-    } = this.props;
+    const { currentTabIndex, fetchLoading, pullLoading, error } = this.props;
 
-    if (checkPostListChanged(posts, nextProps.posts)) {
-      return true;
-    }
     if (currentTabIndex !== nextProps.currentTabIndex) {
       return true;
     }
@@ -240,10 +230,10 @@ class UserProfileTaggedPostList extends Component<
   };
 
   /**
-   * Method navigate when pressing on user's tag
+   * Method navigate to user screen
    * @param user Preloaded user passed to new screen
    */
-  navigateWhenPressOnTag = (user: {
+  navigateToUserScreen = (user: {
     id: string;
     username: string;
     avatar: string;
@@ -292,7 +282,12 @@ class UserProfileTaggedPostList extends Component<
         performLikePost={this.performLikePost(item.id)}
         performUnlikePost={this.performUnlikePost(item.id)}
         navigateWhenPressOnPostOrComment={this.navigateToPostScreen(item)}
-        navigateWhenPressOnTag={this.navigateWhenPressOnTag}
+        navigateWhenPressOnTag={this.navigateToUserScreen}
+        navigateWhenPressOnUsernameOrAvatar={this.navigateToUserScreen({
+          id: item.user.id,
+          username: item.user.username,
+          avatar: item.user.avatar,
+        })}
       />
     );
   };

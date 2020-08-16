@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { connect } from 'react-redux';
+import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { Loading } from '../components';
 import { checkAuth } from '../redux/auth/actions';
@@ -141,6 +142,7 @@ class RootStack extends Component<RootStackProps> {
     }
     return (
       <NavigationContainer>
+        <StatusBar barStyle="light-content" translucent={true} />
         <Stack.Navigator headerMode="none" mode="modal">
           <Stack.Screen name="Root" component={BottomTabNavigator} />
           <Stack.Screen name="Add" component={CreatePostStack} />
