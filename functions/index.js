@@ -222,6 +222,7 @@ exports.handleFollow = functions.firestore
         .doc(uid);
       const myselfUsername = myself.data().username;
       trans.set(myselfAboutToAddedRef, {
+        username: myselfUsername,
         for_search: generateSubstringForUsername(myselfUsername),
       });
     });

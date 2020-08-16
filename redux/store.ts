@@ -6,6 +6,7 @@ import tagReducer from './tag/reducer';
 import commentStackReducer from './comment_stack/reducer';
 import replyStackReducer from './reply_stack/reducer';
 import usersStackReducer from './user_stack/reducer';
+import searchUserReducer from './search_user/reducer';
 import currentViewableItemReducer from './curentViewableItem/reducer';
 import { PostState } from './posts/types';
 import { AuthState } from './auth/types';
@@ -14,6 +15,7 @@ import { TagState } from './tag/types';
 import { CommentStackState } from './comment_stack/types';
 import { ReplyStackState } from './reply_stack/types';
 import { UserStackState } from './user_stack/types';
+import { SearchUserState } from './search_user/types';
 
 const rootReducer = combineReducers({
   allPosts: postsReducer,
@@ -22,7 +24,8 @@ const rootReducer = combineReducers({
   tag: tagReducer,
   commentStack: commentStackReducer,
   replyStack: replyStackReducer,
-  usersStack: usersStackReducer,
+  userStack: usersStackReducer,
+  searchUser: searchUserReducer,
 });
 
 export interface AppState {
@@ -32,7 +35,8 @@ export interface AppState {
   tag: TagState;
   commentStack: CommentStackState;
   replyStack: ReplyStackState;
-  usersStack: UserStackState;
+  userStack: UserStackState;
+  searchUser: SearchUserState;
 }
 
 export default createStore(rootReducer, compose(applyMiddleware(thunk)));

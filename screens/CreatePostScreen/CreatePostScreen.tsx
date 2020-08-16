@@ -111,8 +111,8 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   }
 
   componentWillUnmount() {
-    this.keyboardDidShowListener!.remove();
-    this.keyboardDidHideListener!.remove();
+    this.keyboardDidShowListener?.remove();
+    this.keyboardDidHideListener?.remove();
   }
 
   keyboardDidShow = (event: any) => {
@@ -321,6 +321,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
         multiple: true,
         mediaType: 'any',
         maxFiles: 10,
+        compressImageQuality: 0.6,
       })) as Image[];
 
       const mediaItems = media.map((md) => ({
@@ -357,6 +358,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   openPhotoCamera = async () => {
     try {
       const image = (await ImagePicker.openCamera({
+        compressImageQuality: 0.6,
         mediaType: 'photo',
       })) as Image;
       const newState = { ...this.state };
@@ -380,6 +382,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   openVideoCamera = async () => {
     try {
       const video = (await ImagePicker.openCamera({
+        compressImageQuality: 0.6,
         mediaType: 'video',
       })) as Image;
 

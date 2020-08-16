@@ -5,8 +5,8 @@ import { checkUserResultListChanged } from '../../../utils/functions';
 import { List, UserResultCard } from '../../../components';
 import { UserResult } from '../../../models';
 import {
-  fetchUserResults,
-  fetchNewUserResults,
+  fetchMoreTagUserResults,
+  fetchNewTagUserResults,
 } from '../../../redux/tag/actions';
 import { AppState } from '../../../redux/store';
 
@@ -14,8 +14,8 @@ interface CreatePostUserResultListProps {
   searchQuery: string;
   userTags: Array<UserResult>;
   loading: boolean;
-  onFetchUserResults: (searchQuery: string) => void;
-  onFetchNewUserResults: (searchQuery: string) => void;
+  onFetchMoreTagUserResults: (searchQuery: string) => void;
+  onFetchNewTagUserResults: (searchQuery: string) => void;
   onSelectUserResult: ({
     id,
     username,
@@ -35,54 +35,60 @@ class CreatePostUserResultList extends Component<
   }
 
   shouldComponentUpdate(nextProps: CreatePostUserResultListProps) {
-    // if (!checkUserResultListChanged(this.props.userTags, nextProps.userTags)) {
-    //   return false;
-    // }
-    if (this.props.searchQuery !== nextProps.searchQuery) {
+    const { searchQuery, loading, userTags } = this.props;
+    if (searchQuery !== nextProps.searchQuery) {
       return true;
     }
-    if (this.props.loading !== nextProps.loading) {
+    if (loading !== nextProps.loading) {
       return true;
     }
-    if (checkUserResultListChanged(this.props.userTags, nextProps.userTags)) {
+    if (checkUserResultListChanged(userTags, nextProps.userTags)) {
       return true;
     }
     return false;
   }
 
   componentDidMount() {
-    this.props.onFetchNewUserResults(this.props.searchQuery);
+    const { searchQuery, onFetchNewTagUserResults } = this.props;
+    onFetchNewTagUserResults(searchQuery);
   }
 
   componentDidUpdate(prevProps: CreatePostUserResultListProps) {
     if (this.timeout) {
       clearTimeout(this.timeout);
     }
-    // console.log('update', this.props.searchQuery);
+    const { searchQuery, loading, onFetchNewTagUserResults } = this.props;
     if (
-      this.props.searchQuery !== prevProps.searchQuery &&
-      this.props.loading === false &&
+      searchQuery !== prevProps.searchQuery &&
+      loading === false &&
       prevProps.loading === false
     ) {
       this.timeout = setTimeout(() => {
-        this.props.onFetchNewUserResults(this.props.searchQuery);
+        onFetchNewTagUserResults(searchQuery);
       }, 500);
     }
   }
 
   performFetchMoreUserResults = () => {
-    this.props.onFetchUserResults(this.props.searchQuery);
+    const { searchQuery, onFetchMoreTagUserResults } = this.props;
+    onFetchMoreTagUserResults(searchQuery);
+  };
+
+  performSelectUserResult = (user: UserResult) => () => {
+    this.props.onSelectUserResult({ id: user.id, username: user.username });
   };
 
   renderItem = ({ item, index }: { item: UserResult; index: number }) => {
     return (
-      <UserResultCard data={item} onSelect={this.props.onSelectUserResult} />
+      <UserResultCard
+        data={item}
+        onSelect={this.performSelectUserResult(item)}
+      />
     );
   };
 
   render() {
     const { loading, userTags, searchQuery } = this.props;
-    // console.log(userTags);
     if (loading && userTags.length === 0) {
       return (
         <View
@@ -122,8 +128,8 @@ const mapStateToProps = (state: AppState) => ({
 });
 
 const mapDispatchToProps = {
-  onFetchUserResults: fetchUserResults,
-  onFetchNewUserResults: fetchNewUserResults,
+  onFetchMoreTagUserResults: fetchMoreTagUserResults,
+  onFetchNewTagUserResults: fetchNewTagUserResults,
 };
 
 export default connect(

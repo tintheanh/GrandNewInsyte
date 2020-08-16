@@ -189,6 +189,29 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
     this.detectScreenGoBackUnsubscriber();
   }
 
+  componentDidUpdate() {
+    const {
+      followError,
+      unfollowError,
+      likePostError,
+      unlikePostError,
+    } = this.props;
+
+    if (followError) {
+      alertDialog(followError.message, this.performClearFollowError);
+    }
+
+    if (unfollowError) {
+      alertDialog(unfollowError.message, this.performClearUnfollowError);
+    }
+    if (likePostError) {
+      this.performClearLikePostError();
+    }
+    if (unlikePostError) {
+      this.performClearUnlikePostError();
+    }
+  }
+
   onViewableItemsChanged = ({ viewableItems, _ }: any) => {
     if (viewableItems && viewableItems.length > 0 && viewableItems[0]) {
       this.props.onSetCurrentViewableListIndex(viewableItems[0].index);
@@ -426,29 +449,6 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
     this.setState({ unlikedPostID: '' });
   };
 
-  componentDidUpdate() {
-    const {
-      followError,
-      unfollowError,
-      likePostError,
-      unlikePostError,
-    } = this.props;
-
-    if (followError) {
-      alertDialog(followError.message, this.performClearFollowError);
-    }
-
-    if (unfollowError) {
-      alertDialog(unfollowError.message, this.performClearUnfollowError);
-    }
-    if (likePostError) {
-      this.performClearLikePostError();
-    }
-    if (unlikePostError) {
-      this.performClearUnlikePostError();
-    }
-  }
-
   render() {
     const { posts, loading, followers } = this.props;
 
@@ -545,23 +545,23 @@ const mapStateToProps = (state: AppState, ownProps: UserScreenProps) => {
   const { currentTabScreen } = ownProps.route.params;
   return {
     currentUID: state.auth.user?.id,
-    avatar: state.usersStack[currentTabScreen].top()?.avatar ?? '',
-    name: state.usersStack[currentTabScreen].top()?.name ?? '',
-    bio: state.usersStack[currentTabScreen].top()?.bio ?? '',
-    following: state.usersStack[currentTabScreen].top()?.following ?? 0,
-    followers: state.usersStack[currentTabScreen].top()?.followers ?? 0,
-    totalPosts: state.usersStack[currentTabScreen].top()?.totalPosts ?? 0,
-    isFollowed: state.usersStack[currentTabScreen].top()?.isFollowed ?? false,
+    avatar: state.userStack[currentTabScreen].top()?.avatar ?? '',
+    name: state.userStack[currentTabScreen].top()?.name ?? '',
+    bio: state.userStack[currentTabScreen].top()?.bio ?? '',
+    following: state.userStack[currentTabScreen].top()?.following ?? 0,
+    followers: state.userStack[currentTabScreen].top()?.followers ?? 0,
+    totalPosts: state.userStack[currentTabScreen].top()?.totalPosts ?? 0,
+    isFollowed: state.userStack[currentTabScreen].top()?.isFollowed ?? false,
     fetchError:
-      state.usersStack[currentTabScreen].top()?.errors.fetchError ?? null,
+      state.userStack[currentTabScreen].top()?.errors.fetchError ?? null,
     followError:
-      state.usersStack[currentTabScreen].top()?.errors.followError ?? null,
+      state.userStack[currentTabScreen].top()?.errors.followError ?? null,
     unfollowError:
-      state.usersStack[currentTabScreen].top()?.errors.unfollowError ?? null,
+      state.userStack[currentTabScreen].top()?.errors.unfollowError ?? null,
     likePostError: state.allPosts.likePost.error,
     unlikePostError: state.allPosts.unlikePost.error,
-    loading: state.usersStack[currentTabScreen].top()?.loading ?? false,
-    posts: state.usersStack[currentTabScreen].top()?.posts ?? [],
+    loading: state.userStack[currentTabScreen].top()?.loading ?? false,
+    posts: state.userStack[currentTabScreen].top()?.posts ?? [],
   };
 };
 

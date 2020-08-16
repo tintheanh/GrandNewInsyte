@@ -948,7 +948,15 @@ export const fetchTaggedPosts = () => async (
       return dispatch(fetchTaggedPostsSuccess([], lastVisible));
     }
 
-    const newPosts = await FSdocsToPostArray(documentSnapshots.docs);
+    const currentUser = {
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar,
+    };
+    const newPosts = await FSdocsToPostArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
 
     if (newPosts.length === 0) {
       return dispatch(fetchTaggedPostsSuccess([], lastVisible));
@@ -1001,7 +1009,15 @@ export const pullToFetchTaggedPosts = () => async (
       return dispatch(fetchTaggedPostsSuccess([], lastVisible));
     }
 
-    const newPosts = await FSdocsToPostArray(documentSnapshots.docs);
+    const currentUser = {
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar,
+    };
+    const newPosts = await FSdocsToPostArray(
+      documentSnapshots.docs,
+      currentUser,
+    );
 
     if (newPosts.length === 0) {
       return dispatch(fetchTaggedPostsSuccess([], lastVisible));

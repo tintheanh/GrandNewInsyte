@@ -1,8 +1,5 @@
 import React from 'react';
-import {
-  createStackNavigator,
-  HeaderBackButton,
-} from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import { connect } from 'react-redux';
 import {
   HomeScreen,
@@ -72,10 +69,12 @@ export default connect(
       <Stack.Screen
         name="HomeScreen"
         component={HomeScreen}
-        options={{
-          headerTitle: (props) => <SearchBar {...props} />,
+        options={({ navigation }) => ({
+          headerTitle: (props) => (
+            <SearchBar {...props} navigation={navigation} />
+          ),
           title: 'Home',
-        }}
+        })}
       />
       <Stack.Screen
         name="PostScreen"

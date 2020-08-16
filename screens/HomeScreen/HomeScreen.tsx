@@ -6,7 +6,6 @@ import { AppState } from '../../redux/store';
 import HomeAuth from './private_components/HomeAuth';
 import HomeNotAuth from './private_components/HomeNotAuth';
 import { fsDB } from '../../config';
-import { generateSubstringForUsername } from '../../utils/functions';
 
 // interface FeedProps {
 //   onFetchPublicNewPosts: () => void;
@@ -14,6 +13,18 @@ import { generateSubstringForUsername } from '../../utils/functions';
 //   posts: Array<any>;
 //   error: Error | null;
 // }
+
+const generateSubstringForUsername = (username: string) => {
+  const toLower = username.toLocaleLowerCase();
+  const result = new Set<string>();
+  const len = toLower.length;
+  for (let i = 0; i < len; i++) {
+    for (let j = i + 1; j < len + 1; j++) {
+      result.add(toLower.slice(i, j));
+    }
+  }
+  return [...result];
+};
 
 class HomeScreen extends Component<any> {
   constructor(props: any) {
@@ -59,7 +70,7 @@ class HomeScreen extends Component<any> {
     //   console.log(err);
     // }
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 30; i++) {
       // const reply = {
       //   content: faker.lorem.sentence(),
       //   date_posted: faker.date.between('2020-08-05', '2020-08-07').getTime(),
@@ -85,19 +96,23 @@ class HomeScreen extends Component<any> {
       //   .doc('OVzTdk3S0hUFEseleGbS')
       //   .collection('comment_list')
       //   .add(comment);
+
+      // const username = faker.internet.userName();
       // const user = {
       //   avatar: '',
       //   bio: 'test',
       //   followers: 0,
-      //   following: 1,
+      //   following: 0,
       //   name: `${faker.name.firstName()} ${faker.name.lastName()}`,
-      //   username: faker.internet.userName(),
+      //   username,
       //   total_posts: 0,
+      //   for_search: generateSubstringForUsername(username),
       // };
       // await fsDB
       //   .collection('users')
-      //   .doc('fake' + i)
+      //   .doc('faker' + i)
       //   .set(user);
+
       // await fsDB
       //   .collection('users')
       //   .doc('9DHOf4becGfrx7fmUXPcYdqtc2I3')

@@ -14,16 +14,13 @@ interface UserResultCardProps {
     username: string;
     name: string;
   };
-  onSelect: (user: { id: string; username: string }) => void;
+  onSelect: () => void;
 }
 
 export default function UserResultCard(props: UserResultCardProps) {
-  const select = () =>
-    props.onSelect({ id: props.data.id, username: props.data.username });
-
   const { avatar, username, name } = props.data;
   return (
-    <TouchableWithoutFeedback onPress={select}>
+    <TouchableWithoutFeedback onPress={props.onSelect}>
       <View style={styles.cardContainer}>
         <Image
           source={

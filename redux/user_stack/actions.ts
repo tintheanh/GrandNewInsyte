@@ -244,8 +244,8 @@ export const fetchMorePostsFromUser = (
 ) => {
   dispatch(fetchMorePostsFromUserStarted());
   try {
-    const { currentTab } = getState().usersStack;
-    const lastVisible = getState().usersStack[currentTab].top()?.lastVisible;
+    const { currentTab } = getState().userStack;
+    const lastVisible = getState().userStack[currentTab].top()?.lastVisible;
     if (lastVisible === undefined) {
       throw new Error('Error occurred.');
     }

@@ -107,7 +107,7 @@ const mapStateToProps = (
   const { currentTabScreen } = ownProps;
   return {
     currentViewableIndex:
-      state.usersStack[currentTabScreen].top()?.currentViewableIndex ?? 0,
+      state.userStack[currentTabScreen].top()?.currentViewableIndex ?? 0,
   };
 };
 
