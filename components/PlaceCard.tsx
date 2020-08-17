@@ -10,13 +10,27 @@ import Layout from '../constants/Layout';
 
 const CARD_HEIGHT = Layout.window.height / 3.5;
 
-export default function PlaceCard({ thumbnail, name, distance }: any) {
+interface PlaceCardProps {
+  thumbnail: string;
+  name: string;
+  distance: number;
+}
+
+export default function PlaceCard({
+  thumbnail,
+  name,
+  distance,
+}: PlaceCardProps) {
   return (
     <View style={styles.card}>
       <TouchableWithoutFeedback onPress={() => console.log('to place')}>
         <View>
           <Image
-            source={{ uri: thumbnail }}
+            source={
+              thumbnail
+                ? { uri: thumbnail }
+                : require('../assets/img-empty.png')
+            }
             defaultSource={require('../assets/img-empty.png')}
             resizeMode="cover"
             style={styles.cardImage}

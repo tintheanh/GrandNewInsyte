@@ -8,6 +8,7 @@ import replyStackReducer from './reply_stack/reducer';
 import usersStackReducer from './user_stack/reducer';
 import searchUserReducer from './search_user/reducer';
 import currentViewableItemReducer from './curentViewableItem/reducer';
+import placeReducer from './places/reducer';
 import { PostState } from './posts/types';
 import { AuthState } from './auth/types';
 import { IndexState } from './curentViewableItem/types';
@@ -16,6 +17,7 @@ import { CommentStackState } from './comment_stack/types';
 import { ReplyStackState } from './reply_stack/types';
 import { UserStackState } from './user_stack/types';
 import { SearchUserState } from './search_user/types';
+import { PlaceState } from './places/types';
 
 const rootReducer = combineReducers({
   allPosts: postsReducer,
@@ -26,6 +28,7 @@ const rootReducer = combineReducers({
   replyStack: replyStackReducer,
   userStack: usersStackReducer,
   searchUser: searchUserReducer,
+  allPlaces: placeReducer,
 });
 
 export interface AppState {
@@ -37,6 +40,7 @@ export interface AppState {
   replyStack: ReplyStackState;
   userStack: UserStackState;
   searchUser: SearchUserState;
+  allPlaces: PlaceState;
 }
 
 export default createStore(rootReducer, compose(applyMiddleware(thunk)));

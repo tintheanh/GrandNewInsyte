@@ -16,4 +16,6 @@ export default {
   darkColor: '#292C34',
   errorColor: '#f70734',
   btnColor: '#606475',
+  markerBright: '#53A8E3',
+  markerDark: '#0D78C4',
 };

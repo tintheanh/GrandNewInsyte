@@ -23,6 +23,47 @@ import {
 import { Colors, tokenForTag, separatorForTag } from '../constants';
 
 /**
+ * Method convert miles to km. Used for firestore geo query
+ * @param miles Miles to convert
+ */
+const milesToKm = (miles: number) => miles * 1.609344;
+
+/**
+ * Method convert km to miles. Used for firestore geo query
+ * @param km Km to convert
+ */
+const kmToMiles = (km: number) => km * 0.62137;
+
+/**
+ * Method get distance in miles between two coordinates
+ * @param p1 starting point
+ * @param p2 end point
+ */
+const distance = (
+  p1: { latitude: number; longitude: number },
+  p2: { latitude: number; longitude: number },
+) => {
+  if (p1.latitude === p2.latitude && p1.longitude === p2.longitude) {
+    return 0;
+  }
+  const radlat1 = (Math.PI * p1.latitude) / 180;
+  const radlat2 = (Math.PI * p2.latitude) / 180;
+  const theta = p1.longitude - p2.longitude;
+  const radtheta = (Math.PI * theta) / 180;
+  let dist =
+    Math.sin(radlat1) * Math.sin(radlat2) +
+    Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+  if (dist > 1) {
+    dist = 1;
+  }
+  dist = Math.acos(dist);
+  dist = (dist * 180) / Math.PI;
+  dist = dist * 60 * 1.1515;
+
+  return dist;
+};
+
+/**
  * Method ramdomly throw dummy error for testing
  */
 const randomlyThrowError = () => {
@@ -954,4 +995,7 @@ export {
   FSdocsToReplyArray,
   checkPostReplyListChanged,
   checkCommentChanged,
+  distance,
+  milesToKm,
+  kmToMiles,
 };

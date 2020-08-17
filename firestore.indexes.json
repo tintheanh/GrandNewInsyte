@@ -133,6 +133,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "places",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "g.`geohash`",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

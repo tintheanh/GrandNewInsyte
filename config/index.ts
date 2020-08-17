@@ -4,6 +4,7 @@ const repliesPerBatch = 10;
 const userPostsPerBatch = 10;
 const userResultsPerBatch = 10;
 const userTagResultsPerBatch = 5;
+const milesRadius = 2;
 
 export * from './firebase';
 export {
@@ -13,4 +14,5 @@ export {
   userPostsPerBatch,
   userResultsPerBatch,
   userTagResultsPerBatch,
+  milesRadius,
 };

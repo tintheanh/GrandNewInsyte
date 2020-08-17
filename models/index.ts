@@ -9,6 +9,8 @@ import UserStackLayer from './user_stack_layer';
 import MyError, { MyErrorCodes } from './my_error';
 import { CurrentTabScreen } from './current_tab_screen';
 import NavigationStack from './navigation_stack';
+import Place from './place';
+import Media from './media';
 
 export {
   NavigationStack,
@@ -23,4 +25,6 @@ export {
   UserStackLayer,
   MyError,
   MyErrorCodes,
+  Place,
+  Media,
 };
