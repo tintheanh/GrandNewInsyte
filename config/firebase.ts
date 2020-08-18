@@ -22,12 +22,26 @@ export enum HttpsCallableMethods {
 
 export const GeoPoint = firestore.GeoPoint;
 
+const generateSubstringForUsername = (username: string) => {
+  const toLower = username.toLocaleLowerCase();
+  const result = new Set<string>();
+  const len = toLower.length;
+  for (let i = 0; i < len; i++) {
+    for (let j = i + 1; j < len + 1; j++) {
+      result.add(toLower.slice(i, j));
+    }
+  }
+  return [...result];
+};
+
 // geofirestore.collection('places').add({
 //   name: 'Leblanc Cafe',
 //   bio: 'new cafe in town',
+//   category: 'bar',
 //   avatar: '',
 //   media: [],
-//   coordinates: new firestore.GeoPoint(37.329182, -121.902100),
+//   for_search: generateSubstringForUsername('leblanc cafe'),
+//   coordinates: new firestore.GeoPoint(37.329182, -121.9021),
 // });
 
 // const query = geofirestore

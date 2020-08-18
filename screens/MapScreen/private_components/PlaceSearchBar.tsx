@@ -26,7 +26,22 @@ export default React.memo(
     openDropdownCategories,
   }: PlaceSearchBarProps) {
     return (
-      <View style={styles.searchWrapper}>
+      <View
+        style={[
+          styles.searchWrapper,
+          !isDropdownOpen
+            ? {
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 0,
+                  height: 1,
+                },
+                shadowOpacity: 0.2,
+                shadowRadius: 1.41,
+                elevation: 2,
+              }
+            : null,
+        ]}>
         <FontAwesome5
           name="search-location"
           size={14}
@@ -100,14 +115,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     borderRadius: 40,
     backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
   },
   searchIcon: {
     position: 'absolute',

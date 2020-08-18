@@ -1,10 +1,15 @@
 import { DispatchTypes, PlaceAction, PlaceState } from './types';
+import { FirebaseFirestoreTypes } from '../../config';
 import { Place } from '../../models';
 
 const initialState: PlaceState = {
   places: [],
   error: null,
-  loading: false,
+  loadings: {
+    searchAroundLoading: false,
+    searchByInputLoading: false,
+  },
+  lastVisible: null,
 };
 
 export default function placeReducer(
@@ -17,22 +22,46 @@ export default function placeReducer(
       newState.error = null;
       return newState;
     }
-    case DispatchTypes.FETCH_PLACES_STARTED: {
+    case DispatchTypes.SEARCH_PLACES_AROUND_STARTED: {
       const newState = { ...state };
-      newState.loading = true;
+      newState.loadings.searchAroundLoading = true;
       return newState;
     }
-    case DispatchTypes.FETCH_PLACES_SUCCESS: {
+    case DispatchTypes.SEARCH_PLACES_AROUND_SUCCESS: {
       const newState = { ...state };
-      newState.loading = false;
+      newState.loadings.searchAroundLoading = false;
       newState.error = null;
       newState.places = action.payload as Array<Place>;
       return newState;
     }
-    case DispatchTypes.FETCH_PLACES_FAILURE: {
+    case DispatchTypes.SEARCH_PLACES_AROUND_FAILURE: {
       const newState = { ...state };
-      newState.loading = false;
+      newState.loadings.searchAroundLoading = false;
       newState.error = action.payload as Error;
+      newState.places = [];
+      return newState;
+    }
+    case DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_STARTED: {
+      const newState = { ...state };
+      newState.loadings.searchByInputLoading = true;
+      return newState;
+    }
+    case DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_SUCCESS: {
+      const newState = { ...state };
+      const payload = action.payload as {
+        places: Array<Place>;
+        lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
+      };
+      newState.loadings.searchByInputLoading = false;
+      newState.places = payload.places;
+      newState.lastVisible = payload.lastVisible;
+      newState.error = null;
+      return newState;
+    }
+    case DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_FAILURE: {
+      const newState = { ...state };
+      newState.error = action.payload as Error;
+      newState.loadings.searchByInputLoading = false;
       newState.places = [];
       return newState;
     }

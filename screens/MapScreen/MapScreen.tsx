@@ -4,31 +4,27 @@ import Geolocation from '@react-native-community/geolocation';
 import {
   Text,
   View,
-  TextInput,
   StyleSheet,
   Animated,
   TouchableOpacity,
   ActivityIndicator,
-  TouchableWithoutFeedback,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Loading, Map } from '../../components';
 import {
-  PlaceList,
+  PlaceScrollView,
   PlaceSearchBar,
   DropdownCategories,
+  PlaceList,
 } from './private_components';
-import { distance, alertDialog, delay } from '../../utils/functions';
-import {
-  Colors,
-  Layout,
-  FontAwesome5,
-  MaterialIcons,
-  Ionicons,
-} from '../../constants';
+import { distance, alertDialog } from '../../utils/functions';
+import { Colors, Layout, MaterialIcons } from '../../constants';
 import { Place } from '../../models';
 import { AppState } from '../../redux/store';
-import { fetchPlaces, clearFetchPlacesError } from '../../redux/places/actions';
+import {
+  searchPlacesAround,
+  clearFetchPlacesError,
+} from '../../redux/places/actions';
 
 const CARD_WIDTH = 158;
 const { width, height } = Layout.window;
@@ -39,10 +35,10 @@ const AnimatedIcon = Animated.createAnimatedComponent(MaterialIcons);
 
 interface MapScreenProps {
   places: Array<Place>;
-  loading: boolean;
+  searchAroundLoading: boolean;
   error: Error | null;
 
-  onFetchPlaces: (
+  onSearchPlacesAround: (
     locationForSearch: {
       lat: number;
       lng: number;
@@ -262,7 +258,10 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
       async () => {
         const { lastSearchedLocation, zoom, currentLocation } = this.state;
         if (lastSearchedLocation && currentLocation) {
-          await this.props.onFetchPlaces(lastSearchedLocation, currentLocation);
+          await this.props.onSearchPlacesAround(
+            lastSearchedLocation,
+            currentLocation,
+          );
           if (this.props.places.length) {
             this.mapRef.current?.animateToRegion({
               latitude: this.props.places[0].location.lat,
@@ -357,7 +356,7 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
       searchQuery,
       zoom,
     } = this.state;
-    const { places, loading } = this.props;
+    const { places, searchAroundLoading } = this.props;
 
     if (!currentLocation) {
       return <Loading />;
@@ -372,20 +371,35 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
           isDropdownOpen={toggleDropdownCategories}
           submitSearch={() => console.log('ok submit')}
         />
+        {/* <PlaceList
+          places={[
+            {
+              id: '1',
+              name: 'Bar Tender',
+              distance: 2,
+              location: currentLocation.coords,
+            },
+            {
+              id: '2',
+              name: 'Leblanc Cafe',
+              distance: 3,
+              location: currentLocation.coords,
+            },
+          ]}
+        /> */}
         {toggleDropdownCategories ? (
           <DropdownCategories
             categories={['bar', 'restaurant']}
             onSelectCategory={this.onSearchCategorySelect}
           />
         ) : null}
-
         {triggerSearchThisLocation ? (
           <View style={styles.searchThisBtnWrapper}>
             <TouchableOpacity
-              disabled={loading}
+              disabled={searchAroundLoading}
               style={styles.searchThisBtn}
               onPress={this.performSearchOnThisLocation}>
-              {loading ? (
+              {searchAroundLoading ? (
                 <ActivityIndicator
                   size="small"
                   color="black"
@@ -397,26 +411,6 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
             </TouchableOpacity>
           </View>
         ) : null}
-        {/* <MapView
-          ref={this.mapRef}
-          style={styles.mapView}
-          initialRegion={{
-            latitude: currentLocation.coords.lat,
-            longitude: currentLocation.coords.lng,
-            latitudeDelta: LATITUDE_DELTA,
-            longitudeDelta: LONGITUDE_DELTA,
-          }}
-          onRegionChangeComplete={this.onRegionChange}>
-          {currentLocation.type === 'my-location' ? (
-            <Marker
-              coordinate={{
-                latitude: currentLocation.coords.lat,
-                longitude: currentLocation.coords.lng,
-              }}
-            />
-          ) : null}
-          {this.renderMarkers()}
-        </MapView> */}
         <Map
           ref={this.mapRef}
           currentLocation={currentLocation}
@@ -425,7 +419,7 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
           onRegionChange={this.onRegionChange}
         />
         {places.length ? (
-          <PlaceList places={places} animation={this.animation} />
+          <PlaceScrollView places={places} animation={this.animation} />
         ) : null}
         {currentLocation.type === 'my-location' ? (
           <TouchableOpacity
@@ -564,12 +558,12 @@ const styles = StyleSheet.create({
 
 const mapStateToProps = (state: AppState) => ({
   places: state.allPlaces.places,
-  loading: state.allPlaces.loading,
+  searchAroundLoading: state.allPlaces.loadings.searchAroundLoading,
   error: state.allPlaces.error,
 });
 
 const mapDispatchToProps = {
-  onFetchPlaces: fetchPlaces,
+  onSearchPlacesAround: searchPlacesAround,
   onClearFetchPlacesError: clearFetchPlacesError,
 };
 

@@ -1,7 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { View } from 'react-native';
+import { View, Text } from 'react-native';
 import {
   FontAwesome,
   FontAwesome5,
@@ -60,6 +60,14 @@ class BottomTabNavigator extends Component<any> {
     onSetCurrentTabForCommentStack(currentTabScreen);
     onSetCurrentTabForReplyStack(currentTabScreen);
     onSetCurrentTabForUserStack(currentTabScreen);
+  };
+
+  empty = () => {
+    return (
+      <View>
+        <Text>Nothing</Text>
+      </View>
+    );
   };
 
   clearAllStacks = () => {
@@ -150,7 +158,7 @@ class BottomTabNavigator extends Component<any> {
         {this.props.user ? (
           <BottomTab.Screen
             name="Notif"
-            component={MapStack}
+            component={this.empty}
             options={{
               tabBarIcon: ({ focused }) => (
                 <TabBarIcon

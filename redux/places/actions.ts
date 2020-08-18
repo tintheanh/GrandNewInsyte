@@ -1,12 +1,13 @@
 import { PlaceAction, DispatchTypes } from './types';
-import { geofirestore, GeoPoint } from '../../config';
+import { geofirestore, GeoPoint, fsDB } from '../../config';
 import { Place, Media } from '../../models';
+import { FirebaseFirestoreTypes, placeResultsPerBatch } from '../../config';
 import { milesToKm, kmToMiles, delay, distance } from '../../utils/functions';
 import { milesRadius } from '../../config';
 
 /* -------------------- place actions ------------------- */
 
-export const fetchPlaces = (
+export const searchPlacesAround = (
   locationForSearch: {
     lat: number;
     lng: number;
@@ -16,7 +17,7 @@ export const fetchPlaces = (
     type: 'my-location' | 'default-location';
   },
 ) => async (dispatch: (action: PlaceAction) => void) => {
-  dispatch(fetchPlacesStarted());
+  dispatch(searchPlacesAroundStarted());
   try {
     // await delay(3000);
     const documentSnapshots = await geofirestore
@@ -27,49 +28,85 @@ export const fetchPlaces = (
       })
       .get();
 
-    let places: Array<Place>;
-    if (currentLocation.type === 'my-location') {
-      places = documentSnapshots.docs.map((doc) => {
-        const data = doc.data();
-        const location = {
-          lat: data.coordinates.latitude as number,
-          lng: data.coordinates.longitude as number,
-        };
-        return {
-          id: doc.id,
-          avatar: data.avatar as string,
-          name: data.name as string,
-          bio: data.bio as string,
-          media: data.media as Array<Media>,
-          location,
-          distance: distance(currentLocation.coords, location),
-        };
-      });
-    } else {
-      places = documentSnapshots.docs.map((doc) => {
-        const data = doc.data();
-        const location = {
-          lat: data.coordinates.latitude as number,
-          lng: data.coordinates.longitude as number,
-        };
-        return {
-          id: doc.id,
-          avatar: data.avatar as string,
-          name: data.name as string,
-          bio: data.bio as string,
-          media: data.media as Array<Media>,
-          location,
-          distance: -1,
-        };
-      });
-    }
+    const places = documentSnapshots.docs.map((doc) => {
+      const data = doc.data();
+      const location = {
+        lat: data.coordinates.latitude as number,
+        lng: data.coordinates.longitude as number,
+      };
+      return {
+        id: doc.id,
+        avatar: data.avatar as string,
+        name: data.name as string,
+        bio: data.bio as string,
+        category: data.category as string,
+        media: data.media as Array<Media>,
+        location,
+        distance:
+          currentLocation.type === 'my-location'
+            ? distance(currentLocation.coords, location)
+            : -1,
+      };
+    });
 
     places.sort((a, b) => a.distance - b.distance);
 
-    dispatch(fetchPlacesSuccess(places));
+    dispatch(searchPlacesAroundSuccess(places));
   } catch (err) {
     dispatch(
-      fetchPlacesFailure(new Error('Error occurred. Please try again.')),
+      searchPlacesAroundFailure(new Error('Error occurred. Please try again.')),
+    );
+  }
+};
+
+export const searchNewPlacesByName = (
+  searchQuery: string,
+  currentLocation: {
+    coords: { lat: number; lng: number };
+    type: 'my-location' | 'default-location';
+  },
+) => async (dispatch: (action: PlaceAction) => void) => {
+  dispatch(searchNewPlacesByNameStarted());
+  try {
+    const documentSnapshots = await fsDB
+      .collection('places')
+      .where('for_search', 'array-contains', searchQuery)
+      .limit(placeResultsPerBatch)
+      .get();
+
+    if (documentSnapshots.empty) {
+      return dispatch(searchNewPlacesByNameSuccess([], null));
+    }
+
+    const places = documentSnapshots.docs.map((doc) => {
+      const data = doc.data();
+      const location = {
+        lat: data.coordinates.latitude as number,
+        lng: data.coordinates.longitude as number,
+      };
+      return {
+        id: doc.id,
+        avatar: data.avatar as string,
+        name: data.name as string,
+        bio: data.bio as string,
+        category: data.category as string,
+        media: data.media as Array<Media>,
+        location,
+        distance:
+          currentLocation.type === 'my-location'
+            ? distance(currentLocation.coords, location)
+            : -1,
+      };
+    });
+
+    const newLastVisible =
+      documentSnapshots.docs[documentSnapshots.docs.length - 1];
+    dispatch(searchNewPlacesByNameSuccess(places, newLastVisible));
+  } catch (err) {
+    dispatch(
+      searchNewPlacesByNameFailure(
+        new Error('Error occurred. Please try again.'),
+      ),
     );
   }
 };
@@ -87,18 +124,36 @@ export const clearFetchPlacesError = () => (
 
 /* ------------------ place dispatches ------------------ */
 
-const fetchPlacesStarted = (): PlaceAction => ({
-  type: DispatchTypes.FETCH_PLACES_STARTED,
+const searchPlacesAroundStarted = (): PlaceAction => ({
+  type: DispatchTypes.SEARCH_PLACES_AROUND_STARTED,
   payload: null,
 });
 
-const fetchPlacesSuccess = (places: Array<Place>): PlaceAction => ({
-  type: DispatchTypes.FETCH_PLACES_SUCCESS,
+const searchPlacesAroundSuccess = (places: Array<Place>): PlaceAction => ({
+  type: DispatchTypes.SEARCH_PLACES_AROUND_SUCCESS,
   payload: places,
 });
 
-const fetchPlacesFailure = (error: Error): PlaceAction => ({
-  type: DispatchTypes.FETCH_PLACES_FAILURE,
+const searchPlacesAroundFailure = (error: Error): PlaceAction => ({
+  type: DispatchTypes.SEARCH_PLACES_AROUND_FAILURE,
+  payload: error,
+});
+
+const searchNewPlacesByNameStarted = (): PlaceAction => ({
+  type: DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_STARTED,
+  payload: null,
+});
+
+const searchNewPlacesByNameSuccess = (
+  places: Array<Place>,
+  lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
+): PlaceAction => ({
+  type: DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_STARTED,
+  payload: { places, lastVisible },
+});
+
+const searchNewPlacesByNameFailure = (error: Error): PlaceAction => ({
+  type: DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_FAILURE,
   payload: error,
 });
 

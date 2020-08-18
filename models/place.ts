@@ -3,6 +3,7 @@ export default interface Place {
   avatar: string;
   name: string;
   bio: string;
+  category: string;
   media: Array<{
     id: string;
     type: 'image' | 'video';

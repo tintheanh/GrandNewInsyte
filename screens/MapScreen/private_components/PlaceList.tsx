@@ -1,68 +1,74 @@
 import React from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
-import { PlaceCard } from '../../../components';
+import { View, Text, StyleSheet } from 'react-native';
+import { List } from '../../../components';
 import { Place } from '../../../models';
 import { checkPlaceListChanged } from '../../../utils/functions';
-
-const CARD_WIDTH = 158;
+import { Layout } from '../../../constants';
 
 interface PlaceListProps {
-  places: Array<Place>;
-  animation: Animated.Value;
+  places: Array<any>;
 }
 
-export default React.memo(
-  function PlaceList({ places, animation }: PlaceListProps) {
+export default function PlaceList({ places }: PlaceListProps) {
+  const renderItem = ({ item, index }: { item: any; index: number }) => {
     return (
-      <Animated.ScrollView
-        horizontal
-        scrollEventThrottle={1}
-        showsHorizontalScrollIndicator={false}
-        style={styles.placeResults}
-        snapToInterval={CARD_WIDTH}
-        contentContainerStyle={styles.endPadding}
-        onScroll={Animated.event(
-          [
-            {
-              nativeEvent: {
-                contentOffset: {
-                  x: animation,
-                },
-              },
-            },
-          ],
-          { useNativeDriver: true },
-        )}>
-        {places.map((place) => (
-          <PlaceCard
-            key={place.id}
-            thumbnail={place.media.length ? place.media[0].url : ''}
-            name={place.name}
-            distance={place.distance}
-          />
-        ))}
-        <View style={{ width: CARD_WIDTH }} />
-        <View style={{ width: CARD_WIDTH }} />
-      </Animated.ScrollView>
+      <View style={styles.place}>
+        <Text style={styles.placeName}>{item.name}</Text>
+        <Text style={styles.placeDistance}>{item.distance} mi away</Text>
+      </View>
     );
-  },
-  (prevProps: PlaceListProps, nextProps: PlaceListProps) => {
-    if (checkPlaceListChanged(prevProps.places, nextProps.places)) {
-      return false;
-    }
-    return true;
-  },
-);
+  };
+
+  return (
+    <View style={styles.placeList}>
+      <List
+        data={places}
+        renderItem={renderItem}
+        listHeaderComponent={<View style={{ height: 20 }} />}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+        checkChangesToUpdate={checkPlaceListChanged}
+        onEndReached={() => console.log('end')}
+      />
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
-  placeResults: {
+  placeList: {
+    zIndex: 100,
     position: 'absolute',
-    bottom: 30,
-    left: 0,
-    right: 0,
-    paddingVertical: 10,
+    top: 62,
+    height: Layout.window.height / 3.5,
+    width: '90%',
+    alignSelf: 'center',
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
   },
-  endPadding: {
-    paddingRight: 2,
+  place: {
+    paddingLeft: 12,
+    paddingRight: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
+    borderBottomWidth: 0.5,
+    borderBottomColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  placeName: {
+    color: 'rgba(0, 0, 0, 0.8)',
+    fontSize: 13,
+  },
+  placeDistance: {
+    color: 'rgba(0, 0, 0, 0.5)',
+    fontSize: 12,
   },
 });
