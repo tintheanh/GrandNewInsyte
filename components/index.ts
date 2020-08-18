@@ -23,6 +23,7 @@ import EmailTextBox from './EmailTextBox';
 import PasswordTextBox from './PasswordTextBox';
 import BigButton from './BigButton';
 import SortPostListHeader from './SortPostListHeader';
+import Map from './Map';
 
 export {
   TextBox,
@@ -50,4 +51,5 @@ export {
   UserStats,
   UserInfo,
   BigButton,
+  Map,
 };

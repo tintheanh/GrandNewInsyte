@@ -38,9 +38,11 @@ export default function PlaceCard({
           <Text numberOfLines={1} style={styles.cardName}>
             {name}
           </Text>
-          <Text numberOfLines={1} style={styles.cardDescription}>
-            {`${distance} mi away`}
-          </Text>
+          {distance !== -1 ? (
+            <Text numberOfLines={1} style={styles.cardDescription}>
+              {`${distance.toFixed(1)} mi away`}
+            </Text>
+          ) : null}
         </View>
       </TouchableWithoutFeedback>
     </View>
@@ -50,7 +52,6 @@ export default function PlaceCard({
 const styles = StyleSheet.create({
   card: {
     padding: 10,
-    elevation: 2,
     backgroundColor: '#FFF',
     marginHorizontal: 6,
     shadowColor: '#000',
@@ -58,10 +59,12 @@ const styles = StyleSheet.create({
       width: 0,
       height: 1,
     },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3,
     width: 158,
-    overflow: 'hidden',
+    // overflow: 'hidden',
     justifyContent: 'space-between',
   },
   touchStyle: {

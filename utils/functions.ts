@@ -18,6 +18,7 @@ import {
   Reply,
   User,
   MyError,
+  Place,
   MyErrorCodes,
 } from '../models';
 import { Colors, tokenForTag, separatorForTag } from '../constants';
@@ -40,15 +41,15 @@ const kmToMiles = (km: number) => km * 0.62137;
  * @param p2 end point
  */
 const distance = (
-  p1: { latitude: number; longitude: number },
-  p2: { latitude: number; longitude: number },
+  p1: { lat: number; lng: number },
+  p2: { lat: number; lng: number },
 ) => {
-  if (p1.latitude === p2.latitude && p1.longitude === p2.longitude) {
+  if (p1.lat === p2.lat && p1.lng === p2.lng) {
     return 0;
   }
-  const radlat1 = (Math.PI * p1.latitude) / 180;
-  const radlat2 = (Math.PI * p2.latitude) / 180;
-  const theta = p1.longitude - p2.longitude;
+  const radlat1 = (Math.PI * p1.lat) / 180;
+  const radlat2 = (Math.PI * p2.lat) / 180;
+  const theta = p1.lng - p2.lng;
   const radtheta = (Math.PI * theta) / 180;
   let dist =
     Math.sin(radlat1) * Math.sin(radlat2) +
@@ -61,6 +62,29 @@ const distance = (
   dist = dist * 60 * 1.1515;
 
   return dist;
+};
+
+const checkPlaceListChanged = (
+  placeList1: Array<Place>,
+  placeList2: Array<Place>,
+) => {
+  if (placeList1.length !== placeList2.length) {
+    return true;
+  }
+
+  for (let i = 0; i < placeList1.length; i++) {
+    const place1 = placeList1[i];
+    const place2 = placeList2[i];
+
+    if (
+      place1.location.lat !== place2.location.lat ||
+      place1.location.lng !== place2.location.lng
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 };
 
 /**
@@ -998,4 +1022,5 @@ export {
   distance,
   milesToKm,
   kmToMiles,
+  checkPlaceListChanged,
 };

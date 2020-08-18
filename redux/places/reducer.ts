@@ -12,6 +12,11 @@ export default function placeReducer(
   action: PlaceAction,
 ): PlaceState {
   switch (action.type) {
+    case DispatchTypes.CLEAR_FETCH_PLACES_ERROR: {
+      const newState = { ...state };
+      newState.error = null;
+      return newState;
+    }
     case DispatchTypes.FETCH_PLACES_STARTED: {
       const newState = { ...state };
       newState.loading = true;
@@ -28,6 +33,7 @@ export default function placeReducer(
       const newState = { ...state };
       newState.loading = false;
       newState.error = action.payload as Error;
+      newState.places = [];
       return newState;
     }
     default:

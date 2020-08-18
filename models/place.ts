@@ -11,8 +11,8 @@ export default interface Place {
     height: number;
   }>;
   location: {
-    latitude: number;
-    longitude: number;
+    lat: number;
+    lng: number;
   };
   distance: number;
 }
