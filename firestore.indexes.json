@@ -1,6 +1,20 @@
 {
   "indexes": [
     {
+      "collectionGroup": "follower_list",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "for_search",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "username",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "posts",
       "queryScope": "COLLECTION",
       "fields": [
@@ -79,20 +93,6 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "tagged_users",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "date_posted",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "posts",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
           "fieldPath": "privacy",
           "order": "DESCENDING"
         },
@@ -107,21 +107,21 @@
       ]
     },
     {
-      "collectionGroup": "users",
+      "collectionGroup": "posts",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "for_search",
+          "fieldPath": "tagged_users",
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "username",
-          "order": "ASCENDING"
+          "fieldPath": "date_posted",
+          "order": "DESCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "follower_list",
+      "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -143,7 +143,21 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "g.`geohash`",
+          "fieldPath": "g.geohash",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "places",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "for_search",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "name",
           "order": "ASCENDING"
         }
       ]

@@ -10,7 +10,7 @@ import { FontAwesome5, Ionicons, MaterialIcons } from '../../../constants';
 interface PlaceSearchBarProps {
   searchQuery: string;
   isDropdownOpen: boolean;
-  submitSearch: () => void;
+  isPlaceListOpen: boolean;
   onChangeText: (text: string) => void;
   clearSearch: () => void;
   openDropdownCategories: () => void;
@@ -20,7 +20,7 @@ export default React.memo(
   function PlaceSearchBar({
     searchQuery,
     isDropdownOpen,
-    submitSearch,
+    isPlaceListOpen,
     onChangeText,
     clearSearch,
     openDropdownCategories,
@@ -29,7 +29,7 @@ export default React.memo(
       <View
         style={[
           styles.searchWrapper,
-          !isDropdownOpen
+          !isDropdownOpen && !isPlaceListOpen
             ? {
                 shadowColor: '#000',
                 shadowOffset: {
@@ -56,7 +56,6 @@ export default React.memo(
           value={searchQuery}
           style={styles.searchBox}
           onChangeText={onChangeText}
-          onSubmitEditing={submitSearch}
         />
         <View style={styles.rightIconsWrapper}>
           <View style={styles.downIconWrapper}>
@@ -92,6 +91,9 @@ export default React.memo(
     if (prevProps.isDropdownOpen !== nextProps.isDropdownOpen) {
       return false;
     }
+    if (prevProps.isPlaceListOpen !== nextProps.isPlaceListOpen) {
+      return false;
+    }
     return true;
   },
 );
@@ -101,7 +103,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 110,
+    zIndex: 300,
     position: 'absolute',
     top: 42,
     width: '90%',
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
   searchIcon: {
     position: 'absolute',
     left: 20,
-    zIndex: 200,
+    zIndex: 310,
   },
   rightIconsWrapper: {
     flexDirection: 'row',
@@ -127,14 +129,14 @@ const styles = StyleSheet.create({
     right: 20,
   },
   closeIconWrapper: {
-    zIndex: 200,
+    zIndex: 310,
   },
   closeIcon: {
     justifyContent: 'center',
     height: 28,
   },
   downIconWrapper: {
-    zIndex: 200,
+    zIndex: 310,
   },
   downIcon: {
     justifyContent: 'center',

@@ -4,18 +4,28 @@ import { List } from '../../../components';
 import { Place } from '../../../models';
 import { checkPlaceListChanged } from '../../../utils/functions';
 import { Layout } from '../../../constants';
+import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 interface PlaceListProps {
-  places: Array<any>;
+  places: Array<Place>;
+  onSelect: (place: Place) => void;
 }
 
-export default function PlaceList({ places }: PlaceListProps) {
-  const renderItem = ({ item, index }: { item: any; index: number }) => {
+export default function PlaceList({ places, onSelect }: PlaceListProps) {
+  const performSelect = (place: Place) => () => {
+    onSelect(place);
+  };
+
+  const renderItem = ({ item, index }: { item: Place; index: number }) => {
     return (
-      <View style={styles.place}>
-        <Text style={styles.placeName}>{item.name}</Text>
-        <Text style={styles.placeDistance}>{item.distance} mi away</Text>
-      </View>
+      <TouchableWithoutFeedback onPress={performSelect(item)}>
+        <View style={styles.place}>
+          <Text style={styles.placeName}>{item.name}</Text>
+          <Text style={styles.placeDistance}>
+            {item.distance.toFixed(1)} mi away
+          </Text>
+        </View>
+      </TouchableWithoutFeedback>
     );
   };
 
@@ -37,7 +47,7 @@ export default function PlaceList({ places }: PlaceListProps) {
 
 const styles = StyleSheet.create({
   placeList: {
-    zIndex: 100,
+    zIndex: 200,
     position: 'absolute',
     top: 62,
     height: Layout.window.height / 3.5,

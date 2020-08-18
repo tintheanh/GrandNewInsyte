@@ -68,9 +68,11 @@ export const searchNewPlacesByName = (
 ) => async (dispatch: (action: PlaceAction) => void) => {
   dispatch(searchNewPlacesByNameStarted());
   try {
+    const searchQueryLowerCase = searchQuery.toLowerCase();
     const documentSnapshots = await fsDB
       .collection('places')
-      .where('for_search', 'array-contains', searchQuery)
+      .where('for_search', 'array-contains', searchQueryLowerCase)
+      .orderBy('name')
       .limit(placeResultsPerBatch)
       .get();
 
@@ -120,6 +122,24 @@ export const clearFetchPlacesError = () => (
   });
 };
 
+export const clearPlaceList = () => (
+  dispatch: (action: PlaceAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.CLEAR_PLACE_LIST,
+    payload: null,
+  });
+};
+
+export const selectPlaceFromPlaceList = (place: Place) => (
+  dispatch: (action: PlaceAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.SELECT_PLACE_FROM_PLACE_LIST,
+    payload: place,
+  });
+};
+
 /* -------------------- place actions ------------------- */
 
 /* ------------------ place dispatches ------------------ */
@@ -148,7 +168,7 @@ const searchNewPlacesByNameSuccess = (
   places: Array<Place>,
   lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
 ): PlaceAction => ({
-  type: DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_STARTED,
+  type: DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_SUCCESS,
   payload: { places, lastVisible },
 });
 

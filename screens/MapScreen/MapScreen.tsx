@@ -17,13 +17,16 @@ import {
   DropdownCategories,
   PlaceList,
 } from './private_components';
-import { distance, alertDialog } from '../../utils/functions';
+import { distance, alertDialog, delay } from '../../utils/functions';
 import { Colors, Layout, MaterialIcons } from '../../constants';
 import { Place } from '../../models';
 import { AppState } from '../../redux/store';
 import {
   searchPlacesAround,
   clearFetchPlacesError,
+  searchNewPlacesByName,
+  clearPlaceList,
+  selectPlaceFromPlaceList,
 } from '../../redux/places/actions';
 
 const CARD_WIDTH = 158;
@@ -34,7 +37,8 @@ const LONGITUDE_DELTA = LATITUDE_DELTA * (width / height);
 const AnimatedIcon = Animated.createAnimatedComponent(MaterialIcons);
 
 interface MapScreenProps {
-  places: Array<Place>;
+  surroundPlaces: Array<Place>;
+  placeList: Array<Place>;
   searchAroundLoading: boolean;
   error: Error | null;
 
@@ -48,8 +52,17 @@ interface MapScreenProps {
       type: 'my-location' | 'default-location';
     },
   ) => void;
+  onSearchNewPlacesByName: (
+    searchQuery: string,
+    currentLocation: {
+      coords: { lat: number; lng: number };
+      type: 'my-location' | 'default-location';
+    },
+  ) => void;
+  onSelectPlaceFromPlaceList: (place: Place) => void;
 
   onClearFetchPlacesError: () => void;
+  onClearPlaceList: () => void;
 }
 
 interface MapScreenState {
@@ -112,10 +125,10 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
     this.setCurrentLocation();
 
     this.animation.addListener(({ value }) => {
-      const { places } = this.props;
+      const { surroundPlaces } = this.props;
       let index = Math.floor(value / CARD_WIDTH + 0.3);
-      if (index >= places.length) {
-        index = places.length - 1;
+      if (index >= surroundPlaces.length) {
+        index = surroundPlaces.length - 1;
       }
       if (index <= 0) {
         index = 0;
@@ -125,8 +138,8 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
         if (this.index !== index) {
           this.index = index;
           const { zoom } = this.state;
-          const { location } = places[index];
-          this.mapRef.current?.animateToRegion({
+          const { location } = surroundPlaces[index];
+          this.animateToRegion({
             latitude: location.lat,
             longitude: location.lng,
             latitudeDelta: zoom.latDelta,
@@ -138,7 +151,9 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
   }
 
   componentWillUnmount() {
-    clearTimeout(this.timeout);
+    if (this.timeout) {
+      clearTimeout(this.timeout);
+    }
   }
 
   componentDidUpdate() {
@@ -191,13 +206,26 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
   };
 
   /**
+   * Method move map to desire region
+   * @param region Region to move to
+   */
+  animateToRegion = (region: {
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  }) => {
+    this.mapRef.current?.animateToRegion(region);
+  };
+
+  /**
    * Method move map to current location
    */
   animateToCurrentLocation = () => {
     this.setCurrentLocation().then(() => {
       const { currentLocation, zoom } = this.state;
       if (currentLocation) {
-        this.mapRef.current?.animateToRegion({
+        this.animateToRegion({
           latitude: currentLocation.coords.lat,
           longitude: currentLocation.coords.lng,
           latitudeDelta: zoom.latDelta,
@@ -262,10 +290,10 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
             lastSearchedLocation,
             currentLocation,
           );
-          if (this.props.places.length) {
-            this.mapRef.current?.animateToRegion({
-              latitude: this.props.places[0].location.lat,
-              longitude: this.props.places[0].location.lng,
+          if (this.props.surroundPlaces.length) {
+            this.animateToRegion({
+              latitude: this.props.surroundPlaces[0].location.lat,
+              longitude: this.props.surroundPlaces[0].location.lng,
               latitudeDelta: zoom.latDelta,
               longitudeDelta: zoom.lngDelta,
             });
@@ -277,11 +305,11 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
   };
 
   renderMarkers = () => {
-    const { places } = this.props;
-    if (places.length === 0) {
+    const { surroundPlaces } = this.props;
+    if (surroundPlaces.length === 0) {
       return null;
     }
-    const interpolations = places.map((_, index) => {
+    const interpolations = surroundPlaces.map((_, index) => {
       const inputRange = [
         (index - 1) * CARD_WIDTH,
         index * CARD_WIDTH,
@@ -300,7 +328,7 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
       return { scale, opacity };
     });
 
-    return places.map((place, index) => {
+    return surroundPlaces.map((place, index) => {
       const scaleStyle = {
         transform: [
           {
@@ -330,7 +358,14 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
   };
 
   onSearchQueryChange = (text: string) => {
-    this.setState({ searchQuery: text });
+    this.setState({ searchQuery: text }, () => {
+      delay(500).then(() => {
+        const { searchQuery, currentLocation } = this.state;
+        if (currentLocation) {
+          this.props.onSearchNewPlacesByName(searchQuery, currentLocation);
+        }
+      });
+    });
   };
 
   onSearchCategorySelect = (category: string) => {
@@ -345,7 +380,24 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
   };
 
   clearSearchQuery = () => {
-    this.setState({ searchQuery: '', toggleDropdownCategories: false });
+    this.setState({ searchQuery: '', toggleDropdownCategories: false }, () => {
+      this.props.onClearPlaceList();
+    });
+  };
+
+  performSelectPlaceFromPlaceList = (place: Place) => {
+    const { onSelectPlaceFromPlaceList, onClearPlaceList } = this.props;
+    onSelectPlaceFromPlaceList(place);
+    onClearPlaceList();
+    this.setState({ searchQuery: place.name });
+    const { location } = place;
+    const { zoom } = this.state;
+    this.animateToRegion({
+      latitude: location.lat,
+      longitude: location.lng,
+      latitudeDelta: zoom.latDelta,
+      longitudeDelta: zoom.lngDelta,
+    });
   };
 
   render() {
@@ -356,7 +408,7 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
       searchQuery,
       zoom,
     } = this.state;
-    const { places, searchAroundLoading } = this.props;
+    const { surroundPlaces, placeList, searchAroundLoading } = this.props;
 
     if (!currentLocation) {
       return <Loading />;
@@ -369,24 +421,14 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
           openDropdownCategories={this.openDropdownCategories}
           clearSearch={this.clearSearchQuery}
           isDropdownOpen={toggleDropdownCategories}
-          submitSearch={() => console.log('ok submit')}
+          isPlaceListOpen={placeList.length > 0}
         />
-        {/* <PlaceList
-          places={[
-            {
-              id: '1',
-              name: 'Bar Tender',
-              distance: 2,
-              location: currentLocation.coords,
-            },
-            {
-              id: '2',
-              name: 'Leblanc Cafe',
-              distance: 3,
-              location: currentLocation.coords,
-            },
-          ]}
-        /> */}
+        {placeList.length ? (
+          <PlaceList
+            places={placeList}
+            onSelect={this.performSelectPlaceFromPlaceList}
+          />
+        ) : null}
         {toggleDropdownCategories ? (
           <DropdownCategories
             categories={['bar', 'restaurant']}
@@ -418,8 +460,8 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
           renderMarkers={this.renderMarkers}
           onRegionChange={this.onRegionChange}
         />
-        {places.length ? (
-          <PlaceScrollView places={places} animation={this.animation} />
+        {surroundPlaces.length ? (
+          <PlaceScrollView places={surroundPlaces} animation={this.animation} />
         ) : null}
         {currentLocation.type === 'my-location' ? (
           <TouchableOpacity
@@ -446,66 +488,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     left: 28,
     zIndex: 200,
-  },
-  searchWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 110,
-    position: 'absolute',
-    top: 42,
-    width: '90%',
-    alignSelf: 'center',
-  },
-  searchBox: {
-    width: '100%',
-    paddingLeft: 30,
-    paddingRight: 30,
-    height: 38,
-    fontSize: 12,
-    borderRadius: 40,
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-  },
-  closeIconWrapper: {
-    position: 'relative',
-    right: 26,
-    zIndex: 200,
-  },
-  closeIcon: {
-    justifyContent: 'center',
-    height: 28,
-  },
-  dropdownListWrapper: {
-    zIndex: 100,
-    position: 'absolute',
-    top: 62,
-    width: '90%',
-    alignSelf: 'center',
-  },
-  dropdownList: {
-    width: '100%',
-    backgroundColor: 'white',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 1.41,
-    elevation: 2,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
-  },
-  dropdownItem: {
-    fontSize: 14,
   },
   locationBtn: {
     position: 'absolute',
@@ -557,7 +539,8 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: AppState) => ({
-  places: state.allPlaces.places,
+  surroundPlaces: state.allPlaces.results.surroundPlaces,
+  placeList: state.allPlaces.results.placeList,
   searchAroundLoading: state.allPlaces.loadings.searchAroundLoading,
   error: state.allPlaces.error,
 });
@@ -565,6 +548,9 @@ const mapStateToProps = (state: AppState) => ({
 const mapDispatchToProps = {
   onSearchPlacesAround: searchPlacesAround,
   onClearFetchPlacesError: clearFetchPlacesError,
+  onSearchNewPlacesByName: searchNewPlacesByName,
+  onSelectPlaceFromPlaceList: selectPlaceFromPlaceList,
+  onClearPlaceList: clearPlaceList,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(MapScreen);

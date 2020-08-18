@@ -3,7 +3,10 @@ import { FirebaseFirestoreTypes } from '../../config';
 import { Place } from '../../models';
 
 const initialState: PlaceState = {
-  places: [],
+  results: {
+    surroundPlaces: [],
+    placeList: [],
+  },
   error: null,
   loadings: {
     searchAroundLoading: false,
@@ -22,6 +25,18 @@ export default function placeReducer(
       newState.error = null;
       return newState;
     }
+    case DispatchTypes.CLEAR_PLACE_LIST: {
+      const newState = { ...state };
+      newState.results.placeList = [];
+      return newState;
+    }
+    case DispatchTypes.SELECT_PLACE_FROM_PLACE_LIST: {
+      const newState = { ...state };
+      const onePlace = [];
+      onePlace.push(action.payload as Place);
+      newState.results.surroundPlaces = onePlace;
+      return newState;
+    }
     case DispatchTypes.SEARCH_PLACES_AROUND_STARTED: {
       const newState = { ...state };
       newState.loadings.searchAroundLoading = true;
@@ -31,14 +46,14 @@ export default function placeReducer(
       const newState = { ...state };
       newState.loadings.searchAroundLoading = false;
       newState.error = null;
-      newState.places = action.payload as Array<Place>;
+      newState.results.surroundPlaces = action.payload as Array<Place>;
       return newState;
     }
     case DispatchTypes.SEARCH_PLACES_AROUND_FAILURE: {
       const newState = { ...state };
       newState.loadings.searchAroundLoading = false;
       newState.error = action.payload as Error;
-      newState.places = [];
+      newState.results.surroundPlaces = [];
       return newState;
     }
     case DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_STARTED: {
@@ -53,7 +68,7 @@ export default function placeReducer(
         lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
       };
       newState.loadings.searchByInputLoading = false;
-      newState.places = payload.places;
+      newState.results.placeList = payload.places;
       newState.lastVisible = payload.lastVisible;
       newState.error = null;
       return newState;
@@ -62,7 +77,7 @@ export default function placeReducer(
       const newState = { ...state };
       newState.error = action.payload as Error;
       newState.loadings.searchByInputLoading = false;
-      newState.places = [];
+      newState.results.placeList = [];
       return newState;
     }
     default:

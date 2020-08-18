@@ -3,6 +3,8 @@ import { FirebaseFirestoreTypes } from '../../config';
 
 export enum DispatchTypes {
   CLEAR_FETCH_PLACES_ERROR = 'CLEAR_FETCH_PLACES_ERROR',
+  CLEAR_PLACE_LIST = 'CLEAR_PLACE_LIST',
+  SELECT_PLACE_FROM_PLACE_LIST = 'SELECT_PLACE_FROM_PLACE_LIST',
 
   SEARCH_PLACES_AROUND_STARTED = 'SEARCH_PLACES_AROUND_STARTED',
   SEARCH_PLACES_AROUND_SUCCESS = 'SEARCH_PLACES_AROUND_SUCCESS',
@@ -17,6 +19,7 @@ export interface PlaceAction {
   type: string;
   payload:
     | Array<Place>
+    | Place
     | Error
     | boolean
     | {
@@ -27,7 +30,10 @@ export interface PlaceAction {
 }
 
 export interface PlaceState {
-  places: Array<Place>;
+  results: {
+    surroundPlaces: Array<Place>;
+    placeList: Array<Place>;
+  };
   error: Error | null;
   loadings: {
     searchAroundLoading: boolean;
