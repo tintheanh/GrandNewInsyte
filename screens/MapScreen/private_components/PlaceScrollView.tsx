@@ -1,28 +1,31 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { Animated, StyleSheet, View } from 'react-native';
-import { PlaceCard } from '../../../components';
+import { PlaceCard, CARD_WIDTH } from '../../../components';
 import { Place } from '../../../models';
 import { checkPlaceListChanged } from '../../../utils/functions';
-import { Layout } from '../../../constants';
-
-const CARD_HEIGHT = Layout.window.height / 3.5;
-const CARD_WIDTH = CARD_HEIGHT / 1.5;
 
 interface PlaceScrollViewProps {
+  /**
+   * Current surrounding places
+   */
   places: Array<Place>;
+
+  /**
+   * Animation value for ScrollView snapping
+   */
   animation: Animated.Value;
 }
 
-export default React.memo(
-  function PlaceScrollView({ places, animation }: PlaceScrollViewProps) {
+const PlaceScrollView = forwardRef(
+  ({ places, animation }: PlaceScrollViewProps, ref) => {
     return (
       <Animated.ScrollView
+        ref={ref}
         horizontal
         scrollEventThrottle={1}
         showsHorizontalScrollIndicator={false}
         style={styles.placeResults}
         snapToInterval={CARD_WIDTH + 12}
-        // contentContainerStyle={styles.endPadding}
         onScroll={Animated.event(
           [
             {
@@ -48,6 +51,10 @@ export default React.memo(
       </Animated.ScrollView>
     );
   },
+);
+
+export default React.memo(
+  PlaceScrollView,
   (prevProps: PlaceScrollViewProps, nextProps: PlaceScrollViewProps) => {
     if (checkPlaceListChanged(prevProps.places, nextProps.places)) {
       return false;

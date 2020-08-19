@@ -1,6 +1,6 @@
 import PlaceScrollView from './PlaceScrollView';
 import PlaceSearchBar from './PlaceSearchBar';
-import DropdownCategories from './DropdownCategories';
+import DropdownCategoryList from './DropdownCategoryList';
 import PlaceList from './PlaceList';
 
-export { PlaceScrollView, PlaceSearchBar, DropdownCategories, PlaceList };
+export { PlaceScrollView, PlaceSearchBar, DropdownCategoryList, PlaceList };

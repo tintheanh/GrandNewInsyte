@@ -9,12 +9,39 @@ import {
 import { FontAwesome5, Ionicons, MaterialIcons } from '../../../constants';
 
 interface PlaceSearchBarProps {
+  /**
+   * Current searchQuery value
+   */
   searchQuery: string;
+
+  /**
+   * If dropdown category list is open
+   */
   isDropdownOpen: boolean;
+
+  /**
+   * If place results list is open
+   */
   isPlaceListOpen: boolean;
+
+  /**
+   * If searching is on loading
+   */
   loading: boolean;
+
+  /**
+   * Method update new searchQuery value
+   */
   onChangeText: (text: string) => void;
+
+  /**
+   * Method clear results when pressing on close button
+   */
   clearSearch: () => void;
+
+  /**
+   * Method to open the dropdown category list when pressing on down button
+   */
   openDropdownCategories: () => void;
 }
 

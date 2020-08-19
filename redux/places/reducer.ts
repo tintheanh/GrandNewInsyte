@@ -4,7 +4,7 @@ import { Place } from '../../models';
 
 const initialState: PlaceState = {
   results: {
-    surroundPlaces: [],
+    surroundingPlaces: [],
     placeList: [],
   },
   error: null,
@@ -33,14 +33,14 @@ export default function placeReducer(
     }
     case DispatchTypes.CLEAR_SURROUND_PLACES: {
       const newState = { ...state };
-      newState.results.surroundPlaces = [];
+      newState.results.surroundingPlaces = [];
       return newState;
     }
     case DispatchTypes.SELECT_PLACE_FROM_PLACE_LIST: {
       const newState = { ...state };
       const onePlace = [];
       onePlace.push(action.payload as Place);
-      newState.results.surroundPlaces = onePlace;
+      newState.results.surroundingPlaces = onePlace;
       return newState;
     }
     case DispatchTypes.SEARCH_PLACES_AROUND_STARTED: {
@@ -52,14 +52,14 @@ export default function placeReducer(
       const newState = { ...state };
       newState.loadings.searchAroundLoading = false;
       newState.error = null;
-      newState.results.surroundPlaces = action.payload as Array<Place>;
+      newState.results.surroundingPlaces = action.payload as Array<Place>;
       return newState;
     }
     case DispatchTypes.SEARCH_PLACES_AROUND_FAILURE: {
       const newState = { ...state };
       newState.loadings.searchAroundLoading = false;
       newState.error = action.payload as Error;
-      newState.results.surroundPlaces = [];
+      newState.results.surroundingPlaces = [];
       return newState;
     }
     case DispatchTypes.SEARCH_NEW_PLACES_BY_NAME_STARTED: {
@@ -121,14 +121,14 @@ export default function placeReducer(
       const newState = { ...state };
       newState.loadings.searchByInputLoading = false;
       newState.error = null;
-      newState.results.surroundPlaces = action.payload as Array<Place>;
+      newState.results.surroundingPlaces = action.payload as Array<Place>;
       return newState;
     }
     case DispatchTypes.SEARCH_PLACES_AROUND_BY_CATEGORY_FAILURE: {
       const newState = { ...state };
       newState.loadings.searchByInputLoading = false;
       newState.error = action.payload as Error;
-      newState.results.surroundPlaces = [];
+      newState.results.surroundingPlaces = [];
       return newState;
     }
     default:

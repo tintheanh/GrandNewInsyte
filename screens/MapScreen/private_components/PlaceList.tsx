@@ -7,8 +7,19 @@ import { Layout } from '../../../constants';
 import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 
 interface PlaceListProps {
+  /**
+   * Place results
+   */
   places: Array<Place>;
+
+  /**
+   * Method perform select a place result
+   */
   onSelect: (place: Place) => void;
+
+  /**
+   * Method load more results when scrolling down
+   */
   onLoadMore: () => void;
 }
 
@@ -17,10 +28,18 @@ export default function PlaceList({
   onSelect,
   onLoadMore,
 }: PlaceListProps) {
+
+  /**
+   * Method perform select a place result
+   * @param place Place to select
+   */
   const performSelect = (place: Place) => () => {
     onSelect(place);
   };
 
+  /**
+   * Method render place result
+   */
   const renderItem = ({ item, index }: { item: Place; index: number }) => {
     return (
       <TouchableWithoutFeedback onPress={performSelect(item)}>

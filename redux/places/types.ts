@@ -40,7 +40,7 @@ export interface PlaceAction {
 
 export interface PlaceState {
   results: {
-    surroundPlaces: Array<Place>;
+    surroundingPlaces: Array<Place>;
     placeList: Array<Place>;
   };
   error: Error | null;

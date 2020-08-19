@@ -7,7 +7,7 @@ import Carousel from './Carousel';
 import PostCard from './PostCard/PostCard';
 import CommentCard from './CommentCard/CommentCard';
 import ReplyCard from './ReplyCard';
-import PlaceCard from './PlaceCard';
+import PlaceCard, { CARD_HEIGHT, CARD_WIDTH } from './PlaceCard';
 import ErrorView from './ErrorView';
 import NothingView from './NothingView';
 import ProfilePostList from './ProfilePostList/ProfilePostList';
@@ -34,6 +34,8 @@ export {
   List,
   Carousel,
   PostCard,
+  CARD_HEIGHT,
+  CARD_WIDTH,
   CommentCard,
   PlaceCard,
   ErrorView,

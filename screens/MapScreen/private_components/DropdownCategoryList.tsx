@@ -4,16 +4,30 @@ import { TouchableHighlight, StyleSheet } from 'react-native';
 import { delay, capitalize } from '../../../utils/functions';
 
 interface DropdownCategoriesProps {
+  /**
+   * Current selected category
+   */
   selectedValue: string;
+
+  /**
+   * All categories
+   */
   categories: Array<string>;
+
+  /**
+   * Method select a category
+   */
   onSelectCategory: (category: string) => void;
 }
 
 interface DropdownCategoriesState {
+  /**
+   * Current selected category on scroll
+   */
   value: string;
 }
 
-export default class DropdownCategories extends Component<
+export default class DropdownCategoryList extends Component<
   DropdownCategoriesProps,
   DropdownCategoriesState
 > {
