@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import { Picker } from '@react-native-community/picker';
 import { TouchableHighlight, StyleSheet } from 'react-native';
-import { delay } from '../../../utils/functions';
+import { delay, capitalize } from '../../../utils/functions';
 
 interface DropdownCategoriesProps {
+  selectedValue: string;
   categories: Array<string>;
   onSelectCategory: (category: string) => void;
 }
@@ -19,7 +20,7 @@ export default class DropdownCategories extends Component<
   constructor(props: DropdownCategoriesProps) {
     super(props);
     this.state = {
-      value: this.props.categories.length ? this.props.categories[0] : '',
+      value: this.props.selectedValue,
     };
   }
 
@@ -51,16 +52,9 @@ export default class DropdownCategories extends Component<
     return false;
   };
 
-  capitalize = (str: string) => {
-    if (typeof str !== 'string') {
-      return '';
-    }
-    return str.charAt(0).toUpperCase() + str.slice(1);
-  };
-
   renderCategories = () => {
     return this.props.categories.map((cat, i) => (
-      <Picker.Item key={i} label={this.capitalize(cat)} value={cat} />
+      <Picker.Item key={i} label={capitalize(cat)} value={cat} />
     ));
   };
 
@@ -91,7 +85,7 @@ export default class DropdownCategories extends Component<
 
 const styles = StyleSheet.create({
   dropdownListWrapper: {
-    zIndex: 100,
+    zIndex: 200,
     position: 'absolute',
     top: 62,
     width: '90%',

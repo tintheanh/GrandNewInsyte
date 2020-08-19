@@ -189,36 +189,36 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
     };
   }
 
-  shouldComponentUpdate(nextProps: HomePublicPostListProps) {
-    const {
-      currentTabIndex,
-      fetchLoading,
-      pullLoading,
-      feedChoice,
-      hotTime,
-      error,
-    } = this.props;
+  // shouldComponentUpdate(nextProps: HomePublicPostListProps) {
+  //   const {
+  //     currentTabIndex,
+  //     fetchLoading,
+  //     pullLoading,
+  //     feedChoice,
+  //     hotTime,
+  //     error,
+  //   } = this.props;
 
-    if (currentTabIndex !== nextProps.currentTabIndex) {
-      return true;
-    }
-    if (fetchLoading !== nextProps.fetchLoading) {
-      return true;
-    }
-    if (pullLoading !== nextProps.pullLoading) {
-      return true;
-    }
-    if (feedChoice !== nextProps.feedChoice) {
-      return true;
-    }
-    if (hotTime !== nextProps.hotTime) {
-      return true;
-    }
-    if (error !== nextProps.error) {
-      return true;
-    }
-    return false;
-  }
+  //   if (currentTabIndex !== nextProps.currentTabIndex) {
+  //     return true;
+  //   }
+  //   if (fetchLoading !== nextProps.fetchLoading) {
+  //     return true;
+  //   }
+  //   if (pullLoading !== nextProps.pullLoading) {
+  //     return true;
+  //   }
+  //   if (feedChoice !== nextProps.feedChoice) {
+  //     return true;
+  //   }
+  //   if (hotTime !== nextProps.hotTime) {
+  //     return true;
+  //   }
+  //   if (error !== nextProps.error) {
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
   componentDidMount() {
     this.props.onFetchPublicNewPosts();

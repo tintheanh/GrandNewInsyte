@@ -177,23 +177,23 @@ class UserProfileTaggedPostList extends Component<
     };
   }
 
-  shouldComponentUpdate(nextProps: UserProfileTaggedPostListProps) {
-    const { currentTabIndex, fetchLoading, pullLoading, error } = this.props;
+  // shouldComponentUpdate(nextProps: UserProfileTaggedPostListProps) {
+  //   const { currentTabIndex, fetchLoading, pullLoading, error } = this.props;
 
-    if (currentTabIndex !== nextProps.currentTabIndex) {
-      return true;
-    }
-    if (fetchLoading !== nextProps.fetchLoading) {
-      return true;
-    }
-    if (pullLoading !== nextProps.pullLoading) {
-      return true;
-    }
-    if (error !== nextProps.error) {
-      return true;
-    }
-    return false;
-  }
+  //   if (currentTabIndex !== nextProps.currentTabIndex) {
+  //     return true;
+  //   }
+  //   if (fetchLoading !== nextProps.fetchLoading) {
+  //     return true;
+  //   }
+  //   if (pullLoading !== nextProps.pullLoading) {
+  //     return true;
+  //   }
+  //   if (error !== nextProps.error) {
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
   componentDidMount() {
     this.props.onFetchTaggedPosts();

@@ -17,22 +17,33 @@ import {
   DropdownCategories,
   PlaceList,
 } from './private_components';
-import { distance, alertDialog, delay } from '../../utils/functions';
+import {
+  distance,
+  alertDialog,
+  delay,
+  capitalize,
+} from '../../utils/functions';
 import { Colors, Layout, MaterialIcons } from '../../constants';
 import { Place } from '../../models';
 import { AppState } from '../../redux/store';
 import {
   searchPlacesAround,
   clearFetchPlacesError,
+  clearSurroundPlaces,
   searchNewPlacesByName,
+  searchMorePlacesByName,
   clearPlaceList,
   selectPlaceFromPlaceList,
+  searchPlacesAroundByCategory,
 } from '../../redux/places/actions';
 
-const CARD_WIDTH = 158;
 const { width, height } = Layout.window;
+const CARD_HEIGHT = height / 3.5;
+const CARD_WIDTH = CARD_HEIGHT / 1.5 + 12;
 const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = LATITUDE_DELTA * (width / height);
+
+const CATEGORIES = ['bar', 'restaurant'];
 
 const AnimatedIcon = Animated.createAnimatedComponent(MaterialIcons);
 
@@ -40,6 +51,7 @@ interface MapScreenProps {
   surroundPlaces: Array<Place>;
   placeList: Array<Place>;
   searchAroundLoading: boolean;
+  searchByInputLoading: boolean;
   error: Error | null;
 
   onSearchPlacesAround: (
@@ -52,7 +64,22 @@ interface MapScreenProps {
       type: 'my-location' | 'default-location';
     },
   ) => void;
+
+  onSearchPlacesAroundByCategory: (
+    category: string,
+    currentLocation: {
+      coords: { lat: number; lng: number };
+      type: 'my-location' | 'default-location';
+    },
+  ) => void;
   onSearchNewPlacesByName: (
+    searchQuery: string,
+    currentLocation: {
+      coords: { lat: number; lng: number };
+      type: 'my-location' | 'default-location';
+    },
+  ) => void;
+  onSearchMorePlacesByName: (
     searchQuery: string,
     currentLocation: {
       coords: { lat: number; lng: number };
@@ -63,6 +90,7 @@ interface MapScreenProps {
 
   onClearFetchPlacesError: () => void;
   onClearPlaceList: () => void;
+  onClearSurroundPlaces: () => void;
 }
 
 interface MapScreenState {
@@ -111,7 +139,7 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
         lngDelta: LONGITUDE_DELTA,
       },
       triggerSearchThisLocation: false,
-      searchCategory: 'bar',
+      searchCategory: CATEGORIES[0],
       searchQuery: '',
       toggleDropdownCategories: false,
     };
@@ -304,6 +332,13 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
     );
   };
 
+  performSearchMorePlacesByName = () => {
+    const { searchQuery, currentLocation } = this.state;
+    if (currentLocation) {
+      this.props.onSearchMorePlacesByName(searchQuery, currentLocation);
+    }
+  };
+
   renderMarkers = () => {
     const { surroundPlaces } = this.props;
     if (surroundPlaces.length === 0) {
@@ -369,10 +404,31 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
   };
 
   onSearchCategorySelect = (category: string) => {
-    this.setState({
-      searchCategory: category,
-      toggleDropdownCategories: false,
-    });
+    this.setState(
+      {
+        searchCategory: category,
+        searchQuery: capitalize(category),
+        toggleDropdownCategories: false,
+      },
+      async () => {
+        const { currentLocation, zoom } = this.state;
+        if (currentLocation) {
+          await this.props.onSearchPlacesAroundByCategory(
+            category,
+            currentLocation,
+          );
+          if (this.props.surroundPlaces.length) {
+            const firstPlace = this.props.surroundPlaces[0].location;
+            this.animateToRegion({
+              latitude: firstPlace.lat,
+              longitude: firstPlace.lng,
+              latitudeDelta: zoom.latDelta,
+              longitudeDelta: zoom.lngDelta,
+            });
+          }
+        }
+      },
+    );
   };
 
   openDropdownCategories = () => {
@@ -381,7 +437,9 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
 
   clearSearchQuery = () => {
     this.setState({ searchQuery: '', toggleDropdownCategories: false }, () => {
-      this.props.onClearPlaceList();
+      const { onClearSurroundPlaces, onClearPlaceList } = this.props;
+      onClearPlaceList();
+      onClearSurroundPlaces();
     });
   };
 
@@ -406,9 +464,15 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
       triggerSearchThisLocation,
       toggleDropdownCategories,
       searchQuery,
+      searchCategory,
       zoom,
     } = this.state;
-    const { surroundPlaces, placeList, searchAroundLoading } = this.props;
+    const {
+      surroundPlaces,
+      placeList,
+      searchAroundLoading,
+      searchByInputLoading,
+    } = this.props;
 
     if (!currentLocation) {
       return <Loading />;
@@ -422,16 +486,19 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
           clearSearch={this.clearSearchQuery}
           isDropdownOpen={toggleDropdownCategories}
           isPlaceListOpen={placeList.length > 0}
+          loading={searchByInputLoading}
         />
         {placeList.length ? (
           <PlaceList
             places={placeList}
             onSelect={this.performSelectPlaceFromPlaceList}
+            onLoadMore={this.performSearchMorePlacesByName}
           />
         ) : null}
         {toggleDropdownCategories ? (
           <DropdownCategories
-            categories={['bar', 'restaurant']}
+            selectedValue={searchCategory}
+            categories={CATEGORIES}
             onSelectCategory={this.onSearchCategorySelect}
           />
         ) : null}
@@ -457,6 +524,7 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
           ref={this.mapRef}
           currentLocation={currentLocation}
           zoom={zoom}
+          places={surroundPlaces}
           renderMarkers={this.renderMarkers}
           onRegionChange={this.onRegionChange}
         />
@@ -542,6 +610,7 @@ const mapStateToProps = (state: AppState) => ({
   surroundPlaces: state.allPlaces.results.surroundPlaces,
   placeList: state.allPlaces.results.placeList,
   searchAroundLoading: state.allPlaces.loadings.searchAroundLoading,
+  searchByInputLoading: state.allPlaces.loadings.searchByInputLoading,
   error: state.allPlaces.error,
 });
 
@@ -549,8 +618,11 @@ const mapDispatchToProps = {
   onSearchPlacesAround: searchPlacesAround,
   onClearFetchPlacesError: clearFetchPlacesError,
   onSearchNewPlacesByName: searchNewPlacesByName,
+  onClearSurroundPlaces: clearSurroundPlaces,
+  onSearchMorePlacesByName: searchMorePlacesByName,
   onSelectPlaceFromPlaceList: selectPlaceFromPlaceList,
   onClearPlaceList: clearPlaceList,
+  onSearchPlacesAroundByCategory: searchPlacesAroundByCategory,
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(MapScreen);

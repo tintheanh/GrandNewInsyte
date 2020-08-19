@@ -139,7 +139,7 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "name",
+          "fieldPath": "category",
           "order": "ASCENDING"
         },
         {

@@ -23,6 +23,13 @@ import {
 } from '../models';
 import { Colors, tokenForTag, separatorForTag } from '../constants';
 
+const capitalize = (str: string) => {
+  if (typeof str !== 'string') {
+    return '';
+  }
+  return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
 /**
  * Method convert miles to km. Used for firestore geo query
  * @param miles Miles to convert
@@ -1023,4 +1030,5 @@ export {
   milesToKm,
   kmToMiles,
   checkPlaceListChanged,
+  capitalize,
 };

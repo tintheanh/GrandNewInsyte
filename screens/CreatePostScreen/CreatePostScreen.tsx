@@ -321,7 +321,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
         multiple: true,
         mediaType: 'any',
         maxFiles: 10,
-        compressImageQuality: 0.6,
+        compressImageQuality: 0.4,
       })) as Image[];
 
       const mediaItems = media.map((md) => ({
@@ -358,7 +358,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   openPhotoCamera = async () => {
     try {
       const image = (await ImagePicker.openCamera({
-        compressImageQuality: 0.6,
+        compressImageQuality: 0.4,
         mediaType: 'photo',
       })) as Image;
       const newState = { ...this.state };
@@ -382,7 +382,7 @@ class CreatePostScreen extends Component<any, CreatePostScreenState> {
   openVideoCamera = async () => {
     try {
       const video = (await ImagePicker.openCamera({
-        compressImageQuality: 0.6,
+        compressImageQuality: 0.4,
         mediaType: 'video',
       })) as Image;
 

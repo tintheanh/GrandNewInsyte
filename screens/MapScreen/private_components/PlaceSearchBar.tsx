@@ -4,6 +4,7 @@ import {
   TextInput,
   TouchableWithoutFeedback,
   StyleSheet,
+  ActivityIndicator,
 } from 'react-native';
 import { FontAwesome5, Ionicons, MaterialIcons } from '../../../constants';
 
@@ -11,6 +12,7 @@ interface PlaceSearchBarProps {
   searchQuery: string;
   isDropdownOpen: boolean;
   isPlaceListOpen: boolean;
+  loading: boolean;
   onChangeText: (text: string) => void;
   clearSearch: () => void;
   openDropdownCategories: () => void;
@@ -21,6 +23,7 @@ export default React.memo(
     searchQuery,
     isDropdownOpen,
     isPlaceListOpen,
+    loading,
     onChangeText,
     clearSearch,
     openDropdownCategories,
@@ -70,15 +73,23 @@ export default React.memo(
             </TouchableWithoutFeedback>
           </View>
           <View style={styles.closeIconWrapper}>
-            <TouchableWithoutFeedback onPress={clearSearch}>
-              <View style={styles.closeIcon}>
-                <Ionicons
-                  name="ios-close"
-                  size={14}
-                  color="rgba(0, 0, 0, 0.6)"
-                />
-              </View>
-            </TouchableWithoutFeedback>
+            {loading ? (
+              <ActivityIndicator
+                size="small"
+                color="black"
+                style={styles.loading}
+              />
+            ) : (
+              <TouchableWithoutFeedback onPress={clearSearch}>
+                <View style={styles.closeIcon}>
+                  <Ionicons
+                    name="ios-close"
+                    size={14}
+                    color="rgba(0, 0, 0, 0.6)"
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+            )}
           </View>
         </View>
       </View>
@@ -92,6 +103,9 @@ export default React.memo(
       return false;
     }
     if (prevProps.isPlaceListOpen !== nextProps.isPlaceListOpen) {
+      return false;
+    }
+    if (prevProps.loading !== nextProps.loading) {
       return false;
     }
     return true;
@@ -117,6 +131,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     borderRadius: 40,
     backgroundColor: 'white',
+    color: 'rgba(0, 0, 0, 0.6)',
   },
   searchIcon: {
     position: 'absolute',
@@ -141,5 +156,11 @@ const styles = StyleSheet.create({
   downIcon: {
     justifyContent: 'center',
     height: 28,
+  },
+  loading: {
+    justifyContent: 'center',
+    height: 28,
+    width: 14,
+    transform: [{ scale: 0.5 }],
   },
 });

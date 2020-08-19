@@ -3,8 +3,10 @@ import { Animated, StyleSheet, View } from 'react-native';
 import { PlaceCard } from '../../../components';
 import { Place } from '../../../models';
 import { checkPlaceListChanged } from '../../../utils/functions';
+import { Layout } from '../../../constants';
 
-const CARD_WIDTH = 158;
+const CARD_HEIGHT = Layout.window.height / 3.5;
+const CARD_WIDTH = CARD_HEIGHT / 1.5;
 
 interface PlaceScrollViewProps {
   places: Array<Place>;
@@ -19,8 +21,8 @@ export default React.memo(
         scrollEventThrottle={1}
         showsHorizontalScrollIndicator={false}
         style={styles.placeResults}
-        snapToInterval={CARD_WIDTH}
-        contentContainerStyle={styles.endPadding}
+        snapToInterval={CARD_WIDTH + 12}
+        // contentContainerStyle={styles.endPadding}
         onScroll={Animated.event(
           [
             {

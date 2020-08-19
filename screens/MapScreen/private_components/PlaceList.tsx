@@ -9,9 +9,14 @@ import { TouchableWithoutFeedback } from 'react-native-gesture-handler';
 interface PlaceListProps {
   places: Array<Place>;
   onSelect: (place: Place) => void;
+  onLoadMore: () => void;
 }
 
-export default function PlaceList({ places, onSelect }: PlaceListProps) {
+export default function PlaceList({
+  places,
+  onSelect,
+  onLoadMore,
+}: PlaceListProps) {
   const performSelect = (place: Place) => () => {
     onSelect(place);
   };
@@ -39,7 +44,7 @@ export default function PlaceList({ places, onSelect }: PlaceListProps) {
         maxToRenderPerBatch={10}
         windowSize={7}
         checkChangesToUpdate={checkPlaceListChanged}
-        onEndReached={() => console.log('end')}
+        onEndReached={onLoadMore}
       />
     </View>
   );
@@ -64,6 +69,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
+    overflow: 'hidden',
   },
   place: {
     paddingLeft: 12,

@@ -186,28 +186,23 @@ class UserProfilePostList extends Component<UserProfilePostListProps> {
     };
   }
 
-  shouldComponentUpdate(nextProps: UserProfilePostListProps) {
-    const {
-      currentTabIndex,
-      fetchLoading,
-      pullLoading,
-      error,
-    } = this.props;
+  // shouldComponentUpdate(nextProps: UserProfilePostListProps) {
+  //   const { currentTabIndex, fetchLoading, pullLoading, error } = this.props;
 
-    if (currentTabIndex !== nextProps.currentTabIndex) {
-      return true;
-    }
-    if (fetchLoading !== nextProps.fetchLoading) {
-      return true;
-    }
-    if (pullLoading !== nextProps.pullLoading) {
-      return true;
-    }
-    if (error !== nextProps.error) {
-      return true;
-    }
-    return false;
-  }
+  //   if (currentTabIndex !== nextProps.currentTabIndex) {
+  //     return true;
+  //   }
+  //   if (fetchLoading !== nextProps.fetchLoading) {
+  //     return true;
+  //   }
+  //   if (pullLoading !== nextProps.pullLoading) {
+  //     return true;
+  //   }
+  //   if (error !== nextProps.error) {
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
   componentDidMount() {
     this.props.onFetchOwnPosts();

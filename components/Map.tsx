@@ -1,5 +1,7 @@
 import React, { forwardRef } from 'react';
 import MapView, { Marker } from 'react-native-maps';
+import { Place } from '../models';
+import { checkPlaceListChanged } from '../utils/functions';
 
 interface MapProps {
   currentLocation: {
@@ -13,6 +15,7 @@ interface MapProps {
     latDelta: number;
     lngDelta: number;
   };
+  places: Array<Place>;
   ref?: React.RefObject<MapView>;
 
   onRegionChange?: (region: {
@@ -68,8 +71,7 @@ export default React.memo(Map, (prevProps: MapProps, nextProps: MapProps) => {
   ) {
     return false;
   }
-
-  if (prevProps.renderMarkers() !== nextProps.renderMarkers()) {
+  if (checkPlaceListChanged(prevProps.places, nextProps.places)) {
     return false;
   }
 

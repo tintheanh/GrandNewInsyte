@@ -9,6 +9,7 @@ import {
 import Layout from '../constants/Layout';
 
 const CARD_HEIGHT = Layout.window.height / 3.5;
+const CARD_WIDTH = CARD_HEIGHT / 1.5;
 
 interface PlaceCardProps {
   thumbnail: string;
@@ -63,8 +64,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2.22,
 
     elevation: 3,
-    width: 158,
-    // overflow: 'hidden',
+    width: CARD_WIDTH,
     justifyContent: 'space-between',
   },
   touchStyle: {

@@ -5,7 +5,8 @@ const userPostsPerBatch = 10;
 const userResultsPerBatch = 10;
 const userTagResultsPerBatch = 5;
 const placeResultsPerBatch = 10;
-const milesRadius = 2;
+const milesRadius = 5;
+const milesRadiusForCategorySearch = 10;
 
 export * from './firebase';
 export {
@@ -17,4 +18,5 @@ export {
   userTagResultsPerBatch,
   placeResultsPerBatch,
   milesRadius,
+  milesRadiusForCategorySearch,
 };
