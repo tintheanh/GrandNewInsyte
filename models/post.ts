@@ -1,3 +1,5 @@
+import Media from './media';
+
 export default interface Post {
   id: string;
   caption: string;
@@ -5,13 +7,7 @@ export default interface Post {
   timeLabel: string;
   likes: number;
   comments: number;
-  media: Array<{
-    id: string;
-    type: 'image' | 'video';
-    url: string;
-    width: number;
-    height: number;
-  }>;
+  media: Array<Media>;
   user: {
     id: string;
     avatar: string;

@@ -8,6 +8,7 @@ import MapScreen from './MapScreen/MapScreen';
 import UserScreen from './UserScreen/UserScreen';
 import CreatePostScreen from './CreatePostScreen/CreatePostScreen';
 import UserSettingScreen from './UserSettingScreen/UserSettingScreen';
+import PlaceScreen from './PlaceScreen/PlaceScreen';
 
 export {
   HomeScreen,
@@ -20,4 +21,5 @@ export {
   UserScreen,
   CreatePostScreen,
   UserSettingScreen,
+  PlaceScreen,
 };

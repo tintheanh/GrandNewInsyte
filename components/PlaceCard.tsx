@@ -15,16 +15,19 @@ interface PlaceCardProps {
   thumbnail: string;
   name: string;
   distance: number;
+
+  navigateToPlaceScreen: () => void;
 }
 
 export default function PlaceCard({
   thumbnail,
   name,
   distance,
+  navigateToPlaceScreen,
 }: PlaceCardProps) {
   return (
     <View style={styles.card}>
-      <TouchableWithoutFeedback onPress={() => console.log('to place')}>
+      <TouchableWithoutFeedback onPress={navigateToPlaceScreen}>
         <View>
           <Image
             source={

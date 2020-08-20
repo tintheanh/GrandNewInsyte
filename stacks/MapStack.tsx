@@ -1,7 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-
-import { MapScreen } from '../screens';
+import { MapScreen, PlaceScreen } from '../screens';
 import { Colors } from '../constants';
 
 const Stack = createStackNavigator();
@@ -9,16 +8,18 @@ const Stack = createStackNavigator();
 export default function MapStack() {
   return (
     <Stack.Navigator
-      initialRouteName="Map"
+      initialRouteName="MapScreen"
       screenOptions={{
+        title: 'Map',
         headerTintColor: 'white',
         headerStyle: { backgroundColor: Colors.darkColor },
       }}>
       <Stack.Screen
-        name="Map"
+        name="MapScreen"
         component={MapScreen}
         options={{ headerShown: false }}
       />
+      <Stack.Screen name="PlaceScreen" component={PlaceScreen} />
     </Stack.Navigator>
   );
 }

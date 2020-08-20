@@ -1,6 +1,6 @@
 import Post from './post';
 import User from './user';
-import UserResult from './userResult';
+import UserResult from './user_result';
 import Comment from './comment';
 import Reply from './reply';
 import CommentStackLayer from './comment_stack_layer';

@@ -46,6 +46,8 @@ const CATEGORIES = ['bar', 'restaurant'];
 const AnimatedIcon = Animated.createAnimatedComponent(MaterialIcons);
 
 interface MapScreenProps {
+  navigation: any;
+
   /**
    * Surrounding places for places scroll view
    */
@@ -611,6 +613,10 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
     });
   };
 
+  navigateToPlaceScreen = (placeID: string) => () => {
+    this.props.navigation.push('PlaceScreen', { placeID });
+  };
+
   render() {
     const {
       currentLocation,
@@ -686,6 +692,7 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
             ref={this.scrollViewRef}
             places={surroundingPlaces}
             animation={this.animation}
+            navigateToPlaceScreen={this.navigateToPlaceScreen}
           />
         ) : null}
         {currentLocation.type === 'my-location' ? (

@@ -14,10 +14,12 @@ interface PlaceScrollViewProps {
    * Animation value for ScrollView snapping
    */
   animation: Animated.Value;
+
+  navigateToPlaceScreen: (placeID: string) => () => void;
 }
 
 const PlaceScrollView = forwardRef(
-  ({ places, animation }: PlaceScrollViewProps, ref) => {
+  ({ places, animation, navigateToPlaceScreen }: PlaceScrollViewProps, ref) => {
     return (
       <Animated.ScrollView
         ref={ref}
@@ -44,6 +46,7 @@ const PlaceScrollView = forwardRef(
             thumbnail={place.media.length ? place.media[0].url : ''}
             name={place.name}
             distance={place.distance}
+            navigateToPlaceScreen={navigateToPlaceScreen(place.id)}
           />
         ))}
         <View style={{ width: CARD_WIDTH }} />
