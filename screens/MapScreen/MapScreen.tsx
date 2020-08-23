@@ -683,7 +683,10 @@ class MapScreen extends Component<MapScreenProps, MapScreenState> {
           ref={this.mapRef}
           currentLocation={currentLocation}
           zoom={zoom}
-          places={surroundingPlaces}
+          places={surroundingPlaces.map((place) => ({
+            lat: place.location.lat,
+            lng: place.location.lng,
+          }))}
           renderMarkers={this.renderMarkers}
           onRegionChange={this.onRegionChange}
         />

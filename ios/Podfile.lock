@@ -647,8 +647,6 @@ PODS:
     - React
   - RNCPicker (1.6.6):
     - React
-  - RNDeviceInfo (5.6.3):
-    - React
   - RNFBApp (8.2.0):
     - Firebase/CoreOnly (~> 6.27.0)
     - React
@@ -771,7 +769,6 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCMaskedView (from `../node_modules/@react-native-community/masked-view`)"
   - "RNCPicker (from `../node_modules/@react-native-community/picker`)"
-  - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
   - "RNFBDatabase (from `../node_modules/@react-native-firebase/database`)"
@@ -907,8 +904,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/masked-view"
   RNCPicker:
     :path: "../node_modules/@react-native-community/picker"
-  RNDeviceInfo:
-    :path: "../node_modules/react-native-device-info"
   RNFBApp:
     :path: "../node_modules/@react-native-firebase/app"
   RNFBAuth:
@@ -1029,7 +1024,6 @@ SPEC CHECKSUMS:
   ReactCommon: 2905859f84a94a381bb0d8dd3921ccb1a0047cb8
   RNCMaskedView: f5c7d14d6847b7b44853f7acb6284c1da30a3459
   RNCPicker: 494015f2b7ec4bee5484b6f235aa19691426dcdb
-  RNDeviceInfo: c5fa705c8914c42800ff36e86d25d277e8eb16ff
   RNFBApp: 6fd8a7e757135d4168bf033a8812c241af7363a0
   RNFBAuth: 82b94c2f0a851be529a19f5fda2dffb390bfdd7f
   RNFBDatabase: d9824d0305425f6ca344f341e48330a6f5ef3663

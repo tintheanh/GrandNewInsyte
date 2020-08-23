@@ -3,7 +3,7 @@ import { View, ScrollView, StyleSheet, Image } from 'react-native';
 import { Layout, Colors } from '../../../constants';
 
 const WIDTH = Layout.window.width;
-const HEIGHT = WIDTH / 2;
+const HEIGHT = WIDTH / 1.4;
 
 interface PlaceImageCarouselProps {
   items: Array<{
@@ -63,17 +63,18 @@ class PlaceImageCarousel extends Component<
             showsHorizontalScrollIndicator={false}
             decelerationRate="fast">
             {items.map((item) => (
-              <Image
-                key={item.id}
-                source={{ uri: item.url }}
-                defaultSource={require('../../../assets/img-empty.png')}
-                resizeMode="cover"
-                style={styles.image}
-              />
+              <View key={item.id} style={styles.overlay}>
+                <Image
+                  source={{ uri: item.url }}
+                  defaultSource={require('../../../assets/img-empty.png')}
+                  resizeMode="cover"
+                  style={styles.image}
+                />
+              </View>
             ))}
           </ScrollView>
         ) : (
-          <View>
+          <View style={styles.overlay}>
             <Image
               source={{ uri: items[0].url }}
               defaultSource={require('../../../assets/img-empty.png')}
@@ -100,6 +101,13 @@ const styles = StyleSheet.create({
   image: {
     width: WIDTH,
     height: HEIGHT,
+  },
+  overlay: {
+    width: WIDTH,
+    height: HEIGHT,
+    backgroundColor: 'black',
+    opacity: 0.8,
+    zIndex: 100,
   },
 });
 

@@ -1,9 +1,13 @@
 import React, { forwardRef } from 'react';
 import MapView, { Marker } from 'react-native-maps';
-import { Place } from '../models';
-import { checkPlaceListChanged } from '../utils/functions';
+import { Layout } from '../constants';
+
+const { width, height } = Layout.window;
+const LATITUDE_DELTA = 0.0922;
+const LONGITUDE_DELTA = LATITUDE_DELTA * (width / height);
 
 interface MapProps {
+  children?: any;
   /**
    * Current location of the user
    */
@@ -18,16 +22,20 @@ interface MapProps {
   /**
    * Current zoom level when zooming the map
    */
-  zoom: {
+  zoom?: {
     latDelta: number;
     lngDelta: number;
   };
-  places: Array<Place>;
+
+  places?: Array<{
+    lat: number;
+    lng: number;
+  }>;
 
   /**
    * Method render all markers
    */
-  renderMarkers: () => Array<JSX.Element> | null;
+  renderMarkers?: () => Array<JSX.Element> | null;
 
   /**
    * Optional method when the map is moving/zooming
@@ -41,7 +49,19 @@ interface MapProps {
 }
 
 const Map = forwardRef(
-  ({ currentLocation, zoom, onRegionChange, renderMarkers }: MapProps, ref) => {
+  (
+    {
+      children,
+      currentLocation,
+      zoom = {
+        latDelta: LATITUDE_DELTA,
+        lngDelta: LONGITUDE_DELTA,
+      },
+      onRegionChange,
+      renderMarkers,
+    }: MapProps,
+    ref,
+  ) => {
     /**
      * Method render current location's marker
      */
@@ -71,7 +91,8 @@ const Map = forwardRef(
         }}
         onRegionChangeComplete={onRegionChange}>
         {renderCurrentMarker()}
-        {renderMarkers()}
+        {renderMarkers ? renderMarkers() : null}
+        {children}
       </MapView>
     );
   },
@@ -86,14 +107,26 @@ export default React.memo(Map, (prevProps: MapProps, nextProps: MapProps) => {
   ) {
     return false;
   }
-  if (
-    prevProps.zoom.latDelta !== nextProps.zoom.latDelta ||
-    prevProps.zoom.lngDelta !== nextProps.zoom.lngDelta
-  ) {
-    return false;
+  if (prevProps.zoom && nextProps.zoom) {
+    if (
+      prevProps.zoom.latDelta !== nextProps.zoom.latDelta ||
+      prevProps.zoom.lngDelta !== nextProps.zoom.lngDelta
+    ) {
+      return false;
+    }
   }
-  if (checkPlaceListChanged(prevProps.places, nextProps.places)) {
-    return false;
+
+  if (prevProps.places && nextProps.places) {
+    if (prevProps.places.length !== nextProps.places.length) {
+      return false;
+    }
+    for (let i = 0; i < prevProps.places.length; i++) {
+      const place1 = prevProps.places[i];
+      const place2 = nextProps.places[i];
+      if (place1.lat !== place2.lat || place1.lng !== place2.lng) {
+        return false;
+      }
+    }
   }
 
   return true;

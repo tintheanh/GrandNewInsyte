@@ -19,7 +19,11 @@ export default function MapStack() {
         component={MapScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen name="PlaceScreen" component={PlaceScreen} />
+      <Stack.Screen
+        name="PlaceScreen"
+        component={PlaceScreen}
+        options={{ headerShown: false }}
+      />
     </Stack.Navigator>
   );
 }
