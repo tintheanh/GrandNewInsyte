@@ -72,11 +72,8 @@ export default class Directions extends Component<
               1655 Jasmine Way, Morgan Hill, CA 95037
             </Text>
           </View>
-          <Text style={styles.distance}>
-            {kmToMiles(distance).toFixed(1)} mi
-          </Text>
+          <Text style={styles.distance}>{distance.toFixed(1)} mi</Text>
         </View>
-
         <View style={styles.getDirectionsWrapper}>
           <Text style={styles.getDirections}>Get Directions</Text>
           <MaterialCommunityIcons name="directions" color="white" size={20} />
@@ -111,7 +108,7 @@ export default class Directions extends Component<
               optimizeWaypoints={true}
               onReady={(result) => {
                 this.setState({
-                  distance: result.distance,
+                  distance: kmToMiles(result.distance),
                   duration: result.duration,
                 });
                 this.mapRef.current?.fitToCoordinates(result.coordinates, {
