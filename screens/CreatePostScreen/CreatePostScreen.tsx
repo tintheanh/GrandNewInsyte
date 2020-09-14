@@ -26,7 +26,7 @@ import {
   clearButKeepSelected,
   setSelectedUserResults,
   clearAll,
-} from '../../redux/tag/actions';
+} from '../../redux/tag_user/actions';
 import { Colors, tokenForTag } from '../../constants';
 
 interface CreatePostScreenState {

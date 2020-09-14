@@ -22,6 +22,7 @@ export default function MapStack() {
       <Stack.Screen
         name="PlaceScreen"
         component={PlaceScreen}
+        initialParams={{ currentTabScreen: 'placeTabStack' }}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

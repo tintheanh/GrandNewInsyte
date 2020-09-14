@@ -7,7 +7,7 @@ import { UserResult } from '../../../models';
 import {
   fetchMoreTagUserResults,
   fetchNewTagUserResults,
-} from '../../../redux/tag/actions';
+} from '../../../redux/tag_user/actions';
 import { AppState } from '../../../redux/store';
 
 interface CreatePostUserResultListProps {

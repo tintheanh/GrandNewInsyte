@@ -1,1 +1,4 @@
-export type CurrentTabScreen = 'homeTabStack' | 'userTabStack';
+export type CurrentTabScreen =
+  | 'homeTabStack'
+  | 'userTabStack'
+  | 'placeTabStack';

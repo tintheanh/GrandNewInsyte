@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ProfileStackParamList } from '../../../../stacks/ProfileStack';
-import { setCurrentUserListPostIndex } from '../../../../redux/curentViewableItem/actions';
+import { setCurrentUserListPostIndex } from '../../../../redux/curent_viewable_item/actions';
 import {
   fetchOwnPosts,
   pullToFetchOwnPosts,

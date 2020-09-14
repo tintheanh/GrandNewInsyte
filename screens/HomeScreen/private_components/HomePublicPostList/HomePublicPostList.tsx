@@ -12,7 +12,7 @@ import {
   SortPostListHeader,
   FooterLoading,
 } from '../../../../components';
-import { setCurrentHomeListPostIndex } from '../../../../redux/curentViewableItem/actions';
+import { setCurrentHomeListPostIndex } from '../../../../redux/curent_viewable_item/actions';
 import HomePostCardWrapper from '../HomePostCardWrapper';
 import {
   fetchPublicNewPosts,

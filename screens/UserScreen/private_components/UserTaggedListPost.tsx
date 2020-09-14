@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Animated, FlatList } from 'react-native';
 import { connect } from 'react-redux';
 import Layout from '../../../constants/Layout';
-import { setCurrentUserTaggedListPostIndex } from '../../../redux/curentViewableItem/actions';
+import { setCurrentUserTaggedListPostIndex } from '../../../redux/curent_viewable_item/actions';
 import UserTaggedPostCard from './UserTaggedPostCard';
 
 const windowHeight = Layout.window.height;

@@ -11,6 +11,8 @@ import { CurrentTabScreen } from './current_tab_screen';
 import NavigationStack from './navigation_stack';
 import Place from './place';
 import Media from './media';
+import { PlaceCategory } from './place_category';
+import PlaceStackLayer from './place_stack_layer';
 
 export {
   NavigationStack,
@@ -27,4 +29,6 @@ export {
   MyErrorCodes,
   Place,
   Media,
+  PlaceCategory,
+  PlaceStackLayer,
 };

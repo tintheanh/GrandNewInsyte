@@ -1,9 +1,11 @@
 import ReplyStackLayer from './reply_stack_layer';
 import CommentStackLayer from './comment_stack_layer';
 import UserStackLayer from './user_stack_layer';
+import PlaceStackLayer from './place_stack_layer';
 import Reply from './reply';
 import Comment from './comment';
 import Post from './post';
+import Media from './media';
 
 export default class NavigationStack<T> {
   private stack: Array<T>;
@@ -47,13 +49,18 @@ export default class NavigationStack<T> {
     | CommentStackLayer
     | ReplyStackLayer
     | UserStackLayer
+    | PlaceStackLayer
     | null => {
-    if (this.stack.length === 0) {
+    if (this.isEmpty()) {
       return null;
     }
 
     const top = this.stack[this.stack.length - 1] as any;
-    let topClone: CommentStackLayer | ReplyStackLayer | UserStackLayer;
+    let topClone:
+      | CommentStackLayer
+      | ReplyStackLayer
+      | UserStackLayer
+      | PlaceStackLayer;
     if ('postID' in top) {
       const fetchErrorClone = top.errors.fetchError
         ? new Error(top.errors.fetchError.message)
@@ -150,6 +157,30 @@ export default class NavigationStack<T> {
         currentViewableIndex: top.currentViewableIndex,
         posts: top.posts.map((post: Post) => ({ ...post })),
       };
+    } else if ('placeID' in top) {
+      const errorClone = top.error ? new Error(top.error.message) : null;
+      topClone = {
+        placeID: top.placeID,
+        username: top.username,
+        name: top.name,
+        avatar: top.avatar,
+        bio: top.bio,
+        category: top.category,
+        tags: [...top.tags],
+        openTime: [...top.openTime],
+        isOpen: top.isOpen,
+        error: errorClone,
+        loading: top.loading,
+        address: top.address,
+        location: {
+          lat: top.location.lat,
+          lng: top.location.lng,
+        },
+        media: top.media.map((m: Media) => ({ ...m })),
+        lastVisible: top.lastVisible,
+        currentViewableIndex: top.currentViewableIndex,
+        posts: top.posts.map((post: Post) => ({ ...post })),
+      };
     } else {
       throw new Error('Invalid arguments.');
     }
@@ -181,10 +212,10 @@ export default class NavigationStack<T> {
    */
   private toArray = () => this.stack;
 
-  /**
-   * Generic method clone a stack
-   * @param stackToClone
-   */
+  // /**
+  //  * Generic method clone a stack
+  //  * @param stackToClone
+  //  */
   // static clone = (stackToClone: NavigationStack<any>) => {
   //   if (stackToClone.isEmpty()) {
   //     return stackToClone;
