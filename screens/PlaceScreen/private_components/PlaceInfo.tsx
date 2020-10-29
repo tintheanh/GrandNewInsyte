@@ -6,7 +6,7 @@ import PlaceImageCarousel from './PlaceImageCarousel';
 import BackBtn from './BackBtn';
 import Directions from './Directions';
 import PlaceTag from './PlaceTag';
-import { BigAvatar } from '../../../components';
+import { BigAvatar, UserStats, UserInfo } from '../../../components';
 import { isIPhoneX, Layout, Colors, Feather, Entypo } from '../../../constants';
 
 const WIDTH = Layout.window.width;
@@ -17,14 +17,14 @@ const IMAGES: any[] = [];
 for (let i = 0; i < 10; i++) {
   IMAGES.push({
     id: faker.random.uuid(),
-    url: faker.image.nightlife(),
+    url: 'https://content3.jdmagicbox.com/comp/kolkata/p8/033pxx33.xx33.140704150425.m2p8/catalogue/chinese-cafe-isi-kolkata-home-delivery-restaurants-nqpfmafdql.jpg',
     width: 640,
     height: 480,
   });
 }
 
 const place = {
-  avatar: faker.image.food(),
+  avatar: 'https://content3.jdmagicbox.com/comp/kolkata/p8/033pxx33.xx33.140704150425.m2p8/catalogue/chinese-cafe-isi-kolkata-home-delivery-restaurants-nqpfmafdql.jpg',
   media: IMAGES,
   tags: ['bar', 'night club', 'snacks', 'drinks'],
   isOpen: true,
@@ -135,7 +135,7 @@ export default class PlaceInfo extends Component<any> {
   render() {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.darkColor }}>
-        <View style={styles.imagesAndName}>
+        {/* <View style={styles.imagesAndName}>
           <PlaceImageCarousel items={place.media} />
           <View style={styles.backBtnWrapper}>
             <BackBtn goBack={this.goBack} />
@@ -153,6 +153,28 @@ export default class PlaceInfo extends Component<any> {
               </Text>
             </View>
           </TouchableWithoutFeedback>
+        </View> */}
+
+        <View style={styles.header}>
+          <View style={styles.avatarAndStats}>
+            <BigAvatar avatar={place.avatar} />
+
+            <View style={styles.statWrapper}>
+              <UserStats postNum={21} followersNum={102} followingNum={8} />
+              <TouchableWithoutFeedback>
+                <View
+                  style={[
+                    styles.followBtn,
+                    {
+                      backgroundColor: Colors.brightColor,
+                    },
+                  ]}>
+                  <Text style={styles.followBtnLabel}>Follow</Text>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </View>
+          <UserInfo name="Leblanc Cafe" bio="Lorem Ipsums" />
         </View>
 
         <View style={{ margin: 12 }}>
@@ -242,5 +264,38 @@ const styles = StyleSheet.create({
   divider: {
     borderBottomColor: Colors.brightColor,
     borderBottomWidth: 12,
+  },
+  header: {
+    width: '100%',
+    padding: 12,
+    backgroundColor: Colors.darkColor,
+  },
+  avatarAndStats: {
+    width: '100%',
+    flexDirection: 'row',
+  },
+  statWrapper: {
+    flexShrink: 1,
+    alignItems: 'center',
+  },
+  followBtn: {
+    width: '80%',
+    paddingTop: 4,
+    paddingBottom: 4,
+    borderRadius: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+  },
+  followBtnLabel: {
+    textAlign: 'center',
+    color: 'white',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
 });

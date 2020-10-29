@@ -1,3 +1,4 @@
+import faker from 'faker';
 import { PlaceAction, DispatchTypes } from './types';
 import { geofirestore, GeoPoint, fsDB } from '../../config';
 import { Place, Media } from '../../models';
@@ -28,7 +29,8 @@ export const searchPlacesAround = (
       })
       .get();
 
-    const places = documentSnapshots.docs.map((doc) => {
+    const places = documentSnapshots.docs.map((doc, i: number) => {
+      console.log(i);
       const data = doc.data();
       const location = {
         lat: data.coordinates.latitude as number,
@@ -36,11 +38,20 @@ export const searchPlacesAround = (
       };
       return {
         id: doc.id,
-        avatar: data.avatar as string,
+        avatar: faker.image.food(),
         name: data.name as string,
         bio: data.bio as string,
         category: data.category as string,
-        media: data.media as Array<Media>,
+        media: [
+          {
+            id: '1',
+            type: 'image',
+            url:
+              i % 2 === 0
+                ? 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?ixlib=rb-1.2.1&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=1080&fit=max&ixid=eyJhcHBfaWQiOjEyMDd9'
+                : 'https://content3.jdmagicbox.com/comp/kolkata/p8/033pxx33.xx33.140704150425.m2p8/catalogue/chinese-cafe-isi-kolkata-home-delivery-restaurants-nqpfmafdql.jpg',
+          },
+        ],
         location,
         distance:
           currentLocation.type === 'my-location'

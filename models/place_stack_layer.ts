@@ -1,27 +1,17 @@
-import Post from './post';
-import Media from './media';
-import { PlaceCategory } from './place_category';
 import { FirebaseFirestoreTypes } from '../config';
+import Place from './place';
 
 export default interface PlaceStackLayer {
   placeID: string;
-  username: string;
-  name: string;
-  avatar: string;
-  bio: string;
-  category: PlaceCategory;
-  tags: Array<String>;
-  openTime: Array<String>;
-  isOpen: boolean;
-  error: Error | null;
-  loading: boolean;
-  address: string;
-  location: {
-    lat: number;
-    lng: number;
+  placeData: Place;
+  errors: {
+    fetchError: Error | null;
+    followError: Error | null;
+    unfollowError: Error | null;
   };
-  media: Array<Media>;
-  lastVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
-  currentViewableIndex: number;
-  posts: Array<Post>;
+  loading: boolean;
+  lastOwnPostVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
+  lastCheckinPostVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
+  currentViewableOwnPostIndex: number;
+  currentViewableCheckinPostIndex: number;
 }

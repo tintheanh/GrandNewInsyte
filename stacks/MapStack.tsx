@@ -23,7 +23,7 @@ export default function MapStack() {
         name="PlaceScreen"
         component={PlaceScreen}
         initialParams={{ currentTabScreen: 'placeTabStack' }}
-        options={{ headerShown: false }}
+        options={{ title: 'Leblance Cafe' }}
       />
     </Stack.Navigator>
   );

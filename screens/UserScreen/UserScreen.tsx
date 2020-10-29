@@ -335,7 +335,6 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
         <View style={styles.header}>
           <View style={styles.avatarAndStats}>
             <BigAvatar avatar={avatar} />
-
             {loading && posts.length === 0 ? (
               <View style={styles.statWrapper}>
                 <UserStats postNum={0} followersNum={0} followingNum={0} />

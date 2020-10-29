@@ -8,6 +8,7 @@ import {
   Animated,
   TouchableOpacity,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { Loading, Map, CARD_WIDTH } from '../../components';

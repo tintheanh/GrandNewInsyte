@@ -1,8 +1,39 @@
+import faker from 'faker';
 import { DispatchTypes, PlaceStackAction } from './types';
 import { AppState } from '../store';
 import { fsDB, placePostsPerBatch, FirebaseFirestoreTypes } from '../../config';
 import { FSdocsToPostArray } from '../../utils/functions';
-import { Post, CurrentTabScreen, MyError, MyErrorCodes } from '../../models';
+import {
+  Post,
+  CurrentTabScreen,
+  MyError,
+  MyErrorCodes,
+  PlaceCategory,
+} from '../../models';
+
+const POSTS: any[] = [];
+
+for (let i = 0; i < 20; i++) {
+  POSTS.push({
+    id: '3ac68afc' + i,
+    user: {
+      username: faker.internet.userName(),
+      avatar: faker.image.avatar(),
+    },
+    datePosted: parseInt((faker.date.past().getTime() / 1000).toFixed(0)),
+    caption: faker.lorem.sentence(),
+    privacy: 'friends',
+    likes: parseInt(faker.random.number().toFixed(0)),
+    comments: parseInt(faker.random.number().toFixed(0)),
+    media: [
+      {
+        id: '1',
+        uri: faker.image.image(),
+        type: 'image',
+      },
+    ],
+  });
+}
 
 /* --------------------- ultilities --------------------- */
 
@@ -10,9 +41,8 @@ import { Post, CurrentTabScreen, MyError, MyErrorCodes } from '../../models';
  * Method push new place layer before navigating to a new place screen
  * @param newPlaceLayer New user layer to push
  */
-export const pushUserLayer = (newPlaceLayer: {
+export const pushPlaceLayer = (newPlaceLayer: {
   placeID: string;
-  username: string;
   name: string;
   avatar: string;
 }) => (dispatch: (action: PlaceStackAction) => void) => {
@@ -23,14 +53,27 @@ export const pushUserLayer = (newPlaceLayer: {
 };
 
 /**
- * Method set current viewable index of the card when list scrolling
+ * Method set current viewable index of the card when own post list scrolling
  * @param index Current index that's being scrolled
  */
-export const setCurrentViewableListIndex = (index: number) => (
+export const setCurrentViewableOwnPostListIndex = (index: number) => (
   dispatch: (action: PlaceStackAction) => void,
 ) => {
   dispatch({
-    type: DispatchTypes.SET_CURRENT_VIEWABLE_POST_INDEX,
+    type: DispatchTypes.SET_CURRENT_VIEWABLE_OWNPOST_INDEX,
+    payload: index,
+  });
+};
+
+/**
+ * Method set current viewable index of the card when checkin post list scrolling
+ * @param index Current index that's being scrolled
+ */
+export const setCurrentViewableCheckinPostListIndex = (index: number) => (
+  dispatch: (action: PlaceStackAction) => void,
+) => {
+  dispatch({
+    type: DispatchTypes.SET_CURRENT_VIEWABLE_CHECKINPOST_INDEX,
     payload: index,
   });
 };
@@ -119,37 +162,43 @@ export const fetchPlace = (placeID: string) => async (
       name: placeData!.name,
       bio: placeData!.bio,
       category: placeData!.category,
-      media: placeData!.media,
       address: placeData!.address,
       openTime: placeData!.openTime,
+      isFollowed: false,
+      followers: 111,
+      following: 22,
+      totalPosts: 19,
       isOpen: true,
+      distance: 12,
       location: {
         lat: placeData!.coordinates.latitude as number,
         lng: placeData!.coordinates.longitude as number,
       },
-      lastVisible: null as FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
-      posts: [] as Array<Post>,
+      lastOwnPostVisible: null as FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
+      lastCheckinPostVisible: null as FirebaseFirestoreTypes.QueryDocumentSnapshot | null,
+      ownPosts: POSTS,
+      checkinPosts: [],
     };
 
-    // fetch place's posts
-    const documentSnapshots = await fsDB
-      .collection('posts')
-      .where('posted_by', '==', placeID)
-      .get();
+    // // fetch place's posts
+    // const documentSnapshots = await fsDB
+    //   .collection('posts')
+    //   .where('posted_by', '==', placeID)
+    //   .get();
 
-    if (documentSnapshots.empty) {
-      return dispatch(fetchPlaceSuccess(completePostLayer));
-    }
+    // if (documentSnapshots.empty) {
+    //   return dispatch(fetchPlaceSuccess(completePostLayer));
+    // }
 
-    const posts = await FSdocsToPostArray(documentSnapshots.docs);
+    // const posts = await FSdocsToPostArray(documentSnapshots.docs);
 
-    if (posts.length === 0) {
-      return dispatch(fetchPlaceSuccess(completePostLayer));
-    }
+    // if (posts.length === 0) {
+    //   return dispatch(fetchPlaceSuccess(completePostLayer));
+    // }
 
-    completePostLayer.posts = posts;
-    completePostLayer.lastVisible =
-      documentSnapshots.docs[documentSnapshots.docs.length - 1];
+    // completePostLayer.posts = posts;
+    // completePostLayer.lastVisible =
+    //   documentSnapshots.docs[documentSnapshots.docs.length - 1];
     dispatch(fetchPlaceSuccess(completePostLayer));
   } catch (err) {
     switch (err.code) {
@@ -170,7 +219,28 @@ const fetchPlaceStarted = (): PlaceStackAction => ({
   payload: null,
 });
 
-const fetchPlaceSuccess = (fetchedPlace: any): PlaceStackAction => ({
+const fetchPlaceSuccess = (fetchedPlace: {
+  avatar: string;
+  name: string;
+  bio: string;
+  category: PlaceCategory;
+  address: string;
+  openTime: Array<string>;
+  followers: number;
+  following: number;
+  totalPosts: number;
+  isFollowed: boolean;
+  isOpen: boolean;
+  distance: number;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  lastOwnPostVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
+  lastCheckinPostVisible: FirebaseFirestoreTypes.QueryDocumentSnapshot | null;
+  ownPosts: Array<Post>;
+  checkinPosts: Array<Post>;
+}): PlaceStackAction => ({
   type: DispatchTypes.FETCH_PLACE_SUCCESS,
   payload: fetchedPlace,
 });

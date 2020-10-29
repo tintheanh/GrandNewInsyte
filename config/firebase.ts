@@ -128,6 +128,18 @@ const locations = [
   },
 ];
 
+//   const name = faker.company.companyName();
+//   const avatar = faker.image.business();
+//   geofirestore.collection('places').add({
+//     name,
+//     bio: faker.lorem.sentence(),
+//     category,
+//     avatar,
+//     media: [],
+//     for_search: generateSubstringForUsername(name.toLowerCase()),
+//     coordinates: new firestore.GeoPoint(location.lat, location.lng),
+//   });
+
 // for (let i = 0; i < locations.length; i++) {
 //   const location = locations[i];
 //   let category = '';

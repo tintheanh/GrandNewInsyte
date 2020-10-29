@@ -14,7 +14,7 @@ const initialState: UserStackState = {
   currentLoadingInTab: '',
 };
 
-export default function commentsStackReducer(
+export default function userStackReducer(
   state = initialState,
   action: UserStackAction,
 ): UserStackState {

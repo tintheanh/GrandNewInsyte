@@ -69,7 +69,7 @@ export default class Directions extends Component<
               </Text>
             </View>
             <Text style={styles.address}>
-              1655 Jasmine Way, Morgan Hill, CA 95037
+              420 1st Street, San Jose, CA 95112
             </Text>
           </View>
           <Text style={styles.distance}>{distance.toFixed(1)} mi</Text>

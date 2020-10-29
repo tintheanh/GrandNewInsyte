@@ -158,29 +158,29 @@ export default class NavigationStack<T> {
         posts: top.posts.map((post: Post) => ({ ...post })),
       };
     } else if ('placeID' in top) {
-      const errorClone = top.error ? new Error(top.error.message) : null;
+      const fetchErrorClone = top.errors.fetchError
+        ? new Error(top.errors.fetchError.message)
+        : null;
+      const followErrorClone = top.errors.followError
+        ? new Error(top.errors.followError.message)
+        : null;
+      const unfollowErrorClone = top.errors.unfollow
+        ? new Error(top.errors.unfollow.message)
+        : null;
       topClone = {
         placeID: top.placeID,
-        username: top.username,
-        name: top.name,
-        avatar: top.avatar,
-        bio: top.bio,
-        category: top.category,
-        tags: [...top.tags],
-        openTime: [...top.openTime],
-        isOpen: top.isOpen,
-        error: errorClone,
-        loading: top.loading,
-        address: top.address,
-        location: {
-          lat: top.location.lat,
-          lng: top.location.lng,
+        placeData: { ...top.placeData },
+        errors: {
+          fetchError: fetchErrorClone,
+          followError: followErrorClone,
+          unfollowError: unfollowErrorClone,
         },
-        media: top.media.map((m: Media) => ({ ...m })),
-        lastVisible: top.lastVisible,
-        currentViewableIndex: top.currentViewableIndex,
-        posts: top.posts.map((post: Post) => ({ ...post })),
-      };
+        loading: top.loading,
+        lastOwnPostVisible: top.lastOwnPostVisible,
+        lastCheckinPostVisible: top.lastCheckinPostVisible,
+        currentViewableOwnPostIndex: top.currentViewableOwnPostIndex,
+        currentViewableCheckinPostIndex: top.currentViewableCheckinPostIndex,
+      } as PlaceStackLayer;
     } else {
       throw new Error('Invalid arguments.');
     }
@@ -206,143 +206,4 @@ export default class NavigationStack<T> {
    * Method get current size of the stack
    */
   size = () => this.stack.length;
-
-  /**
-   * Helper method get the real array stack
-   */
-  private toArray = () => this.stack;
-
-  // /**
-  //  * Generic method clone a stack
-  //  * @param stackToClone
-  //  */
-  // static clone = (stackToClone: NavigationStack<any>) => {
-  //   if (stackToClone.isEmpty()) {
-  //     return stackToClone;
-  //   }
-
-  //   const layer = stackToClone.top() as
-  //     | CommentStackLayer
-  //     | ReplyStackLayer
-  //     | UserStackLayer;
-
-  //   let newStack = null;
-  //   if ('postID' in layer) {
-  //     newStack = new NavigationStack<CommentStackLayer>();
-  //   } else if ('commentID' in layer) {
-  //     newStack = new NavigationStack<ReplyStackLayer>();
-  //   } else if ('userID' in layer) {
-  //     newStack = new NavigationStack<UserStackLayer>();
-  //   } else {
-  //     throw new Error('Invalid arguments.');
-  //   }
-
-  //   const array = stackToClone.toArray();
-
-  //   for (const oneLayer of array) {
-  //     let layerClone: any = null;
-
-  //     if ('postID' in oneLayer) {
-  //       const fetchErrorClone = oneLayer.errors.fetchError
-  //         ? new Error(oneLayer.errors.fetchError.message)
-  //         : null;
-  //       const createCommentErrorClone = oneLayer.errors.createCommentError
-  //         ? new Error(oneLayer.errors.createCommentError.message)
-  //         : null;
-  //       const likeCommentErrorClone = oneLayer.errors.likeCommentError
-  //         ? new Error(oneLayer.errors.likeCommentError.message)
-  //         : null;
-  //       const unlikeCommentErrorClone = oneLayer.errors.unlikeCommentError
-  //         ? new Error(oneLayer.errors.unlikeCommentError.message)
-  //         : null;
-  //       const deleteCommentErrorClone = oneLayer.errors.deleteCommentError
-  //         ? new Error(oneLayer.errors.deleteCommentError.message)
-  //         : null;
-  //       layerClone = {
-  //         postID: oneLayer.postID,
-  //         errors: {
-  //           fetchError: fetchErrorClone,
-  //           createCommentError: createCommentErrorClone,
-  //           likeCommentError: likeCommentErrorClone,
-  //           unlikeCommentError: unlikeCommentErrorClone,
-  //           deleteCommentError: deleteCommentErrorClone,
-  //         },
-  //         loadings: {
-  //           fetchLoading: oneLayer.loadings.fetchLoading,
-  //           createCommentLoading: oneLayer.loadings.createCommentLoading,
-  //         },
-  //         lastVisible: oneLayer.lastVisible,
-  //         comments: oneLayer.comments.map((comment: Comment) => ({
-  //           ...comment,
-  //         })),
-  //       };
-  //     } else if ('commentID' in oneLayer) {
-  //       const fetchErrorClone = oneLayer.errors.fetchError
-  //         ? new Error(oneLayer.errors.fetchError.message)
-  //         : null;
-  //       const createReplyErrorClone = oneLayer.errors.createReplyError
-  //         ? new Error(oneLayer.errors.createReplyError.message)
-  //         : null;
-  //       const likeReplyErrorClone = oneLayer.errors.likeReplyError
-  //         ? new Error(oneLayer.errors.likeReplyError.message)
-  //         : null;
-  //       const unlikeReplyErrorClone = oneLayer.errors.unlikeReplyError
-  //         ? new Error(oneLayer.errors.unlikeReplyError.message)
-  //         : null;
-  //       const deleteReplyErrorClone = oneLayer.errors.deleteReplyError
-  //         ? new Error(oneLayer.errors.deleteReplyError.message)
-  //         : null;
-  //       layerClone = {
-  //         commentID: oneLayer.commentID,
-  //         lastVisible: oneLayer.lastVisible,
-  //         errors: {
-  //           fetchError: fetchErrorClone,
-  //           createReplyError: createReplyErrorClone,
-  //           likeReplyError: likeReplyErrorClone,
-  //           unlikeReplyError: unlikeReplyErrorClone,
-  //           deleteReplyError: deleteReplyErrorClone,
-  //         },
-  //         loadings: {
-  //           fetchLoading: oneLayer.loadings.fetchLoading,
-  //           createReplyLoading: oneLayer.loadings.createReplyLoading,
-  //         },
-  //         replies: oneLayer.replies.map((reply: Reply) => ({ ...reply })),
-  //       };
-  //     } else {
-  //       const fetchErrorClone = oneLayer.errors.fetchError
-  //         ? new Error(oneLayer.errors.fetchError.message)
-  //         : null;
-  //       const followErrorClone = oneLayer.errors.followError
-  //         ? new Error(oneLayer.errors.followError.message)
-  //         : null;
-  //       const unfollowErrorClone = oneLayer.errors.unfollow
-  //         ? new Error(oneLayer.errors.unfollow.message)
-  //         : null;
-  //       layerClone = {
-  //         userID: oneLayer.userID,
-  //         username: oneLayer.username,
-  //         name: oneLayer.name,
-  //         avatar: oneLayer.avatar,
-  //         bio: oneLayer.bio,
-  //         following: oneLayer.following,
-  //         followers: oneLayer.followers,
-  //         totalPosts: oneLayer.totalPosts,
-  //         isFollowed: oneLayer.isFollowed,
-  //         errors: {
-  //           fetchError: fetchErrorClone,
-  //           followError: followErrorClone,
-  //           unfollowError: unfollowErrorClone,
-  //         },
-  //         loading: oneLayer.loading,
-  //         lastVisible: oneLayer.lastVisible,
-  //         currentViewableIndex: oneLayer.currentViewableIndex,
-  //         posts: oneLayer.posts,
-  //       };
-  //     }
-
-  //     newStack.push(layerClone);
-  //   }
-
-  //   return newStack;
-  // };
 }

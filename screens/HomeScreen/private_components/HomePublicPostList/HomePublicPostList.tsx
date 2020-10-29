@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
+import faker from 'faker';
 import { View, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -28,7 +29,7 @@ import {
 import { decreaseTotalPostsByOne } from '../../../../redux/auth/actions';
 import { pushCommentLayer } from '../../../../redux/comment_stack/actions';
 import { pushUserLayer } from '../../../../redux/user_stack/actions';
-import { checkPostListChanged } from '../../../../utils/functions';
+import { checkPostListChanged, convertTime } from '../../../../utils/functions';
 import { AppState } from '../../../../redux/store';
 import {
   Colors,
@@ -38,6 +39,36 @@ import {
   oneYear,
 } from '../../../../constants';
 import { Post } from '../../../../models';
+
+const POSTS = [];
+for (let i = 0; i < 20; i++) {
+  const date = faker.date.between('2020-10-08', '2020-10-11').getTime();
+  POSTS.push({
+    id: `${i}`,
+    caption: faker.lorem.sentence(),
+    datePosted: date,
+    timeLabel: convertTime(date),
+    likes: faker.random.number(100),
+    comments: faker.random.number(100),
+    media: [
+      {
+        id: '169',
+        url: 'https://www.thebalancesmb.com/thmb/21M3XWPlH8QML9kbou1VhSx_C2M=/1920x1280/filters:fill(auto,1)/restaurant-1284351_1920-581279e25f9b58564c10d1ac.jpg',
+        type: 'image',
+        width: 640,
+        height: 480,
+      },
+    ],
+    user: {
+      id: `${i}`,
+      avatar: faker.image.avatar(),
+      username: faker.internet.userName(),
+    },
+    taggedUsers: [],
+    isLiked: false,
+    privacy: 'public',
+  });
+}
 
 type HomeScreenNavigationProp = StackNavigationProp<
   HomeStackParamList,
@@ -563,7 +594,7 @@ const mapStateToProps = (state: AppState) => {
     pullLoading: state.allPosts.public.pullLoading,
     fetchLoading: state.allPosts.public.fetchLoading,
     error: state.allPosts.public.error,
-    posts: state.allPosts.public.posts,
+    posts: POSTS,
     feedChoice: state.allPosts.public.feedChoice,
     hotTime: state.allPosts.public.hotTime,
   };

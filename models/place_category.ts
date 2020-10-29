@@ -1,1 +1,1 @@
-export type PlaceCategory = 'bar';
+export type PlaceCategory = 'bar' | '';

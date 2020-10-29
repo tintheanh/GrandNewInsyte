@@ -5,7 +5,7 @@ import authReducer from './auth/reducer';
 import tagReducer from './tag_user/reducer';
 import commentStackReducer from './comment_stack/reducer';
 import replyStackReducer from './reply_stack/reducer';
-import usersStackReducer from './user_stack/reducer';
+import userStackReducer from './user_stack/reducer';
 import searchUserReducer from './search_user/reducer';
 import currentViewableItemReducer from './curent_viewable_item/reducer';
 import placeReducer from './places/reducer';
@@ -26,7 +26,7 @@ const rootReducer = combineReducers({
   tag: tagReducer,
   commentStack: commentStackReducer,
   replyStack: replyStackReducer,
-  userStack: usersStackReducer,
+  userStack: userStackReducer,
   searchUser: searchUserReducer,
   allPlaces: placeReducer,
 });

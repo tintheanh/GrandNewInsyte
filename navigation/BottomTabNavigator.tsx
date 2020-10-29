@@ -29,6 +29,7 @@ import TabBarIcon from '../components/TabBarIcon';
 import HomeStack from '../stacks/HomeStack';
 import AuthScreen from '../screens/AuthScreen';
 import MapStack from '../stacks/MapStack';
+import NotifStack from '../stacks/NotifStack';
 import { Colors } from '../constants';
 import { CurrentTabScreen } from '../models';
 
@@ -158,7 +159,7 @@ class BottomTabNavigator extends Component<any> {
         {this.props.user ? (
           <BottomTab.Screen
             name="Notif"
-            component={this.empty}
+            component={NotifStack}
             options={{
               tabBarIcon: ({ focused }) => (
                 <TabBarIcon

@@ -24,6 +24,7 @@ import PasswordTextBox from './PasswordTextBox';
 import BigButton from './BigButton';
 import SortPostListHeader from './SortPostListHeader';
 import Map from './Map';
+import Notification from './Notification';
 
 export {
   TextBox,
@@ -54,4 +55,5 @@ export {
   UserInfo,
   BigButton,
   Map,
+  Notification,
 };

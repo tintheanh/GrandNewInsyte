@@ -9,6 +9,7 @@ import UserScreen from './UserScreen/UserScreen';
 import CreatePostScreen from './CreatePostScreen/CreatePostScreen';
 import UserSettingScreen from './UserSettingScreen/UserSettingScreen';
 import PlaceScreen from './PlaceScreen/PlaceScreen';
+import NotifScreen from './NotifScreen/NotifScreen';
 
 export {
   HomeScreen,
@@ -22,4 +23,5 @@ export {
   CreatePostScreen,
   UserSettingScreen,
   PlaceScreen,
+  NotifScreen,
 };
