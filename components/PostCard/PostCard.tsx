@@ -63,6 +63,8 @@ interface PostCardProps {
    */
   userPostControl?: () => void;
 
+  guessControl: () => void;
+
   /**
    * Optional method navigate to user screen
    * when pressing username or avatar
@@ -132,6 +134,7 @@ export default class PostCard extends Component<PostCardProps> {
       isTabFocused = true,
       shouldPlayMedia,
       userPostControl,
+      guessControl,
       performLikePost,
       performUnlikePost,
       navigateWhenPressOnPostOrComment,
@@ -207,7 +210,16 @@ export default class PostCard extends Component<PostCardProps> {
                 style={{ marginTop: -5 }}
               />
             </TouchableWithoutFeedback>
-          ) : null}
+          ) : (
+            <TouchableWithoutFeedback onPress={guessControl}>
+              <MaterialCommunityIcons
+                name="dots-horizontal"
+                size={20}
+                color="rgba(255,255,255, 0.6)"
+                style={{ marginTop: -5 }}
+              />
+            </TouchableWithoutFeedback>
+          )}
         </View>
         <Caption
           caption={data.caption}

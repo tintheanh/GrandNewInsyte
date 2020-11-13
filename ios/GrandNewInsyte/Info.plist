@@ -38,13 +38,13 @@
 		</dict>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>Please allow application to access camera</string>
+	<string>Please allow application to access camera for taking pictures/videos through Insyte</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Please allow application to access location while using</string>
+	<string>Please allow application to access location while using for to accurate showing what businesses are around you</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Please allow application to access microphone</string>
+	<string>Please allow application to access microphone for recording sounds for videos recorded through Insyte</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Please allow application to access media library</string>
+	<string>Please allow application to access media library for posting pictures/videos</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>AntDesign.ttf</string>

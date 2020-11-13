@@ -53,7 +53,8 @@ for (let i = 0; i < 20; i++) {
     media: [
       {
         id: '169',
-        url: 'https://www.thebalancesmb.com/thmb/21M3XWPlH8QML9kbou1VhSx_C2M=/1920x1280/filters:fill(auto,1)/restaurant-1284351_1920-581279e25f9b58564c10d1ac.jpg',
+        url:
+          'https://www.thebalancesmb.com/thmb/21M3XWPlH8QML9kbou1VhSx_C2M=/1920x1280/filters:fill(auto,1)/restaurant-1284351_1920-581279e25f9b58564c10d1ac.jpg',
         type: 'image',
         width: 640,
         height: 480,
@@ -469,6 +470,28 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
     this.props.onUnlikePost(postID);
   };
 
+  guessControl = () => {
+    Alert.alert(
+      'This post contains offended content?',
+      '',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Report this post',
+          onPress: () => {
+            Alert.alert('Reported!', '', [{ text: 'OK' }], {
+              cancelable: false,
+            });
+          },
+        },
+      ],
+      { cancelable: true },
+    );
+  };
+
   /**
    * Method render list item
    * @param item
@@ -493,6 +516,7 @@ class HomePublicPostList extends Component<HomePublicPostListProps> {
         userPostControl={
           currentUID === item.user.id ? this.userControl(item.id) : undefined
         }
+        guessControl={this.guessControl}
         navigateWhenPressOnTag={this.navigateWhenPressOnTag}
       />
     );

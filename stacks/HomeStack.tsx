@@ -1,6 +1,7 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { connect } from 'react-redux';
+import { TouchableWithoutFeedback, Alert } from 'react-native';
 import {
   HomeScreen,
   PostScreen,
@@ -8,7 +9,7 @@ import {
   UserScreen,
   ProfileScreen,
 } from '../screens';
-import { Colors } from '../constants';
+import { Colors, MaterialIcons } from '../constants';
 import SearchBar from '../screens/HomeScreen/private_components/SearchBar';
 import { popCommentLayer } from '../redux/comment_stack/actions';
 import { Post, CurrentTabScreen } from '../models';
@@ -99,6 +100,45 @@ export default connect(
         options={({ route }) => ({
           title: route.params.user.username,
           headerBackTitle: '',
+          headerRight: () => (
+            <TouchableWithoutFeedback
+              onPress={() => {
+                Alert.alert(
+                  'This user contains offended content?',
+                  '',
+                  [
+                    {
+                      text: 'Cancel',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'Block this user',
+                      onPress: () => {
+                        Alert.alert('Block!', '', [{ text: 'OK' }], {
+                          cancelable: false,
+                        });
+                      },
+                    },
+                    {
+                      text: 'Report this user',
+                      onPress: () => {
+                        Alert.alert('Reported!', '', [{ text: 'OK' }], {
+                          cancelable: false,
+                        });
+                      },
+                    },
+                  ],
+                  { cancelable: true },
+                );
+              }}>
+              <MaterialIcons
+                name="report"
+                size={20}
+                color="white"
+                style={{ marginRight: 14 }}
+              />
+            </TouchableWithoutFeedback>
+          ),
         })}
       />
       <Stack.Screen

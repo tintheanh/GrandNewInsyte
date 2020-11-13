@@ -56,6 +56,8 @@ interface HomePostCardWrapperProps {
    */
   userPostControl?: () => void;
 
+  guessControl: () => void;
+
   /**
    * Optional method navigate to user screen
    * when pressing username or avatar
