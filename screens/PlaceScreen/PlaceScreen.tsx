@@ -66,7 +66,7 @@ export default class PlaceScreen extends Component<any> {
       <View style={styles.container}>
         <StatusBar barStyle="light-content" translucent={true} />
         <List
-          data={POSTS}
+          data={[]}
           renderItem={this.renderItem}
           listEmptyComponent={this.renderEmptyComponent()}
           listHeaderComponent={this.renderHeaderComponent()}

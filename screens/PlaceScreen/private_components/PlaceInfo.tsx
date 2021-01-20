@@ -159,7 +159,7 @@ export default class PlaceInfo extends Component<any> {
           <View style={styles.avatarAndStats}>
             <BigAvatar avatar={place.avatar} />
 
-            <View style={styles.statWrapper}>
+            {/* <View style={styles.statWrapper}>
               <UserStats postNum={21} followersNum={102} followingNum={8} />
               <TouchableWithoutFeedback>
                 <View
@@ -172,7 +172,7 @@ export default class PlaceInfo extends Component<any> {
                   <Text style={styles.followBtnLabel}>Follow</Text>
                 </View>
               </TouchableWithoutFeedback>
-            </View>
+            </View> */}
           </View>
           <UserInfo name="Leblanc Cafe" bio="Lorem Ipsums" />
         </View>
@@ -184,14 +184,14 @@ export default class PlaceInfo extends Component<any> {
         </View>
         <View style={styles.divider} />
 
-        <View>
+        {/* <View>
           <Directions
             origin={{ lat: 37.771707, lng: -122.4053769 }}
             destination={place.location}
             width={WIDTH}
             height={200}
           />
-        </View>
+        </View> */}
 
         <View style={{ margin: 12 }}>
           <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>

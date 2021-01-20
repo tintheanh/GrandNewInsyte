@@ -20,6 +20,7 @@ export const clearSearchUser = () => (
 
 export const fetchNewUserResults = (searchQuery: string) => async (
   dispatch: (action: SearchUserAction) => void,
+  getState: () => AppState,
 ) => {
   dispatch(fetchNewUserResultsStarted());
   try {
@@ -34,15 +35,39 @@ export const fetchNewUserResults = (searchQuery: string) => async (
       return dispatch(fetchNewUserResultsSuccess([], null));
     }
 
-    const userResults = documentSnapshots.docs.map((doc) => {
+    const currentUser = getState().auth.user?.id;
+
+    const userResults = [];
+    for (const doc of documentSnapshots.docs) {
+      // const block = await fsDB
+      //   .collection('users')
+      //   .doc(currentUser)
+      //   .collection('block_list')
+      //   .doc(doc.id)
+      //   .get();
+      // if (block.exists) continue;
+      
       const data = doc.data();
-      return {
+
+      const block = await fsDB.collection('block_list').where('blocker', '==', currentUser).where('blocked', '==', doc.id).get();
+
+      if (!block.empty) {
+        continue;
+      }
+  
+      const blocked = await fsDB.collection('block_list').where('blocker', '==', doc.id).where('blocked', '==', currentUser).get();
+  
+      if (!blocked.empty) {
+        continue;
+      }
+
+      userResults.push({
         id: doc.id,
         avatar: data.avatar as string,
         username: data.username as string,
         name: data.name as string,
-      };
-    });
+      });
+    }
 
     const newLastVisible =
       documentSnapshots.docs[documentSnapshots.docs.length - 1];
@@ -81,15 +106,25 @@ export const fetchMoreUserResults = (searchQuery: string) => async (
       return dispatch(fetchMoreUserResultsSuccess([], null));
     }
 
-    const userResults = documentSnapshots.docs.map((doc) => {
+    const currentUser = getState().auth.user?.id;
+
+    const userResults = [];
+    for (const doc of documentSnapshots.docs) {
+      const block = await fsDB
+        .collection('users')
+        .doc(currentUser)
+        .collection('block_list')
+        .doc(doc.id)
+        .get();
+      if (block.exists) continue;
       const data = doc.data();
-      return {
+      userResults.push({
         id: doc.id,
         avatar: data.avatar as string,
         username: data.username as string,
         name: data.name as string,
-      };
-    });
+      });
+    }
 
     const newLastVisible =
       documentSnapshots.docs[documentSnapshots.docs.length - 1];

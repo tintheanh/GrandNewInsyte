@@ -19,6 +19,7 @@ import {
 import { User } from '../models';
 import BottomTabNavigator from '../navigation/BottomTabNavigator';
 import CreatePostStack from './CreatePostStack';
+import NotAuthedStack from './NotAuthedStack';
 import { alertDialog } from '../utils/functions';
 
 const Stack = createStackNavigator();
@@ -137,18 +138,29 @@ class RootStack extends Component<RootStackProps> {
   };
 
   render() {
-    if (this.props.user === undefined) {
+    const { user } = this.props;
+    if (user === undefined) {
       return <Loading />;
+    } else if (user === null) {
+      return (
+        <NavigationContainer>
+          <StatusBar barStyle="light-content" translucent={true} />
+          <Stack.Navigator headerMode="none" mode="modal">
+            <Stack.Screen name="Root" component={NotAuthedStack} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      );
+    } else {
+      return (
+        <NavigationContainer>
+          <StatusBar barStyle="light-content" translucent={true} />
+          <Stack.Navigator headerMode="none" mode="modal">
+            <Stack.Screen name="Root" component={BottomTabNavigator} />
+            <Stack.Screen name="Add" component={CreatePostStack} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      );
     }
-    return (
-      <NavigationContainer>
-        <StatusBar barStyle="light-content" translucent={true} />
-        <Stack.Navigator headerMode="none" mode="modal">
-          <Stack.Screen name="Root" component={BottomTabNavigator} />
-          <Stack.Screen name="Add" component={CreatePostStack} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    );
   }
 }
 

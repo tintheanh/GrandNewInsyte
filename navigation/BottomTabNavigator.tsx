@@ -156,7 +156,7 @@ class BottomTabNavigator extends Component<any> {
             })}
           />
         ) : null}
-        {this.props.user ? (
+        {/* {this.props.user ? (
           <BottomTab.Screen
             name="Notif"
             component={NotifStack}
@@ -170,7 +170,7 @@ class BottomTabNavigator extends Component<any> {
               ),
             }}
           />
-        ) : null}
+        ) : null} */}
 
         <BottomTab.Screen
           name="Auth"

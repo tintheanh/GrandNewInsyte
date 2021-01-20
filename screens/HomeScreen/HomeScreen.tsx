@@ -189,7 +189,10 @@ class HomeScreen extends Component<any> {
     // if (!this.props.user) {
     //   return <Loading />;
     // }
-    return this.props.user ? <HomeAuth /> : <HomeNotAuth />;
+    
+    // return this.props.user ? <HomeAuth /> : <HomeNotAuth />;
+
+    return <HomeNotAuth />;
 
     // return (
     //   <View style={styles.container}>

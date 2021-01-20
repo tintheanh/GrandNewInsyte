@@ -10,8 +10,10 @@ interface AuthScreenProps {
   loading: boolean;
 }
 
+// TODO: need fix
 function AuthScreen({ user }: AuthScreenProps) {
-  return user ? <AuthedStack /> : <NotAuthedStack />;
+  // return user ? <AuthedStack /> : <NotAuthedStack />;
+  return <AuthedStack />
 }
 
 const mapStateToProps = (state: AppState) => ({

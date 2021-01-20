@@ -618,7 +618,7 @@ const mapStateToProps = (state: AppState) => {
     pullLoading: state.allPosts.public.pullLoading,
     fetchLoading: state.allPosts.public.fetchLoading,
     error: state.allPosts.public.error,
-    posts: POSTS,
+    posts: state.allPosts.public.posts,
     feedChoice: state.allPosts.public.feedChoice,
     hotTime: state.allPosts.public.hotTime,
   };

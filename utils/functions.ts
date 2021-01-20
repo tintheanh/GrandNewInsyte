@@ -514,9 +514,34 @@ const FSdocsToPostArray = async (
 ): Promise<Array<Post>> => {
   const newPosts = [];
 
+  // const blockIDs = [];
+  // if (currentUser) {
+  //   const blockListRef = await fsDB
+  //     .collection('users')
+  //     .doc(currentUser.id)
+  //     .collection('block_list')
+  //     .get();
+  //   blockListRef.forEach((doc) => {
+  //     blockIDs.push(doc.id);
+  //   });
+  // }
+
   for (const doc of docs) {
     const postData = doc.data();
     let userData = null;
+
+    const block = await fsDB.collection('block_list').where('blocker', '==', currentUser?.id).where('blocked', '==', postData!.posted_by).get();
+
+    if (!block.empty) {
+      continue;
+    }
+
+    const blocked = await fsDB.collection('block_list').where('blocker', '==', postData!.posted_by).where('blocked', '==', currentUser?.id).get();
+
+    if (!blocked.empty) {
+      continue;
+    }
+
     try {
       if (currentUser && currentUser.id === postData!.posted_by) {
         userData = {
@@ -538,6 +563,9 @@ const FSdocsToPostArray = async (
           avatar: userRef.data()!.avatar,
         };
       }
+
+      
+
       let captionWithTags = postData!.caption;
       if (postData!.tagged_users.length > 0) {
         const taggedUsers: Array<{
@@ -595,6 +623,10 @@ const FSdocsToPostArray = async (
           isLiked = true;
         }
       }
+
+      // if (blockIDs.includes(postData.posted_by)) {
+      //   continue;
+      // }
 
       const post = {
         id: doc.id,
@@ -770,9 +802,34 @@ const FSdocsToCommentArray = async (
   },
 ) => {
   const comments = [];
+  // const blockIDs = [];
+  // if (currentUser) {
+  //   const blockListRef = await fsDB
+  //     .collection('users')
+  //     .doc(currentUser.id)
+  //     .collection('block_list')
+  //     .get();
+  //   blockListRef.forEach((doc) => {
+  //     blockIDs.push(doc.id);
+  //   });
+  // }
+
   for (const snapshot of docs) {
     try {
       const commentData = snapshot.data();
+
+      const block = await fsDB.collection('block_list').where('blocker', '==', currentUser?.id).where('blocked', '==', commentData!.posted_by).get();
+
+      if (!block.empty) {
+        continue;
+      }
+  
+      const blocked = await fsDB.collection('block_list').where('blocker', '==', commentData!.posted_by).where('blocked', '==', currentUser?.id).get();
+  
+      if (!blocked.empty) {
+        continue;
+      }
+
       let postedBy;
       if (currentUser && currentUser.id === commentData!.posted_by) {
         postedBy = currentUser;
@@ -805,6 +862,10 @@ const FSdocsToCommentArray = async (
           isLiked = true;
         }
       }
+
+      // if (blockIDs.includes(postedBy)) {
+      //   continue;
+      // }
 
       const comment = {
         id: snapshot.id,
@@ -841,9 +902,33 @@ const FSdocsToReplyArray = async (
   },
 ) => {
   const replies = [];
+  // const blockIDs = [];
+  // if (currentUser) {
+  //   const blockListRef = await fsDB
+  //     .collection('users')
+  //     .doc(currentUser.id)
+  //     .collection('block_list')
+  //     .get();
+  //   blockListRef.forEach((doc) => {
+  //     blockIDs.push(doc.id);
+  //   });
+  // }
   for (const snapshot of docs) {
     try {
       const replyData = snapshot.data();
+
+      const block = await fsDB.collection('block_list').where('blocker', '==', currentUser?.id).where('blocked', '==', replyData!.posted_by).get();
+
+      if (!block.empty) {
+        continue;
+      }
+  
+      const blocked = await fsDB.collection('block_list').where('blocker', '==', replyData!.posted_by).where('blocked', '==', currentUser?.id).get();
+  
+      if (!blocked.empty) {
+        continue;
+      }
+
       let postedBy;
       if (currentUser && currentUser.id === replyData!.posted_by) {
         postedBy = currentUser;
@@ -878,6 +963,8 @@ const FSdocsToReplyArray = async (
           isLiked = true;
         }
       }
+
+      // if (blockIDs.includes(postedBy)) continue;
 
       const reply = {
         id: snapshot.id,

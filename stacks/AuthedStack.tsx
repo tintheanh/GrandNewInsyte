@@ -44,7 +44,7 @@ const CustomDrawerContent = (props: AuthedStackProps, navigation: any) => {
   };
   return (
     <DrawerContentScrollView {...props}>
-      <DrawerItem
+      {/* <DrawerItem
         icon={() => <Ionicons name="ios-settings" size={16} color="white" />}
         label={() => (
           <Text
@@ -57,7 +57,7 @@ const CustomDrawerContent = (props: AuthedStackProps, navigation: any) => {
           </Text>
         )}
         onPress={() => navigation.navigate('UserSetting')}
-      />
+      /> */}
       <DrawerItem
         label={() => (
           <Text

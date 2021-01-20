@@ -117,6 +117,8 @@ class UserScreen extends Component<UserScreenProps, UserScreenState> {
     };
   }
 
+  
+
   shouldComponentUpdate(
     nextProps: UserScreenProps,
     nextState: UserScreenState,
